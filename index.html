@@ -3791,7 +3791,7 @@ function getOrCreateFolder() {
                                 <div><strong>Font Family</strong><span>Choose the typeface used across the app</span></div>
                             </div>
                             <div class="settings-control settings-control-wide">
-                                <div class="font-family-grid" id="settingFontFamilyGrid"></div>
+                                <select id="settingFontFamily" class="settings-select" style="width:100%;font-size:13px" onchange="setAppFontFamily(this.value)"></select>
                             </div>
                         </div>
                         <div class="settings-row">

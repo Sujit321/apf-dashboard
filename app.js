@@ -19774,14 +19774,11 @@ function renderSettings() {
  // SSR class toggles
  renderSSRClassToggles();
 
- // Font family grid
- const ffGrid = document.getElementById('settingFontFamilyGrid');
- if (ffGrid) {
- ffGrid.innerHTML = FONT_FAMILIES.map(f =>
- `<div class="font-family-option ${s.fontFamily === f.key ? 'active' : ''}" style="font-family:${f.css}" onclick="setAppFontFamily('${f.key}')">
- <span class="ff-preview">${f.preview}</span>
- <span class="ff-name">${f.name}</span>
- </div>`
+ // Font family dropdown
+ const ffSelect = document.getElementById('settingFontFamily');
+ if (ffSelect) {
+ ffSelect.innerHTML = FONT_FAMILIES.map(f =>
+ `<option value="${f.key}" ${s.fontFamily === f.key ? 'selected' : ''}>${f.name}</option>`
  ).join('');
  }
 
