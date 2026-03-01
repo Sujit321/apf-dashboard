@@ -463,7 +463,7 @@ const SessionPersist = {
 // Unsaved changes tracking
 let hasUnsavedChanges = false;
 let lastEncSaveTime = null;
-const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments', 'teacherActionPlans'];
+const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments', 'teacherActionPlans', 'manualFollowups'];
 
 // ===== Google Drive Auto-Backup (via Google Apps Script) =====
 const GoogleDriveSync = {
@@ -12445,6 +12445,25 @@ function collectFollowupItems() {
  });
  });
 
+ // Manual follow-ups
+ const manuals = DB.get('manualFollowups') || [];
+ manuals.forEach(m => {
+ if (m.text && m.text.trim()) {
+ items.push({
+ id: m.id,
+ source: 'manual',
+ sourceId: m.id,
+ school: m.school || '',
+ block: m.block || '',
+ cluster: m.cluster || '',
+ date: normalizeDateOnly(m.date || m.createdAt),
+ text: m.text,
+ icon: 'fa-pen-to-square',
+ cls: 'followup-manual'
+ });
+ }
+ });
+
  return items;
 }
 
@@ -12841,32 +12860,266 @@ function linkFollowupEvidence(id) {
  openFollowupEvidencePicker(id);
 }
 
+// ===== FOLLOW-UP TRACKER ENHANCED HELPERS =====
+
+function autoDetectPriority(text) {
+ const t = (text || '').toLowerCase();
+ const highKw = ['urgent', 'critical', 'immediately', 'failing', 'failed', 'serious', 'emergency', 'asap', 'dropout', 'violence', 'danger', 'severe', 'no teacher', 'absent', 'closed school', 'not reporting'];
+ const lowKw = ['consider', 'suggest', 'optional', 'try', 'explore', 'might', 'could', 'general', 'routine', 'when possible', 'eventually', 'minor'];
+ if (highKw.some(k => t.includes(k))) return 'high';
+ if (lowKw.some(k => t.includes(k))) return 'low';
+ return 'medium';
+}
+
+function _getOrCreateFollowupEntry(id) {
+ const statusList = DB.get('followupStatus') || [];
+ let entry = statusList.find(f => f.id === id);
+ if (!entry) {
+ const item = collectFollowupItems().find(f => f.id === id);
+ if (!item) return null;
+ entry = upsertFollowupLifecycle(statusList, item).entry;
+ DB.set('followupStatus', statusList);
+ }
+ return { statusList, entry };
+}
+
+function setFollowupPriority(id, priority) {
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ r.entry.priority = priority;
+ r.entry.updatedAt = new Date().toISOString();
+ addFollowupHistory(r.entry, 'priority-set', `Priority set to ${priority}`);
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+}
+
+function setFollowupRichStatus(id, status) {
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ const prevDone = r.entry.done;
+ r.entry.richStatus = status;
+ r.entry.done = (status === 'done');
+ r.entry.status = status;
+ r.entry.updatedAt = new Date().toISOString();
+ if (status === 'done' && !prevDone) {
+ if (!r.entry.closedAt) r.entry.closedAt = new Date().toISOString();
+ if (!r.entry.closureLabel) r.entry.closureLabel = 'Closed manually';
+ if (!r.entry.closureType) r.entry.closureType = 'manual';
+ if (!r.entry.closureMode) r.entry.closureMode = 'manual';
+ if (!r.entry.closureDate) r.entry.closureDate = normalizeDateOnly(new Date());
+ } else if (status !== 'done' && prevDone) {
+ r.entry.reopenedAt = new Date().toISOString();
+ }
+ addFollowupHistory(r.entry, 'status-changed', `Status changed to ${status}`);
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+ const labels = { pending: 'Marked Pending', 'in-progress': 'In Progress', blocked: 'Marked Blocked', done: 'Completed!' };
+ showToast(labels[status] || status, status === 'done' ? 'success' : 'info');
+}
+
+function toggleFollowupPin(id) {
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ r.entry.pinned = !r.entry.pinned;
+ r.entry.updatedAt = new Date().toISOString();
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+ showToast(r.entry.pinned ? 'Follow-up pinned to top' : 'Follow-up unpinned', 'info');
+}
+
+function hideFollowup(id) {
+ if (!confirm('Hide this follow-up? You can show it again by selecting "All" filter.')) return;
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ r.entry.hidden = true;
+ r.entry.updatedAt = new Date().toISOString();
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+ showToast('Follow-up hidden. Select "All" filter to see hidden items.', 'info');
+}
+
+function addFollowupNotePrompt(id) {
+ const text = prompt('Add a note to this follow-up:');
+ if (!text || !text.trim()) return;
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ if (!Array.isArray(r.entry.notes)) r.entry.notes = [];
+ r.entry.notes.push({ id: DB.generateId(), ts: new Date().toISOString(), text: text.trim() });
+ r.entry.updatedAt = new Date().toISOString();
+ addFollowupHistory(r.entry, 'note-added', 'Note added');
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+ showToast('Note added', 'success');
+}
+
+function deleteFollowupNote(id, noteId) {
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ r.entry.notes = (r.entry.notes || []).filter(n => n.id !== noteId);
+ r.entry.updatedAt = new Date().toISOString();
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+}
+
+let _followupView = 'list';
+function setFollowupView(view) {
+ _followupView = view;
+ document.getElementById('fuViewList')?.classList.toggle('active', view === 'list');
+ document.getElementById('fuViewKanban')?.classList.toggle('active', view === 'kanban');
+ renderFollowups();
+}
+
+function addManualFollowup() {
+ document.getElementById('mfText').value = '';
+ document.getElementById('mfSchool').value = '';
+ document.getElementById('mfBlock').value = '';
+ document.getElementById('mfPriority').value = 'medium';
+ document.getElementById('mfDueDate').value = '';
+ document.getElementById('mfOwner').value = getDefaultFollowupOwner();
+ document.getElementById('mfEditId').value = '';
+ document.getElementById('mfModalTitle').textContent = 'Add Follow-up';
+ document.getElementById('manualFollowupModal').style.display = 'flex';
+}
+
+function closeManualFollowupModal() {
+ document.getElementById('manualFollowupModal').style.display = 'none';
+}
+
+function saveManualFollowup() {
+ const text = document.getElementById('mfText').value.trim();
+ if (!text) { showToast('Please enter follow-up text.', 'error'); return; }
+ const manuals = DB.get('manualFollowups') || [];
+ const editId = document.getElementById('mfEditId').value;
+ const owner = document.getElementById('mfOwner').value.trim() || getDefaultFollowupOwner();
+ const dueDate = document.getElementById('mfDueDate').value;
+ const priority = document.getElementById('mfPriority').value;
+ const school = document.getElementById('mfSchool').value.trim();
+ const block = document.getElementById('mfBlock').value.trim();
+
+ let savedId = editId;
+ if (editId) {
+ const item = manuals.find(m => m.id === editId);
+ if (item) { item.text = text; item.school = school; item.block = block; item.updatedAt = new Date().toISOString(); }
+ } else {
+ savedId = DB.generateId();
+ manuals.push({ id: savedId, text, school, block, cluster: '', date: normalizeDateOnly(new Date()), source: 'manual', createdAt: new Date().toISOString() });
+ }
+ DB.set('manualFollowups', manuals);
+
+ // Save priority/owner/dueDate to followupStatus
+ const statusList = DB.get('followupStatus') || [];
+ let entry = statusList.find(f => f.id === savedId);
+ if (!entry) { entry = { id: savedId, done: false }; statusList.push(entry); addFollowupHistory(entry, 'created', 'Manual follow-up created'); }
+ entry.priority = priority;
+ entry.owner = owner;
+ if (dueDate) entry.dueDate = dueDate;
+ entry.source = 'manual';
+ entry.richStatus = entry.richStatus || 'pending';
+ entry.status = entry.status || 'pending';
+ entry.updatedAt = new Date().toISOString();
+ DB.set('followupStatus', statusList);
+
+ closeManualFollowupModal();
+ renderFollowups();
+ showToast(editId ? 'Follow-up updated!' : 'Follow-up added!', 'success');
+}
+
+function editManualFollowup(id) {
+ const manuals = DB.get('manualFollowups') || [];
+ const item = manuals.find(m => m.id === id);
+ if (!item) return;
+ const statusList = DB.get('followupStatus') || [];
+ const entry = statusList.find(f => f.id === id) || {};
+ document.getElementById('mfEditId').value = id;
+ document.getElementById('mfText').value = item.text || '';
+ document.getElementById('mfSchool').value = item.school || '';
+ document.getElementById('mfBlock').value = item.block || '';
+ document.getElementById('mfPriority').value = entry.priority || 'medium';
+ document.getElementById('mfDueDate').value = entry.dueDate || '';
+ document.getElementById('mfOwner').value = entry.owner || getDefaultFollowupOwner();
+ document.getElementById('mfModalTitle').textContent = 'Edit Follow-up';
+ document.getElementById('manualFollowupModal').style.display = 'flex';
+}
+
+function deleteManualFollowup(id) {
+ if (!confirm('Permanently delete this follow-up?')) return;
+ let manuals = DB.get('manualFollowups') || [];
+ manuals = manuals.filter(m => m.id !== id);
+ DB.set('manualFollowups', manuals);
+ let status = DB.get('followupStatus') || [];
+ status = status.filter(s => s.id !== id);
+ DB.set('followupStatus', status);
+ renderFollowups();
+ showToast('Follow-up deleted', 'success');
+}
+
+function exportFollowupsToExcel() {
+ if (typeof XLSX === 'undefined') { showToast('Excel library not loaded', 'error'); return; }
+ const followupItems = collectFollowupItems();
+ const followupStatus = DB.get('followupStatus') || [];
+ const statusById = new Map(followupStatus.map(f => [f.id, f]));
+ const rows = followupItems.map(item => {
+ const st = statusById.get(item.id) || {};
+ return {
+ Source: (item.source || '').toUpperCase(),
+ School: item.school || '',
+ Block: item.block || '',
+ Teacher: item.teacher || '',
+ 'Follow-up Text': item.text || '',
+ Date: item.date || '',
+ Status: st.richStatus || st.status || (st.done ? 'done' : 'pending'),
+ Priority: st.priority || autoDetectPriority(item.text),
+ Owner: st.owner || item.assignee || getDefaultFollowupOwner(),
+ 'Due Date': st.dueDate || '',
+ 'Closed Date': st.closureDate || '',
+ Notes: (st.notes || []).map(n => n.text).join(' | ')
+ };
+ });
+ if (!rows.length) { showToast('No follow-ups to export.', 'info'); return; }
+ const wb = XLSX.utils.book_new();
+ const ws = XLSX.utils.json_to_sheet(rows);
+ XLSX.utils.book_append_sheet(wb, ws, 'Follow-ups');
+ XLSX.writeFile(wb, `Follow-ups_${normalizeDateOnly(new Date())}.xlsx`);
+ showToast('Follow-ups exported!', 'success');
+}
+
 function renderFollowups() {
  const followupItems = collectFollowupItems();
  syncActionClosureRecords(followupItems, { autoClose: false });
  const followupStatus = DB.get('followupStatus') || [];
  const statusById = new Map((followupStatus || []).map(f => [f.id, f]));
- const filter = document.getElementById('followupFilter')?.value || 'pending';
+
+ const statusFilter = document.getElementById('followupFilter')?.value || 'pending';
+ const sourceFilter = document.getElementById('followupSourceFilter')?.value || 'all';
+ const priorityFilter = document.getElementById('followupPriorityFilter')?.value || 'all';
+ const groupBy = document.getElementById('followupGroupBy')?.value || 'none';
+ const sortBy = document.getElementById('followupSortBy')?.value || 'date-desc';
+ const searchQ = (document.getElementById('followupSearch')?.value || '').trim().toLowerCase();
 
  let followups = followupItems.map(item => {
- const status = statusById.get(item.id) || {};
- const done = !!status.done;
+ const st = statusById.get(item.id) || {};
+ const done = !!st.done || st.richStatus === 'done';
+ const richStatus = st.richStatus || (done ? 'done' : 'pending');
+ const priority = st.priority || autoDetectPriority(item.text);
  return {
  ...item,
  done,
- owner: status.owner || item.assignee || getDefaultFollowupOwner(),
- dueDate: normalizeDateOnly(status.dueDate),
- sourceDate: normalizeDateOnly(status.sourceDate || item.date),
- closureType: status.closureType || '',
- closureLabel: status.closureLabel || '',
- closureMode: status.closureMode || '',
- closureDate: normalizeDateOnly(status.closureDate),
- statusText: status.status || (done ? 'done' : 'pending'),
- history: Array.isArray(status.history) ? status.history.slice() : []
+ richStatus,
+ priority,
+ detectedPriority: autoDetectPriority(item.text),
+ pinned: !!st.pinned,
+ hidden: !!st.hidden,
+ notes: Array.isArray(st.notes) ? st.notes : [],
+ owner: st.owner || item.assignee || getDefaultFollowupOwner(),
+ dueDate: normalizeDateOnly(st.dueDate),
+ sourceDate: normalizeDateOnly(st.sourceDate || item.date),
+ closureType: st.closureType || '',
+ closureLabel: st.closureLabel || '',
+ closureMode: st.closureMode || '',
+ closureDate: normalizeDateOnly(st.closureDate),
+ history: Array.isArray(st.history) ? st.history.slice() : []
  };
  });
-
- followups.sort((a, b) => (dateOnlyToMs(b.sourceDate) || 0) - (dateOnlyToMs(a.sourceDate) || 0));
 
  const todayMs = dateOnlyToMs(new Date());
  followups = followups.map(f => {
@@ -12879,119 +13132,278 @@ function renderFollowups() {
  return { ...f, daysSinceSource, dueInDays, isOverdue, urgency };
  });
 
- const totalCount = followups.length;
- const doneCount = followups.filter(f => f.done).length;
- const pendingCount = totalCount - doneCount;
- const overdueCount = followups.filter(f => f.isOverdue).length;
- const autoClosedCount = followups.filter(f => f.done && f.closureMode === 'auto').length;
+ // Stats from all unhidden items
+ const allV = followups.filter(f => !f.hidden);
+ const totalCount = allV.length;
+ const doneCount = allV.filter(f => f.done).length;
+ const pendingCount = allV.filter(f => f.richStatus === 'pending').length;
+ const inProgressCount = allV.filter(f => f.richStatus === 'in-progress').length;
+ const blockedCount = allV.filter(f => f.richStatus === 'blocked').length;
+ const overdueCount = allV.filter(f => f.isOverdue).length;
+ const highPriCount = allV.filter(f => !f.done && f.priority === 'high').length;
+ const autoClosedCount = allV.filter(f => f.done && f.closureMode === 'auto').length;
  const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
  const statsEl = document.getElementById('followupStats');
- statsEl.innerHTML = `
- <div class="followup-stat-card">
+ if (statsEl) statsEl.innerHTML = `
+ <div class="followup-stat-card fsc-pending" onclick="document.getElementById('followupFilter').value='pending';_pageState.followups=1;renderFollowups()" title="Show pending">
  <div class="followup-stat-icon pending"><i class="fas fa-hourglass-half"></i></div>
  <div class="followup-stat-value">${pendingCount}</div>
  <div class="followup-stat-label">Pending</div>
  </div>
- <div class="followup-stat-card">
+ <div class="followup-stat-card fsc-inprog" onclick="document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" title="Show in progress">
+ <div class="followup-stat-icon inprog"><i class="fas fa-spinner"></i></div>
+ <div class="followup-stat-value">${inProgressCount}</div>
+ <div class="followup-stat-label">In Progress</div>
+ </div>
+ <div class="followup-stat-card fsc-blocked" onclick="document.getElementById('followupFilter').value='blocked';_pageState.followups=1;renderFollowups()" title="Show blocked">
+ <div class="followup-stat-icon blocked"><i class="fas fa-ban"></i></div>
+ <div class="followup-stat-value">${blockedCount}</div>
+ <div class="followup-stat-label">Blocked</div>
+ </div>
+ <div class="followup-stat-card fsc-overdue" onclick="document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" title="Show active overdue">
  <div class="followup-stat-icon overdue"><i class="fas fa-triangle-exclamation"></i></div>
  <div class="followup-stat-value">${overdueCount}</div>
  <div class="followup-stat-label">SLA Overdue</div>
  </div>
- <div class="followup-stat-card">
+ <div class="followup-stat-card fsc-high" onclick="document.getElementById('followupPriorityFilter').value='high';document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" title="Show high priority">
+ <div class="followup-stat-icon high"><i class="fas fa-fire"></i></div>
+ <div class="followup-stat-value">${highPriCount}</div>
+ <div class="followup-stat-label">High Priority</div>
+ </div>
+ <div class="followup-stat-card fsc-done" onclick="document.getElementById('followupFilter').value='done';_pageState.followups=1;renderFollowups()" title="Show completed">
  <div class="followup-stat-icon done"><i class="fas fa-check-circle"></i></div>
  <div class="followup-stat-value">${doneCount}</div>
  <div class="followup-stat-label">Completed</div>
  </div>
- <div class="followup-stat-card">
- <div class="followup-stat-icon total"><i class="fas fa-list"></i></div>
- <div class="followup-stat-value">${totalCount}</div>
- <div class="followup-stat-label">Total</div>
- </div>
- <div class="followup-stat-card">
- <div class="followup-stat-icon rate"><i class="fas fa-chart-line"></i></div>
- <div class="followup-stat-value">${completionPct}%</div>
- <div class="followup-stat-label">Completion</div>
- </div>
- <div class="followup-stat-card">
+ <div class="followup-stat-card fsc-auto">
  <div class="followup-stat-icon auto"><i class="fas fa-link"></i></div>
  <div class="followup-stat-value">${autoClosedCount}</div>
  <div class="followup-stat-label">Auto Closed</div>
  </div>
+ <div class="followup-stat-card fsc-rate" onclick="document.getElementById('followupFilter').value='all';_pageState.followups=1;renderFollowups()" title="Show all">
+ <div class="followup-stat-icon total"><i class="fas fa-list"></i></div>
+ <div class="followup-stat-value">${totalCount}</div>
+ <div class="followup-stat-label">Total</div>
+ </div>
  `;
 
- if (filter === 'pending') followups = followups.filter(f => !f.done);
- else if (filter === 'done') followups = followups.filter(f => f.done);
+ // Progress bar
+ const pw = document.getElementById('followupProgressWrap');
+ if (pw) {
+ pw.style.display = totalCount > 0 ? 'flex' : 'none';
+ const fill = document.getElementById('followupProgressFill');
+ if (fill) fill.style.width = completionPct + '%';
+ const lbl = document.getElementById('followupProgressLabel');
+ if (lbl) lbl.textContent = `${doneCount} of ${totalCount} completed (${completionPct}%)`;
+ }
+
+ // Apply filters
+ let filtered = followups.filter(f => statusFilter === 'all' ? true : !f.hidden);
+ if (statusFilter === 'pending') filtered = filtered.filter(f => f.richStatus === 'pending');
+ else if (statusFilter === 'active') filtered = filtered.filter(f => f.richStatus === 'pending' || f.richStatus === 'in-progress');
+ else if (statusFilter === 'blocked') filtered = filtered.filter(f => f.richStatus === 'blocked');
+ else if (statusFilter === 'done') filtered = filtered.filter(f => f.done);
+
+ if (sourceFilter !== 'all') filtered = filtered.filter(f => f.source === sourceFilter);
+ if (priorityFilter !== 'all') filtered = filtered.filter(f => f.priority === priorityFilter);
+
+ if (searchQ) {
+ filtered = filtered.filter(f =>
+ (f.text || '').toLowerCase().includes(searchQ) ||
+ (f.school || '').toLowerCase().includes(searchQ) ||
+ (f.teacher || '').toLowerCase().includes(searchQ) ||
+ (f.owner || '').toLowerCase().includes(searchQ) ||
+ (f.block || '').toLowerCase().includes(searchQ)
+ );
+ }
+
+ // Sort
+ const priOrder = { high: 0, medium: 1, low: 2 };
+ if (sortBy === 'date-asc') filtered.sort((a, b) => (dateOnlyToMs(a.sourceDate) || 0) - (dateOnlyToMs(b.sourceDate) || 0));
+ else if (sortBy === 'priority') filtered.sort((a, b) => (priOrder[a.priority] ?? 1) - (priOrder[b.priority] ?? 1));
+ else if (sortBy === 'sla') filtered.sort((a, b) => {
+ const da = a.dueInDays !== null ? a.dueInDays : 9999;
+ const db2 = b.dueInDays !== null ? b.dueInDays : 9999;
+ return da - db2;
+ });
+ else if (sortBy === 'school') filtered.sort((a, b) => (a.school || '').localeCompare(b.school || ''));
+ else filtered.sort((a, b) => (dateOnlyToMs(b.sourceDate) || 0) - (dateOnlyToMs(a.sourceDate) || 0));
+ // Pinned always first
+ filtered.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
  const container = document.getElementById('followupsContainer');
- if (followups.length === 0) {
- const msg = filter === 'pending' ? 'No pending follow-ups - great job!' : filter === 'done' ? 'No completed follow-ups yet' : 'No follow-ups recorded yet';
- container.innerHTML = `<div class="empty-state"><i class="fas fa-tasks"></i><h3>${msg}</h3><p>Follow-ups are auto-collected from visit notes, observation suggestions, and meeting actions.</p></div>`;
+
+ if (filtered.length === 0) {
+ const msgs = { pending: 'No pending follow-ups — great work!', done: 'No completed follow-ups yet', blocked: 'No blocked follow-ups' };
+ const msg = msgs[statusFilter] || (searchQ ? 'No follow-ups match your search' : 'No follow-ups match the selected filters');
+ container.innerHTML = `<div class="empty-state"><i class="fas fa-tasks"></i><h3>${msg}</h3><p>Follow-ups are collected from visit notes, observation suggestions, meeting actions, and manual entries.</p></div>`;
  return;
  }
 
- const pg = getPaginatedItems(followups, 'followups', getPageSize(20));
+ if (_followupView === 'kanban') {
+ container.innerHTML = _renderFollowupKanban(filtered);
+ return;
+ }
 
- container.innerHTML = pg.items.map(f => {
+ // List view with optional grouping
+ if (groupBy !== 'none') {
+ const groups = new Map();
+ filtered.forEach(f => {
+ let key = groupBy === 'school' ? (f.school || 'Unknown School') :
+ groupBy === 'source' ? (ACTION_CLOSURE_SOURCE_LABELS[f.source] || f.source || 'Other') :
+ groupBy === 'priority' ? (f.priority || 'medium') :
+ (f.block || 'Unknown Block');
+ if (!groups.has(key)) groups.set(key, []);
+ groups.get(key).push(f);
+ });
+ const sorted = [...groups.entries()].sort((a, b) =>
+ groupBy === 'priority' ? ((priOrder[a[0]] ?? 1) - (priOrder[b[0]] ?? 1)) : a[0].localeCompare(b[0])
+ );
+ const priColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
+ let html = '';
+ sorted.forEach(([key, items]) => {
+ const dot = groupBy === 'priority' ? `<span class="fu-group-dot" style="background:${priColors[key] || '#94a3b8'}"></span>` : '<i class="fas fa-layer-group" style="color:var(--accent);font-size:12px"></i>';
+ html += `<div class="fu-group-header">${dot} <span>${escapeHtml(key.charAt(0).toUpperCase() + key.slice(1))}</span> <span class="fu-group-count">${items.length}</span></div>`;
+ html += items.map(f => _renderFollowupCard(f)).join('');
+ });
+ container.innerHTML = html;
+ return;
+ }
+
+ const pg = getPaginatedItems(filtered, 'followups', getPageSize(20));
+ container.innerHTML = pg.items.map(f => _renderFollowupCard(f)).join('') + renderPaginationControls('followups', pg, 'renderFollowups');
+}
+
+function _renderFollowupCard(f) {
+ const priColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
+ const priLabels = { high: 'High', medium: 'Medium', low: 'Low' };
+ const priIcons = { high: 'fa-fire', medium: 'fa-circle-half-stroke', low: 'fa-leaf' };
+ const statusColors = { pending: '#94a3b8', 'in-progress': '#3b82f6', blocked: '#ef4444', done: '#10b981' };
+ const statusLabels = { pending: 'Pending', 'in-progress': 'In Progress', blocked: 'Blocked', done: 'Done' };
+ const statusIcons = { pending: 'fa-hourglass-half', 'in-progress': 'fa-spinner', blocked: 'fa-ban', done: 'fa-check-circle' };
+ const richStatus = f.richStatus || (f.done ? 'done' : 'pending');
+ const priColor = priColors[f.priority] || '#94a3b8';
+ const statusColor = statusColors[richStatus] || '#94a3b8';
  const sourceMs = dateOnlyToMs(f.sourceDate || f.date);
- const dateStr = sourceMs !== null
- ? new Date(sourceMs).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
- : 'No date';
- const sourceLabel = ACTION_CLOSURE_SOURCE_LABELS[f.source] || 'Action';
- const sourceCls = f.source === 'visit' ? 'followup-visit' : f.source === 'observation' ? 'followup-obs' : 'followup-meeting';
- const closureText = f.closureLabel || (f.done ? 'Closed manually' : '');
- const dueText = f.dueDate ? new Date(f.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set';
+ const dateStr = sourceMs !== null ? new Date(sourceMs).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date';
+ const sourceLabel = ACTION_CLOSURE_SOURCE_LABELS[f.source] || (f.source === 'manual' ? 'Manual' : 'Action');
+ const sourceCls = f.source === 'visit' ? 'followup-visit' : f.source === 'observation' ? 'followup-obs' : f.source === 'manual' ? 'followup-manual' : 'followup-meeting';
+ const dueText = f.dueDate ? new Date(f.dueDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No SLA';
  const dueClass = f.isOverdue ? 'overdue' : (f.dueInDays !== null && f.dueInDays <= 2 && !f.done ? 'soon' : '');
- const slaText = f.dueInDays === null
- ? 'No SLA date'
- : f.dueInDays < 0
- ? `Overdue by ${Math.abs(f.dueInDays)}d`
- : f.dueInDays === 0
- ? 'Due today'
- : `Due in ${f.dueInDays}d`;
- const historyEvents = (f.history || [])
- .slice()
- .sort((a, b) => new Date(b.ts || 0) - new Date(a.ts || 0))
- .slice(0, 8);
- const historyHtml = historyEvents.length > 0
- ? historyEvents.map(h => `
- <div class="followup-history-item">
- <span class="followup-history-time">${escapeHtml(formatFollowupHistoryTime(h.ts) || 'Unknown time')}</span>
- <span class="followup-history-text">${escapeHtml(h.message || h.type || 'Action updated')}</span>
- </div>
- `).join('')
- : '<div class="followup-history-empty">No timeline events yet.</div>';
+ const slaText = f.dueInDays === null ? 'No SLA' : f.dueInDays < 0 ? `Overdue ${Math.abs(f.dueInDays)}d` : f.dueInDays === 0 ? 'Due today' : `Due in ${f.dueInDays}d`;
+ const suggestHigh = !f.done && f.detectedPriority === 'high' && f.priority !== 'high';
+ const isManual = f.source === 'manual';
 
- return `<div class="followup-item ${f.done ? 'done' : ''} ${f.urgency}">
- <div class="followup-check" onclick="toggleFollowup('${f.id}')">
- ${f.done ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'}
+ const notesHtml = (f.notes || []).map(n => `
+ <div class="fu-note-item">
+ <span class="fu-note-text">${escapeHtml(n.text)}</span>
+ <span class="fu-note-time">${escapeHtml(formatFollowupHistoryTime(n.ts))}</span>
+ <button class="fu-note-del" onclick="deleteFollowupNote('${f.id}','${n.id}')" title="Delete note">&times;</button>
+ </div>`).join('');
+
+ const historyEvents = (f.history || []).slice().sort((a, b) => new Date(b.ts || 0) - new Date(a.ts || 0)).slice(0, 6);
+ const historyHtml = historyEvents.length > 0
+ ? historyEvents.map(h => `<div class="followup-history-item"><span class="followup-history-time">${escapeHtml(formatFollowupHistoryTime(h.ts) || '')}</span><span class="followup-history-text">${escapeHtml(h.message || h.type || '')}</span></div>`).join('')
+ : '<div class="followup-history-empty">No events yet.</div>';
+
+ return `<div class="followup-item fu-rich ${f.done ? 'done' : ''} ${f.urgency} ${f.pinned ? 'fu-pinned' : ''}" style="border-left:3px solid ${priColor}">
+ ${f.pinned ? `<div class="fu-pin-badge" title="Pinned"><i class="fas fa-thumbtack"></i></div>` : ''}
+ <div class="followup-check" onclick="setFollowupRichStatus('${f.id}','${f.done ? 'pending' : 'done'}')" title="${f.done ? 'Re-open' : 'Mark complete'}">
+ ${f.done ? '<i class="fas fa-check-circle" style="color:var(--success)"></i>' : '<i class="far fa-circle"></i>'}
  </div>
  <div class="followup-body">
  <div class="followup-header">
- <span class="followup-source ${sourceCls}"><i class="fas ${f.icon}"></i> ${sourceLabel}</span>
- <span class="followup-school">${escapeHtml(f.school)}</span>
+ <span class="followup-source ${sourceCls}"><i class="fas ${f.icon || 'fa-tasks'}"></i> ${sourceLabel}</span>
+ <span class="followup-school">${escapeHtml(f.school || 'Unknown School')}</span>
  ${f.teacher ? `<span class="followup-teacher"><i class="fas fa-user"></i> ${escapeHtml(f.teacher)}</span>` : ''}
+ ${f.block ? `<span class="fu-meta-chip"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(f.block)}</span>` : ''}
+ <div class="fu-badges">
+ <span class="fu-priority-badge" style="background:${priColor}20;color:${priColor};border:1px solid ${priColor}40"><i class="fas ${priIcons[f.priority] || 'fa-circle'}"></i> ${priLabels[f.priority] || 'Medium'}</span>
+ <span class="fu-status-badge" style="background:${statusColor}20;color:${statusColor};border:1px solid ${statusColor}40"><i class="fas ${statusIcons[richStatus] || 'fa-circle'}"></i> ${statusLabels[richStatus] || richStatus}</span>
+ ${suggestHigh ? `<span class="fu-ai-suggest" title="AI detected high-priority keywords in this text"><i class="fas fa-bolt"></i> Suggest: High Priority</span>` : ''}
+ </div>
  </div>
  <p class="followup-text">${escapeHtml(f.text)}</p>
  <div class="followup-footer">
  <span class="followup-date"><i class="fas fa-calendar"></i> ${dateStr}</span>
  ${!f.done && f.daysSinceSource > 0 ? `<span class="followup-age ${f.urgency}">${f.daysSinceSource}d ago</span>` : ''}
- <span class="followup-owner"><i class="fas fa-user-tag"></i> ${escapeHtml(f.owner)}</span>
- <span class="followup-sla ${dueClass}"><i class="fas fa-hourglass-half"></i> ${slaText} (${dueText})</span>
- ${f.done ? `<span class="followup-closure ${f.closureMode === 'auto' ? 'auto' : ''}"><i class="fas fa-link"></i> ${escapeHtml(closureText)}</span>` : ''}
+ <span class="followup-owner" onclick="setFollowupOwner('${f.id}')" title="Click to reassign" style="cursor:pointer"><i class="fas fa-user-tag"></i> ${escapeHtml(f.owner)}</span>
+ <span class="followup-sla ${dueClass}" onclick="setFollowupDueDate('${f.id}')" title="Click to set SLA" style="cursor:pointer"><i class="fas fa-hourglass-half"></i> ${slaText} · ${dueText}</span>
+ ${f.done && f.closureLabel ? `<span class="followup-closure ${f.closureMode === 'auto' ? 'auto' : ''}"><i class="fas fa-link"></i> ${escapeHtml(f.closureLabel)}</span>` : ''}
  </div>
+ ${f.notes && f.notes.length > 0 ? `<div class="fu-notes-section"><div class="fu-notes-title"><i class="fas fa-sticky-note"></i> Notes (${f.notes.length})</div><div class="fu-notes-list">${notesHtml}</div></div>` : ''}
  <div class="followup-actions-row">
+ <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)" title="Change status">
+ <option value="pending" ${richStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+ <option value="in-progress" ${richStatus === 'in-progress' ? 'selected' : ''}>🔄 In Progress</option>
+ <option value="blocked" ${richStatus === 'blocked' ? 'selected' : ''}>🚫 Blocked</option>
+ <option value="done" ${richStatus === 'done' ? 'selected' : ''}>✅ Done</option>
+ </select>
+ <select class="fu-priority-select" onchange="setFollowupPriority('${f.id}',this.value)" title="Set priority">
+ <option value="high" ${f.priority === 'high' ? 'selected' : ''}>🔴 High</option>
+ <option value="medium" ${f.priority === 'medium' ? 'selected' : ''}>🟡 Medium</option>
+ <option value="low" ${f.priority === 'low' ? 'selected' : ''}>🟢 Low</option>
+ </select>
  <button class="btn btn-ghost btn-sm" onclick="setFollowupOwner('${f.id}')"><i class="fas fa-user-pen"></i> Assign</button>
  <button class="btn btn-ghost btn-sm" onclick="setFollowupDueDate('${f.id}')"><i class="fas fa-calendar-day"></i> SLA</button>
+ <button class="btn btn-ghost btn-sm" onclick="addFollowupNotePrompt('${f.id}')"><i class="fas fa-sticky-note"></i> Note</button>
  <button class="btn btn-ghost btn-sm" onclick="linkFollowupEvidence('${f.id}')"><i class="fas fa-link"></i> Link</button>
+ <button class="btn btn-ghost btn-sm" onclick="toggleFollowupPin('${f.id}')" title="${f.pinned ? 'Unpin' : 'Pin to top'}"><i class="fas fa-thumbtack" ${f.pinned ? 'style="color:var(--warning)"' : ''}></i></button>
+ ${isManual ? `<button class="btn btn-ghost btn-sm" onclick="editManualFollowup('${f.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-ghost btn-sm" onclick="deleteManualFollowup('${f.id}')" style="color:var(--danger)"><i class="fas fa-trash"></i></button>` : `<button class="btn btn-ghost btn-sm" onclick="hideFollowup('${f.id}')" title="Hide" style="color:var(--text-muted)"><i class="fas fa-eye-slash"></i></button>`}
  </div>
- <div class="followup-history">
- <div class="followup-history-title"><i class="fas fa-clock-rotate-left"></i> Closure Timeline</div>
+ <details class="fu-timeline-details">
+ <summary class="followup-history-title"><i class="fas fa-clock-rotate-left"></i> Closure Timeline</summary>
  <div class="followup-history-list">${historyHtml}</div>
- </div>
+ </details>
  </div>
  </div>`;
- }).join('') + renderPaginationControls('followups', pg, 'renderFollowups');
+}
+
+function _renderFollowupKanban(followups) {
+ const columns = [
+ { key: 'pending', label: 'Pending', icon: 'fa-hourglass-half', color: '#94a3b8' },
+ { key: 'in-progress', label: 'In Progress', icon: 'fa-spinner', color: '#3b82f6' },
+ { key: 'blocked', label: 'Blocked', icon: 'fa-ban', color: '#ef4444' },
+ { key: 'done', label: 'Completed', icon: 'fa-check-circle', color: '#10b981' }
+ ];
+ const priColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
+ return `<div class="fu-kanban-board">
+ ${columns.map(col => {
+ const items = followups.filter(f => (f.richStatus || (f.done ? 'done' : 'pending')) === col.key);
+ return `<div class="fu-kanban-col">
+ <div class="fu-kanban-col-header" style="border-top:3px solid ${col.color}">
+ <i class="fas ${col.icon}" style="color:${col.color}"></i>
+ <span>${col.label}</span>
+ <span class="fu-kanban-count" style="background:${col.color}20;color:${col.color}">${items.length}</span>
+ </div>
+ <div class="fu-kanban-cards">
+ ${items.length === 0 ? `<div class="fu-kanban-empty">No items</div>` : items.map(f => {
+ const pc = priColors[f.priority] || '#94a3b8';
+ const srcMs = dateOnlyToMs(f.sourceDate);
+ const ds = srcMs ? new Date(srcMs).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+ const txt = (f.text || '').length > 90 ? (f.text || '').substring(0, 90) + '...' : (f.text || '');
+ return `<div class="fu-kanban-card ${f.pinned ? 'fu-pinned' : ''}" style="border-left:3px solid ${pc}">
+ ${f.pinned ? '<span class="fu-pin-badge-sm"><i class="fas fa-thumbtack"></i></span>' : ''}
+ <div class="fu-kc-school">${escapeHtml(f.school || 'Unknown')}</div>
+ <div class="fu-kc-text">${escapeHtml(txt)}</div>
+ <div class="fu-kc-meta">
+ <span style="color:${pc};font-size:10px;font-weight:700">${(f.priority || 'medium').toUpperCase()}</span>
+ ${ds ? `<span style="font-size:10px;color:var(--text-muted)">${ds}</span>` : ''}
+ ${f.isOverdue ? `<span style="color:#ef4444;font-size:10px;font-weight:700">⚠ Overdue ${Math.abs(f.dueInDays || 0)}d</span>` : (f.dueInDays !== null && f.dueInDays <= 3 && !f.done ? `<span style="color:#f59e0b;font-size:10px">Due ${f.dueInDays}d</span>` : '')}
+ </div>
+ <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)">
+ <option value="pending" ${col.key === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+ <option value="in-progress" ${col.key === 'in-progress' ? 'selected' : ''}>🔄 In Progress</option>
+ <option value="blocked" ${col.key === 'blocked' ? 'selected' : ''}>🚫 Blocked</option>
+ <option value="done" ${col.key === 'done' ? 'selected' : ''}>✅ Done</option>
+ </select>
+ </div>`;
+ }).join('')}
+ </div>
+ </div>`;
+ }).join('')}
+ </div>`;
 }
 
 function toggleFollowup(id) {

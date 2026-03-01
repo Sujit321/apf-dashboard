@@ -1646,22 +1646,132 @@
  <div class="section-header">
  <div>
  <h1><i class="fas fa-tasks"></i> Follow-up Tracker</h1>
- <p class="section-subtitle">Track pending follow-ups from school visits and observations</p>
+ <p class="section-subtitle">Track, manage &amp; resolve follow-ups from visits, observations and meetings</p>
  </div>
  <div class="header-actions">
- <button class="btn btn-outline btn-sm" onclick="runActionClosureEngine()">
- <i class="fas fa-link"></i> Action Closure Sync
+ <button class="btn btn-primary btn-sm" onclick="addManualFollowup()">
+ <i class="fas fa-plus"></i> Add Follow-up
  </button>
- <select id="followupFilter" class="filter-select"
- onchange="_pageState.followups=1;renderFollowups()">
+ <button class="btn btn-outline btn-sm" onclick="exportFollowupsToExcel()">
+ <i class="fas fa-download"></i> Export
+ </button>
+ <button class="btn btn-outline btn-sm" onclick="runActionClosureEngine()" title="Auto-detect and close follow-ups with evidence">
+ <i class="fas fa-link"></i> Auto-Sync
+ </button>
+ </div>
+ </div>
+
+ <!-- Toolbar -->
+ <div class="followup-toolbar">
+ <div class="followup-search-wrap">
+ <i class="fas fa-search followup-search-icon"></i>
+ <input type="text" id="followupSearch" class="followup-search"
+ placeholder="Search follow-ups, schools, teachers, blocks..."
+ oninput="_pageState.followups=1;renderFollowups()">
+ </div>
+ <div class="followup-filter-row">
+ <select id="followupFilter" class="filter-select-sm" onchange="_pageState.followups=1;renderFollowups()">
  <option value="pending">Pending</option>
+ <option value="active">Pending + In Progress</option>
+ <option value="blocked">Blocked</option>
  <option value="done">Completed</option>
- <option value="all">All</option>
+ <option value="all">All Status</option>
+ </select>
+ <select id="followupSourceFilter" class="filter-select-sm" onchange="_pageState.followups=1;renderFollowups()">
+ <option value="all">All Sources</option>
+ <option value="visit">🏫 Visit</option>
+ <option value="observation">📋 Observation</option>
+ <option value="meeting">🤝 Meeting</option>
+ <option value="manual">✏️ Manual</option>
+ </select>
+ <select id="followupPriorityFilter" class="filter-select-sm" onchange="_pageState.followups=1;renderFollowups()">
+ <option value="all">All Priorities</option>
+ <option value="high">🔴 High</option>
+ <option value="medium">🟡 Medium</option>
+ <option value="low">🟢 Low</option>
+ </select>
+ <select id="followupGroupBy" class="filter-select-sm" onchange="renderFollowups()">
+ <option value="none">No Grouping</option>
+ <option value="school">By School</option>
+ <option value="source">By Source</option>
+ <option value="priority">By Priority</option>
+ <option value="block">By Block</option>
+ </select>
+ <select id="followupSortBy" class="filter-select-sm" onchange="renderFollowups()">
+ <option value="date-desc">Newest First</option>
+ <option value="date-asc">Oldest First</option>
+ <option value="priority">Priority</option>
+ <option value="sla">SLA Due Soon</option>
+ <option value="school">School A–Z</option>
+ </select>
+ <div class="fu-view-toggle">
+ <button class="fu-view-btn active" id="fuViewList" onclick="setFollowupView('list')" title="List view"><i class="fas fa-list"></i></button>
+ <button class="fu-view-btn" id="fuViewKanban" onclick="setFollowupView('kanban')" title="Kanban board"><i class="fas fa-columns"></i></button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Stats -->
+ <div class="followup-stats" id="followupStats"></div>
+
+ <!-- Progress bar -->
+ <div class="followup-progress-bar-wrap" id="followupProgressWrap" style="display:none">
+ <div class="followup-progress-bar-track">
+ <div class="followup-progress-bar-fill" id="followupProgressFill"></div>
+ </div>
+ <span class="followup-progress-label" id="followupProgressLabel"></span>
+ </div>
+
+ <div id="followupsContainer" class="followups-list"></div>
+
+ <!-- Manual Follow-up Modal -->
+ <div id="manualFollowupModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeManualFollowupModal()">
+ <div class="modal modal-sm">
+ <div class="modal-header">
+ <h2><i class="fas fa-plus-circle"></i> <span id="mfModalTitle">Add Follow-up</span></h2>
+ <button class="modal-close" onclick="closeManualFollowupModal()"><i class="fas fa-times"></i></button>
+ </div>
+ <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;padding:20px 24px">
+ <input type="hidden" id="mfEditId">
+ <div class="form-group" style="margin:0">
+ <label class="form-label">Follow-up Action <span style="color:var(--danger)">*</span></label>
+ <textarea id="mfText" class="form-control" rows="3" placeholder="Describe the follow-up action required..."></textarea>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+ <div class="form-group" style="margin:0">
+ <label class="form-label">School</label>
+ <input id="mfSchool" class="form-control" placeholder="School name">
+ </div>
+ <div class="form-group" style="margin:0">
+ <label class="form-label">Block / Area</label>
+ <input id="mfBlock" class="form-control" placeholder="Block / cluster">
+ </div>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+ <div class="form-group" style="margin:0">
+ <label class="form-label">Priority</label>
+ <select id="mfPriority" class="form-control">
+ <option value="high">🔴 High</option>
+ <option value="medium" selected>🟡 Medium</option>
+ <option value="low">🟢 Low</option>
  </select>
  </div>
+ <div class="form-group" style="margin:0">
+ <label class="form-label">Due Date (SLA)</label>
+ <input id="mfDueDate" type="date" class="form-control">
  </div>
- <div class="followup-stats" id="followupStats"></div>
- <div id="followupsContainer" class="followups-list"></div>
+ </div>
+ <div class="form-group" style="margin:0">
+ <label class="form-label">Assigned To</label>
+ <input id="mfOwner" class="form-control" placeholder="Owner name">
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-ghost" onclick="closeManualFollowupModal()">Cancel</button>
+ <button class="btn btn-primary" onclick="saveManualFollowup()"><i class="fas fa-save"></i> Save Follow-up</button>
+ </div>
+ </div>
+ </div>
  </section>
 
  <!-- ==================== IDEA TRACKER SECTION ==================== -->
