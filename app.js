@@ -463,7 +463,7 @@ const SessionPersist = {
 // Unsaved changes tracking
 let hasUnsavedChanges = false;
 let lastEncSaveTime = null;
-const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments'];
+const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments', 'teacherActionPlans'];
 
 // ===== Google Drive Auto-Backup (via Google Apps Script) =====
 const GoogleDriveSync = {
@@ -19463,6 +19463,16 @@ function exportAllDataToExcel() {
  XLSX.utils.book_append_sheet(wb, ws, 'Growth Action Plans');
  }
 
+ const teacherActionPlans = DB.get('teacherActionPlans') || [];
+ if (teacherActionPlans.length > 0) {
+ const ws = XLSX.utils.json_to_sheet(teacherActionPlans.map(p => ({
+ Teacher: p.teacher || '', Playbook: p.playbookTitle || '', Action: p.title || '',
+ Steps: p.steps || '', Priority: p.priority || '', DueDate: p.dueDate || '',
+ Status: p.status || '', CreatedAt: p.createdAt || ''
+ })));
+ XLSX.utils.book_append_sheet(wb, ws, 'Teacher Action Plans');
+ }
+
  const maraiTracking = DB.get('maraiTracking') || [];
  if (maraiTracking.length > 0) {
  const ws = XLSX.utils.json_to_sheet(maraiTracking.map(m => ({
@@ -19572,6 +19582,7 @@ function exportAllDataToExcel() {
  { Metric: 'Meetings', Value: meetings.length },
  { Metric: 'Growth Assessments', Value: growthAssessments.length },
  { Metric: 'Growth Action Plans', Value: growthActionPlans.length },
+ { Metric: 'Teacher Action Plans', Value: (DB.get('teacherActionPlans') || []).length },
  { Metric: 'MARAI Records', Value: maraiTracking.length },
  { Metric: 'School Work', Value: schoolWork.length },
  { Metric: 'Visit Plan Entries', Value: visitPlanEntries.length },
@@ -29324,38 +29335,34 @@ async function applyTeacherInterventionPlaybook(encodedTeacherName, playbookKey)
  return;
  }
 
- if (!await confirmAction(`Apply "${playbook.title}" for ${teacher.name}? ${playbook.actions.length} action plan item(s) will be created.`)) return;
+ if (!await confirmAction(`Apply "${playbook.title}" for ${teacher.name}? ${playbook.actions.length} action item(s) will be added to this teacher's action plan.`)) return;
 
- let actions = typeof getGrowthActions === 'function' ? getGrowthActions() : (DB.get('growthActionPlans') || []);
+ let actions = DB.get('teacherActionPlans') || [];
  const existingTitles = new Set(actions.map(a => normalizeText(a.title)));
  let added = 0;
  let skipped = 0;
 
  playbook.actions.forEach((item, idx) => {
- const actionTitle = `${teacher.name}: ${item.title}`;
- if (existingTitles.has(normalizeText(actionTitle))) {
- skipped++;
- return;
- }
+ const actionTitle = item.title;
+ const dedupKey = normalizeText(teacher.name + '|' + actionTitle);
+ if (existingTitles.has(dedupKey)) { skipped++; return; }
  actions.push({
  id: DB.generateId(),
- dimId: item.dimId || 'dim4',
- title: actionTitle,
- targetLevel: Number.isFinite(item.targetLevel) ? item.targetLevel : 3,
- targetDate: addDaysToDate(new Date(), Number.isFinite(item.dueDays) ? item.dueDays : (7 * (idx + 1))),
- steps: item.steps || '',
- support: `Auto-generated from intervention playbook: ${playbook.title}`,
- priority: item.priority || playbook.priority || 'medium',
- status: 'not-started',
  teacher: teacher.name,
  playbookKey: playbook.key,
+ playbookTitle: playbook.title,
+ title: actionTitle,
+ steps: item.steps || '',
+ priority: item.priority || playbook.priority || 'medium',
+ dueDate: addDaysToDate(new Date(), Number.isFinite(item.dueDays) ? item.dueDays : (7 * (idx + 1))),
+ status: 'not-started',
  createdAt: new Date().toISOString()
  });
- existingTitles.add(normalizeText(actionTitle));
+ existingTitles.add(dedupKey);
  added++;
  });
 
- DB.set('growthActionPlans', actions);
+ DB.set('teacherActionPlans', actions);
 
  const runLog = DB.get('interventionPlaybookRuns') || [];
  runLog.unshift({
@@ -29370,9 +29377,25 @@ async function applyTeacherInterventionPlaybook(encodedTeacherName, playbookKey)
  });
  DB.set('interventionPlaybookRuns', runLog.slice(0, 300));
 
- if (typeof renderGrowthActionPlans === 'function') renderGrowthActionPlans();
  renderTeacherJourney();
- showToast(`Playbook applied: ${added} action plan(s) created${skipped ? `, ${skipped} skipped` : ''}`, 'success');
+ showToast(`Playbook applied: ${added} action item(s) added to ${teacher.name}'s plan${skipped ? `, ${skipped} skipped` : ''}`, 'success');
+}
+
+function toggleTeacherActionPlanStatus(id) {
+ const plans = DB.get('teacherActionPlans') || [];
+ const plan = plans.find(p => p.id === id);
+ if (!plan) return;
+ plan.status = plan.status === 'done' ? 'not-started' : 'done';
+ plan.doneAt = plan.status === 'done' ? new Date().toISOString() : null;
+ DB.set('teacherActionPlans', plans);
+ renderTeacherJourney();
+}
+
+function deleteTeacherActionPlan(id) {
+ let plans = DB.get('teacherActionPlans') || [];
+ plans = plans.filter(p => p.id !== id);
+ DB.set('teacherActionPlans', plans);
+ renderTeacherJourney();
 }
 
 function renderTeacherJourneySection() {
@@ -29740,6 +29763,36 @@ function renderTeacherJourney() {
  ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px"><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> · +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} · ${fmtDateShort(r.runAt)}</div>`).join('')}
  </div>` : ''}
  ` : `<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="fas fa-check-circle" style="font-size:22px;opacity:0.35;margin-bottom:8px;display:block"></i>No critical recurring patterns found right now. Continue monitoring.</div>`);
+
+ // 7b. TEACHER ACTION PLANS
+ const teacherPlans = (DB.get('teacherActionPlans') || []).filter(p => normalizeText(p.teacher) === teacherKey);
+ const prioColor = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
+ const todayStr = new Date().toISOString().split('T')[0];
+ html += sectionBox('', `Teacher Action Plans (${teacherPlans.length})`,
+ teacherPlans.length > 0 ? `
+ <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Actions created from intervention playbooks for this teacher. Mark done when completed.</p>
+ <div style="display:flex;flex-direction:column;gap:8px">
+ ${teacherPlans.map(p => {
+ const done = p.status === 'done';
+ const overdue = !done && p.dueDate && p.dueDate < todayStr;
+ const pc = prioColor[p.priority] || '#64748b';
+ return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${done ? 'rgba(16,185,129,0.3)' : overdue ? 'rgba(239,68,68,0.3)' : 'var(--border)'};border-radius:8px;background:${done ? 'rgba(16,185,129,0.05)' : overdue ? 'rgba(239,68,68,0.04)' : 'var(--bg-secondary)'};transition:opacity 0.2s;opacity:${done ? '0.7' : '1'}">
+ <button onclick="toggleTeacherActionPlanStatus('${p.id}')" title="${done ? 'Mark pending' : 'Mark done'}" style="flex-shrink:0;width:20px;height:20px;border-radius:50%;border:2px solid ${done ? '#10b981' : 'var(--border)'};background:${done ? '#10b981' : 'transparent'};color:white;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;margin-top:1px">${done ? '<i class="fas fa-check"></i>' : ''}</button>
+ <div style="flex:1;min-width:0">
+ <div style="font-size:13px;font-weight:600;color:var(--text-primary);${done ? 'text-decoration:line-through;opacity:0.7' : ''}">${escapeHtml(p.title)}</div>
+ ${p.steps ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.5">${escapeHtml(p.steps)}</div>` : ''}
+ <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">
+ <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:${pc}18;color:${pc};border:1px solid ${pc}33">${p.priority || 'medium'}</span>
+ ${p.dueDate ? `<span style="font-size:10px;color:${overdue ? '#ef4444' : 'var(--text-muted)'}">${overdue ? '<i class="fas fa-exclamation-circle"></i> ' : ''}Due ${fmtDateShort(p.dueDate)}</span>` : ''}
+ <span style="font-size:10px;color:var(--text-muted);opacity:0.6">${escapeHtml(p.playbookTitle || '')}</span>
+ </div>
+ </div>
+ <button onclick="deleteTeacherActionPlan('${p.id}')" title="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px 4px;font-size:12px;opacity:0.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5"><i class="fas fa-times"></i></button>
+ </div>`;
+ }).join('')}
+ </div>` :
+ `<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="fas fa-clipboard-list" style="font-size:22px;opacity:0.3;margin-bottom:8px;display:block"></i>No action plans yet. Apply an Intervention Bundle above to create actions for this teacher.</div>`
+ );
 
  // 8. STRENGTHS
  html += sectionBox('', 'Strengths Identified', `
