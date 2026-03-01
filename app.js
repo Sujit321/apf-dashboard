@@ -12839,6 +12839,46 @@ function setFollowupDueDate(id) {
  });
 }
 
+let _fuCalYear = new Date().getFullYear(), _fuCalMonth = new Date().getMonth();
+
+function fuCalMove(dir) {
+ _fuCalMonth += dir;
+ if (_fuCalMonth > 11) { _fuCalMonth = 0; _fuCalYear++; }
+ if (_fuCalMonth < 0) { _fuCalMonth = 11; _fuCalYear--; }
+ fuCalRender();
+}
+
+function fuCalSelect(dateStr) {
+ document.getElementById('fuQmDateInput').value = dateStr;
+ const d = new Date(dateStr + 'T00:00:00');
+ const disp = document.getElementById('fuCalSelectedDisplay');
+ if (disp) {
+ disp.textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+ disp.className = 'fu-cal-selected-display fu-cal-selected-display-set';
+ }
+ fuCalRender();
+}
+
+function fuCalRender() {
+ const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+ const lbl = document.getElementById('fuCalMonthYear');
+ if (lbl) lbl.textContent = monthNames[_fuCalMonth] + ' ' + _fuCalYear;
+ const grid = document.getElementById('fuCalDays');
+ if (!grid) return;
+ const today = normalizeDateOnly(new Date());
+ const selected = (document.getElementById('fuQmDateInput') || {}).value || '';
+ const firstDay = new Date(_fuCalYear, _fuCalMonth, 1).getDay();
+ const daysInMonth = new Date(_fuCalYear, _fuCalMonth + 1, 0).getDate();
+ let html = '';
+ for (let i = 0; i < firstDay; i++) html += '<div class="fu-cal-empty"></div>';
+ for (let d = 1; d <= daysInMonth; d++) {
+ const ds = `${_fuCalYear}-${String(_fuCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+ const cls = ['fu-cal-day', ds === today ? 'fu-cal-today' : '', ds === selected ? 'fu-cal-sel' : ''].filter(Boolean).join(' ');
+ html += `<button type="button" class="${cls}" onclick="fuCalSelect('${ds}')">${d}</button>`;
+ }
+ grid.innerHTML = html;
+}
+
 function _openFuQuickModal(opts) {
  document.getElementById('fuQmTitle').textContent = opts.title;
  document.getElementById('fuQmIcon').className = 'fas ' + opts.icon;
@@ -12846,18 +12886,33 @@ function _openFuQuickModal(opts) {
  document.getElementById('fuQmId').value = opts.id;
  document.getElementById('fuQmType').value = opts.type;
  const inp = document.getElementById('fuQmInput');
- const dateInp = document.getElementById('fuQmDateInput');
+ const calWrap = document.getElementById('fuCalPicker');
  const hint = document.getElementById('fuQmHint');
  if (opts.type === 'sla') {
  inp.style.display = 'none';
- dateInp.style.display = 'block';
- dateInp.value = opts.value || '';
+ calWrap.style.display = 'block';
+ document.getElementById('fuQmDateInput').value = opts.value || '';
+ // Init calendar to current value or today
+ const seed = opts.value ? new Date(opts.value + 'T00:00:00') : new Date();
+ _fuCalYear = seed.getFullYear();
+ _fuCalMonth = seed.getMonth();
+ // Update selected display
+ const disp = document.getElementById('fuCalSelectedDisplay');
+ if (disp) {
+ if (opts.value) {
+ disp.textContent = seed.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+ disp.className = 'fu-cal-selected-display fu-cal-selected-display-set';
+ } else {
+ disp.textContent = 'Click a date to select';
+ disp.className = 'fu-cal-selected-display';
+ }
+ }
  hint.textContent = opts.slaHint || '';
  hint.style.display = opts.slaHint ? 'block' : 'none';
- setTimeout(() => dateInp.focus(), 80);
+ fuCalRender();
  } else {
  inp.style.display = 'block';
- dateInp.style.display = 'none';
+ calWrap.style.display = 'none';
  inp.value = opts.value || '';
  inp.placeholder = opts.placeholder || '';
  hint.style.display = 'none';
@@ -13377,15 +13432,15 @@ function _renderFollowupCard(f) {
  ${f.notes && f.notes.length > 0 ? `<div class="fu-notes-section"><div class="fu-notes-title"><i class="fas fa-sticky-note"></i> Notes (${f.notes.length})</div><div class="fu-notes-list">${notesHtml}</div></div>` : ''}
  <div class="followup-actions-row">
  <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)" title="Change status">
- <option value="pending" ${richStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
- <option value="in-progress" ${richStatus === 'in-progress' ? 'selected' : ''}>🔄 In Progress</option>
- <option value="blocked" ${richStatus === 'blocked' ? 'selected' : ''}>🚫 Blocked</option>
- <option value="done" ${richStatus === 'done' ? 'selected' : ''}>✅ Done</option>
+ <option value="pending" ${richStatus === 'pending' ? 'selected' : ''}>Pending</option>
+ <option value="in-progress" ${richStatus === 'in-progress' ? 'selected' : ''}>In Progress</option>
+ <option value="blocked" ${richStatus === 'blocked' ? 'selected' : ''}>Blocked</option>
+ <option value="done" ${richStatus === 'done' ? 'selected' : ''}>Done</option>
  </select>
  <select class="fu-priority-select" onchange="setFollowupPriority('${f.id}',this.value)" title="Set priority">
- <option value="high" ${f.priority === 'high' ? 'selected' : ''}>🔴 High</option>
- <option value="medium" ${f.priority === 'medium' ? 'selected' : ''}>🟡 Medium</option>
- <option value="low" ${f.priority === 'low' ? 'selected' : ''}>🟢 Low</option>
+ <option value="high" ${f.priority === 'high' ? 'selected' : ''}>High</option>
+ <option value="medium" ${f.priority === 'medium' ? 'selected' : ''}>Medium</option>
+ <option value="low" ${f.priority === 'low' ? 'selected' : ''}>Low</option>
  </select>
  <button class="btn btn-ghost btn-sm" onclick="setFollowupOwner('${f.id}')"><i class="fas fa-user-pen"></i> Assign</button>
  <button class="btn btn-ghost btn-sm" onclick="setFollowupDueDate('${f.id}')"><i class="fas fa-calendar-day"></i> SLA</button>
@@ -13435,10 +13490,10 @@ function _renderFollowupKanban(followups) {
  ${f.isOverdue ? `<span style="color:#ef4444;font-size:10px;font-weight:700">⚠ Overdue ${Math.abs(f.dueInDays || 0)}d</span>` : (f.dueInDays !== null && f.dueInDays <= 3 && !f.done ? `<span style="color:#f59e0b;font-size:10px">Due ${f.dueInDays}d</span>` : '')}
  </div>
  <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)">
- <option value="pending" ${col.key === 'pending' ? 'selected' : ''}>⏳ Pending</option>
- <option value="in-progress" ${col.key === 'in-progress' ? 'selected' : ''}>🔄 In Progress</option>
- <option value="blocked" ${col.key === 'blocked' ? 'selected' : ''}>🚫 Blocked</option>
- <option value="done" ${col.key === 'done' ? 'selected' : ''}>✅ Done</option>
+ <option value="pending" ${col.key === 'pending' ? 'selected' : ''}>Pending</option>
+ <option value="in-progress" ${col.key === 'in-progress' ? 'selected' : ''}>In Progress</option>
+ <option value="blocked" ${col.key === 'blocked' ? 'selected' : ''}>Blocked</option>
+ <option value="done" ${col.key === 'done' ? 'selected' : ''}>Done</option>
  </select>
  </div>`;
  }).join('')}

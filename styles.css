@@ -12278,6 +12278,135 @@ body.modal-open {
     font-style: italic;
 }
 
+/* === CUSTOM CALENDAR PICKER === */
+.fu-cal-selected-display {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.fu-cal-selected-display.fu-cal-selected-display-set {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 600;
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+.fu-cal-widget {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-card);
+}
+
+.fu-cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.fu-cal-nav-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 12px;
+    transition: var(--transition);
+}
+
+.fu-cal-nav-btn:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.fu-cal-month-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.fu-cal-daynames {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 8px 8px 4px;
+    gap: 2px;
+}
+
+.fu-cal-daynames span {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.fu-cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 4px 8px 10px;
+    gap: 3px;
+}
+
+.fu-cal-empty {
+    min-height: 32px;
+}
+
+.fu-cal-day {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    width: 100%;
+    aspect-ratio: 1;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    font-weight: 500;
+    padding: 0;
+}
+
+.fu-cal-day:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.fu-cal-today {
+    font-weight: 800;
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+.fu-cal-sel {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px var(--accent-light);
+}
+
 /* Evidence modal styles (existing) */
 .followup-evidence-meta {
     background: var(--bg-secondary);

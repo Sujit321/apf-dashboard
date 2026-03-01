@@ -1679,16 +1679,16 @@
  </select>
  <select id="followupSourceFilter" class="filter-select-sm" onchange="_pageState.followups=1;renderFollowups()">
  <option value="all">All Sources</option>
- <option value="visit">🏫 Visit</option>
- <option value="observation">📋 Observation</option>
- <option value="meeting">🤝 Meeting</option>
- <option value="manual">✏️ Manual</option>
+ <option value="visit">Visit</option>
+ <option value="observation">Observation</option>
+ <option value="meeting">Meeting</option>
+ <option value="manual">Manual</option>
  </select>
  <select id="followupPriorityFilter" class="filter-select-sm" onchange="_pageState.followups=1;renderFollowups()">
  <option value="all">All Priorities</option>
- <option value="high">🔴 High</option>
- <option value="medium">🟡 Medium</option>
- <option value="low">🟢 Low</option>
+ <option value="high">High</option>
+ <option value="medium">Medium</option>
+ <option value="low">Low</option>
  </select>
  <select id="followupGroupBy" class="filter-select-sm" onchange="renderFollowups()">
  <option value="none">No Grouping</option>
@@ -1734,9 +1734,24 @@
  <div class="modal-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
  <input type="hidden" id="fuQmId">
  <input type="hidden" id="fuQmType">
+ <input type="hidden" id="fuQmDateInput">
  <label class="form-label" id="fuQmLabel">Value</label>
  <input id="fuQmInput" class="form-control" type="text" style="display:block" placeholder="Enter value..." onkeydown="if(event.key==='Enter')saveFuQuickModal()">
- <input id="fuQmDateInput" class="form-control" type="date" style="display:none" onkeydown="if(event.key==='Enter')saveFuQuickModal()">
+ <!-- Custom calendar picker -->
+ <div id="fuCalPicker" style="display:none">
+ <div id="fuCalSelectedDisplay" class="fu-cal-selected-display">Click a date to select</div>
+ <div class="fu-cal-widget">
+ <div class="fu-cal-nav">
+ <button type="button" class="fu-cal-nav-btn" onclick="fuCalMove(-1)"><i class="fas fa-chevron-left"></i></button>
+ <span id="fuCalMonthYear" class="fu-cal-month-label"></span>
+ <button type="button" class="fu-cal-nav-btn" onclick="fuCalMove(1)"><i class="fas fa-chevron-right"></i></button>
+ </div>
+ <div class="fu-cal-daynames">
+ <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+ </div>
+ <div class="fu-cal-days" id="fuCalDays"></div>
+ </div>
+ </div>
  <div id="fuQmHint" style="display:none;font-size:12px;color:var(--text-muted);padding:6px 10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)"></div>
  </div>
  <div class="modal-footer">
@@ -1773,9 +1788,9 @@
  <div class="form-group" style="margin:0">
  <label class="form-label">Priority</label>
  <select id="mfPriority" class="form-control">
- <option value="high">🔴 High</option>
- <option value="medium" selected>🟡 Medium</option>
- <option value="low">🟢 Low</option>
+ <option value="high">High</option>
+ <option value="medium" selected>Medium</option>
+ <option value="low">Low</option>
  </select>
  </div>
  <div class="form-group" style="margin:0">
