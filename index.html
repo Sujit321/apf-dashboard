@@ -7067,6 +7067,9 @@ function getOrCreateFolder() {
  <button class="ai-tab" onclick="switchAITab('polisher')" id="aiTabPolisher"><i
  class="fas fa-pen-nib"></i>
  Polisher</button>
+ <button class="ai-tab" onclick="switchAITab('lessonplanner')" id="aiTabLessonplanner"><i
+ class="fas fa-book-open"></i>
+ Lesson Planner</button>
  </div>
 
  <!-- Chat Tab -->
@@ -7320,6 +7323,198 @@ function getOrCreateFolder() {
  <h4>Meeting Prep</h4>
  <p>Prepare talking points for an upcoming cluster meeting</p>
  </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('school-scorecard')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#14b8a6,#0d9488);">
+ <i class="fas fa-chart-bar"></i>
+ </div>
+ <h4>School Scorecard</h4>
+ <p>Generate a quick health scorecard for each school you've visited</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('tp-lo-alignment')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#ec4899,#db2777);">
+ <i class="fas fa-project-diagram"></i>
+ </div>
+ <h4>TP-LO Alignment</h4>
+ <p>Check how well your observed teaching practices map to learning outcomes</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('strength-weakness')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#f97316,#ea580c);">
+ <i class="fas fa-balance-scale"></i>
+ </div>
+ <h4>Strengths &amp; Gaps</h4>
+ <p>Identify cluster-level strengths and areas needing improvement</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('parent-community')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#a855f7,#9333ea);">
+ <i class="fas fa-users"></i>
+ </div>
+ <h4>Community Engagement</h4>
+ <p>Analyze parent and community engagement trends from your visit data</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('monthly-comparison')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">
+ <i class="fas fa-chart-line"></i>
+ </div>
+ <h4>Monthly Comparison</h4>
+ <p>Compare this month's progress against previous months</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('best-practices')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#22c55e,#16a34a);">
+ <i class="fas fa-star"></i>
+ </div>
+ <h4>Best Practices</h4>
+ <p>Surface the most effective teaching practices observed across schools</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('risk-alert')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#ef4444,#dc2626);">
+ <i class="fas fa-exclamation-triangle"></i>
+ </div>
+ <h4>Risk Alerts</h4>
+ <p>Flag schools or teachers at risk of falling behind based on data patterns</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('time-allocation')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#eab308,#ca8a04);">
+ <i class="fas fa-clock"></i>
+ </div>
+ <h4>Time Allocation</h4>
+ <p>Analyze how your time is distributed across schools and activities</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('observation-deep-dive')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+ <i class="fas fa-microscope"></i>
+ </div>
+ <h4>Observation Deep Dive</h4>
+ <p>Detailed analysis of classroom observations and feedback patterns</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('action-plan')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#f43f5e,#e11d48);">
+ <i class="fas fa-clipboard-list"></i>
+ </div>
+ <h4>Action Plan</h4>
+ <p>Generate a prioritized action plan for the upcoming week</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('email-draft')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#64748b,#475569);">
+ <i class="fas fa-envelope"></i>
+ </div>
+ <h4>Email Draft</h4>
+ <p>Draft a professional email update to your coordinator or team</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('marai-progress')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+ <i class="fas fa-layer-group"></i>
+ </div>
+ <h4>MARAI Progress</h4>
+ <p>Analyze teacher progression through Motivation → Action → Internalization stages</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('training-attendance')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+ <i class="fas fa-user-check"></i>
+ </div>
+ <h4>Training Attendance</h4>
+ <p>Identify training coverage gaps and frequent/missing attendees</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('goal-achievement')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+ <i class="fas fa-bullseye"></i>
+ </div>
+ <h4>Goal Achievement</h4>
+ <p>Compare your monthly targets vs actual performance across all goals</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('worklog-summary')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#10b981,#059669);">
+ <i class="fas fa-book-open"></i>
+ </div>
+ <h4>Work Log Summary</h4>
+ <p>Summarize your daily work patterns, activity types, and productivity trends</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('visit-plan-execution')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#e11d48,#be123c);">
+ <i class="fas fa-route"></i>
+ </div>
+ <h4>Plan vs Execution</h4>
+ <p>Analyze how well your actual visits match your planned visit schedule</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('capacity-building')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#4f46e5,#4338ca);">
+ <i class="fas fa-seedling"></i>
+ </div>
+ <h4>Growth Journey</h4>
+ <p>Review your professional development progress, courses, and skill building</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('teacher-action-progress')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#f472b6,#ec4899);">
+ <i class="fas fa-tasks"></i>
+ </div>
+ <h4>Teacher Action Plans</h4>
+ <p>Track playbook intervention completion rates and impact on teachers</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('reflection-synthesis')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#a78bfa,#8b5cf6);">
+ <i class="fas fa-brain"></i>
+ </div>
+ <h4>Reflection Synthesis</h4>
+ <p>Synthesize themes from your monthly reflections — moods, challenges, growth</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('teacher-demographics')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#38bdf8,#0284c7);">
+ <i class="fas fa-id-card"></i>
+ </div>
+ <h4>Teacher Overview</h4>
+ <p>Demographic distribution, experience levels, and coverage analysis of teachers</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('meeting-effectiveness')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#fb923c,#ea580c);">
+ <i class="fas fa-handshake"></i>
+ </div>
+ <h4>Meeting Effectiveness</h4>
+ <p>Analyze meeting patterns, action item follow-through, and productivity</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('schoolwork-impact')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#34d399,#059669);">
+ <i class="fas fa-school"></i>
+ </div>
+ <h4>School Work Impact</h4>
+ <p>Evaluate the outcomes and participation trends of school-based activities</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('student-learning')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#facc15,#eab308);">
+ <i class="fas fa-child"></i>
+ </div>
+ <h4>Student Learning</h4>
+ <p>Analyze student learning levels and correlate with classroom observations</p>
+ </div>
+ <div class="ai-insight-card" onclick="generateAIInsight('data-completeness')">
+ <div class="ai-insight-card-icon"
+ style="background:linear-gradient(135deg,#94a3b8,#64748b);">
+ <i class="fas fa-database"></i>
+ </div>
+ <h4>Data Completeness</h4>
+ <p>AI-powered quality audit — find missing fields, gaps, and data health score</p>
+ </div>
  </div>
 
  <!-- Insights Output -->
@@ -7387,6 +7582,142 @@ function getOrCreateFolder() {
  </div>
  </div>
  </div>
+
+ <!-- Lesson Planner Tab -->
+ <div class="ai-tab-content" id="aiPanelLessonplanner">
+  <div class="lp-container">
+
+   <!-- Hero Banner -->
+   <div class="lp-hero">
+    <div class="lp-hero-icon"><i class="fas fa-book-open"></i></div>
+    <div class="lp-hero-text">
+     <h3>AI Lesson Planner</h3>
+     <p>Create structured NCERT 4E lesson plans powered by Sarvam AI</p>
+    </div>
+   </div>
+
+   <!-- Config Bar -->
+   <div class="lp-config-bar">
+    <div class="lp-config-group">
+     <label><i class="fas fa-book"></i> Subject</label>
+     <select id="lpSubjectSelect" onchange="lpLoadTPs()">
+      <option value="">-- Select Subject --</option>
+     </select>
+    </div>
+    <div class="lp-config-group">
+     <label><i class="fas fa-chalkboard"></i> Class / Grade</label>
+     <input type="text" id="lpClassInput" placeholder="e.g. Grade 5A" />
+    </div>
+    <div class="lp-config-group">
+     <label><i class="fas fa-calendar-alt"></i> Lesson Date</label>
+     <input type="hidden" id="lpDateInput" />
+     <div class="lp-cal-wrap" id="lpCalWrap">
+      <button type="button" class="lp-cal-trigger" id="lpCalTrigger" onclick="lpCalToggle()">
+       <i class="fas fa-calendar-alt"></i>
+       <span id="lpCalDisplay">Select date</span>
+       <i class="fas fa-chevron-down lp-cal-arrow"></i>
+      </button>
+      <div class="lp-cal-dropdown" id="lpCalDropdown">
+       <div class="lp-cal-nav">
+        <button type="button" onclick="lpCalMove(-1)"><i class="fas fa-chevron-left"></i></button>
+        <span id="lpCalMonthYear"></span>
+        <button type="button" onclick="lpCalMove(1)"><i class="fas fa-chevron-right"></i></button>
+       </div>
+       <div class="lp-cal-daynames"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+       <div class="lp-cal-days" id="lpCalDays"></div>
+       <div class="lp-cal-footer">
+        <button type="button" onclick="lpCalClear()">Clear</button>
+        <button type="button" onclick="lpCalToday()">Today</button>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="lp-config-group">
+     <label><i class="fas fa-clock"></i> Duration</label>
+     <select id="lpDurationSelect">
+      <option value="30 minutes">30 minutes</option>
+      <option value="45 minutes" selected>45 minutes</option>
+      <option value="60 minutes">60 minutes</option>
+      <option value="90 minutes">90 minutes</option>
+     </select>
+    </div>
+   </div>
+
+   <!-- Lesson Title -->
+   <div class="lp-field-row">
+    <label><i class="fas fa-heading"></i> Lesson Title</label>
+    <input type="text" id="lpTitleInput" placeholder="Enter a descriptive lesson title..." />
+   </div>
+
+   <!-- Objective -->
+   <div class="lp-field-row">
+    <label><i class="fas fa-bullseye"></i> Overall Lesson Objective</label>
+    <textarea id="lpObjectiveInput" rows="2" placeholder="What should students be able to do by the end of this lesson?"></textarea>
+   </div>
+
+   <!-- TP Selection -->
+   <div class="lp-section-wrap lp-section-wrap-tp">
+    <div class="lp-section-header lp-section-tp">
+     <div class="lp-section-icon-box lp-icon-purple"><i class="fas fa-chalkboard-teacher"></i></div>
+     <span>Teaching Practices</span>
+     <span class="lp-badge" id="lpTPCountBadge">0 selected</span>
+    </div>
+    <div class="lp-group-filter" id="lpTPGroupFilter"></div>
+    <div class="lp-tp-list" id="lpTPList">
+     <div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Teaching Practices</div>
+    </div>
+   </div>
+
+   <!-- LO Selection -->
+   <div class="lp-section-wrap lp-section-wrap-lo">
+    <div class="lp-section-header lp-section-lo">
+     <div class="lp-section-icon-box lp-icon-green"><i class="fas fa-graduation-cap"></i></div>
+     <span>Learning Outcomes</span>
+     <span class="lp-badge lp-badge-lo" id="lpLOCountBadge">0 selected</span>
+    </div>
+    <div class="lp-group-filter" id="lpLOGroupFilter"></div>
+    <div class="lp-lo-list" id="lpLOList">
+     <div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Learning Outcomes</div>
+    </div>
+   </div>
+
+   <!-- Materials + Prior Knowledge -->
+   <div class="lp-two-col">
+    <div class="lp-field-row">
+     <label><i class="fas fa-toolbox"></i> Materials Needed</label>
+     <textarea id="lpMaterialsInput" rows="3" placeholder="List materials, tools, resources (one per line)..."></textarea>
+    </div>
+    <div class="lp-field-row">
+     <label><i class="fas fa-brain"></i> Prior Knowledge Notes</label>
+     <textarea id="lpPriorInput" rows="3" placeholder="What should students already know?"></textarea>
+    </div>
+   </div>
+
+   <!-- Generate / Clear -->
+   <div class="lp-generate-row">
+    <button class="btn btn-primary lp-generate-btn" id="lpAIBtn" onclick="lpGeneratePlanAI()">
+     <i class="fas fa-robot"></i> Generate with Sarvam AI
+    </button>
+    <button class="btn btn-secondary lp-clear-btn" onclick="lpClearPlan()">
+     <i class="fas fa-trash-alt"></i> Clear
+    </button>
+   </div>
+
+   <!-- Output -->
+   <div class="lp-output-wrap" id="lpOutputWrap" style="display:none;">
+    <div class="lp-output-toolbar">
+     <span class="lp-output-title"><i class="fas fa-file-alt"></i> Generated Lesson Plan</span>
+     <button class="lp-tool-btn" onclick="lpOpenEditor()"><i class="fas fa-pen-to-square"></i> Edit</button>
+     <button class="lp-tool-btn" onclick="lpExportPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+     <button class="lp-tool-btn" onclick="lpCopyPlan()"><i class="fas fa-copy"></i> Copy</button>
+     <button class="lp-tool-btn" onclick="lpPrintPlan()"><i class="fas fa-print"></i> Print</button>
+    </div>
+    <div class="lp-output" id="lpOutput"></div>
+   </div>
+
+  </div>
+ </div>
+
  </section>
 
  </main>

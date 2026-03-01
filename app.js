@@ -21168,6 +21168,548 @@ function switchAITab(tab) {
  if (tabBtn) tabBtn.classList.add('active');
  if (panel) panel.classList.add('active');
  if (tab === 'chat') renderAIChatKPIs();
+ if (tab === 'lessonplanner') initLessonPlanner();
+}
+
+// ═══════════════════════════════════════════════════════════
+// LESSON PLANNER
+// ═══════════════════════════════════════════════════════════
+
+function initLessonPlanner() {
+ const tps = DB.get('teachingPractices') || [];
+ const los = DB.get('learningOutcomes') || [];
+ const subjects = [...new Set([
+  ...tps.map(t => t.subject),
+  ...los.map(l => l.subject)
+ ])].filter(Boolean).sort();
+
+ const sel = document.getElementById('lpSubjectSelect');
+ if (!sel) return;
+ const prev = sel.value;
+ sel.innerHTML = '<option value="">-- Select Subject --</option>';
+ subjects.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s;
+  opt.textContent = s;
+  if (s === prev) opt.selected = true;
+  sel.appendChild(opt);
+ });
+
+ // Set today's date if empty
+ const dateInput = document.getElementById('lpDateInput');
+ if (dateInput && !dateInput.value) {
+  dateInput.value = new Date().toISOString().slice(0, 10);
+  lpCalUpdateDisplay();
+ }
+
+ // If a subject was already selected, reload TPs/LOs
+ if (prev && subjects.includes(prev)) {
+  lpLoadTPs();
+ } else {
+  document.getElementById('lpTPList').innerHTML = '<div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Teaching Practices</div>';
+  document.getElementById('lpLOList').innerHTML = '<div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Learning Outcomes</div>';
+  var _tf = document.getElementById('lpTPGroupFilter'); if (_tf) _tf.innerHTML = '';
+  var _lf = document.getElementById('lpLOGroupFilter'); if (_lf) _lf.innerHTML = '';
+  document.getElementById('lpTPCountBadge').textContent = '0 selected';
+  document.getElementById('lpLOCountBadge').textContent = '0 selected';
+ }
+}
+
+// ── Lesson Planner Custom Calendar ──────────────────────
+let _lpCalYear = new Date().getFullYear(), _lpCalMonth = new Date().getMonth();
+let _lpCalOpen = false;
+
+function lpCalToggle() {
+ const dd = document.getElementById('lpCalDropdown');
+ _lpCalOpen = !_lpCalOpen;
+ if (_lpCalOpen) {
+  const val = document.getElementById('lpDateInput').value;
+  const seed = val ? new Date(val + 'T00:00:00') : new Date();
+  _lpCalYear = seed.getFullYear();
+  _lpCalMonth = seed.getMonth();
+  lpCalRender();
+  dd.classList.add('open');
+  document.getElementById('lpCalTrigger').classList.add('open');
+ } else {
+  dd.classList.remove('open');
+  document.getElementById('lpCalTrigger').classList.remove('open');
+ }
+}
+
+function lpCalClose() {
+ _lpCalOpen = false;
+ const dd = document.getElementById('lpCalDropdown');
+ if (dd) dd.classList.remove('open');
+ const trig = document.getElementById('lpCalTrigger');
+ if (trig) trig.classList.remove('open');
+}
+
+function lpCalMove(dir) {
+ _lpCalMonth += dir;
+ if (_lpCalMonth > 11) { _lpCalMonth = 0; _lpCalYear++; }
+ if (_lpCalMonth < 0) { _lpCalMonth = 11; _lpCalYear--; }
+ lpCalRender();
+}
+
+function lpCalSelect(dateStr) {
+ document.getElementById('lpDateInput').value = dateStr;
+ lpCalUpdateDisplay();
+ lpCalClose();
+}
+
+function lpCalToday() {
+ const t = new Date();
+ const ds = t.toISOString().slice(0, 10);
+ lpCalSelect(ds);
+}
+
+function lpCalClear() {
+ document.getElementById('lpDateInput').value = '';
+ lpCalUpdateDisplay();
+ lpCalClose();
+}
+
+function lpCalUpdateDisplay() {
+ const val = document.getElementById('lpDateInput').value;
+ const disp = document.getElementById('lpCalDisplay');
+ const trig = document.getElementById('lpCalTrigger');
+ if (val) {
+  const d = new Date(val + 'T00:00:00');
+  disp.textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  trig.classList.add('has-value');
+ } else {
+  disp.textContent = 'Select date';
+  trig.classList.remove('has-value');
+ }
+}
+
+function lpCalRender() {
+ const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+ const lbl = document.getElementById('lpCalMonthYear');
+ if (lbl) lbl.textContent = monthNames[_lpCalMonth] + ' ' + _lpCalYear;
+ const grid = document.getElementById('lpCalDays');
+ if (!grid) return;
+ const todayStr = new Date().toISOString().slice(0, 10);
+ const selected = document.getElementById('lpDateInput').value || '';
+ const daysInMonth = new Date(_lpCalYear, _lpCalMonth + 1, 0).getDate();
+ const firstDay = new Date(_lpCalYear, _lpCalMonth, 1).getDay();
+ let html = '';
+ for (let i = 0; i < firstDay; i++) html += '<div class="lp-cal-empty"></div>';
+ for (let d = 1; d <= daysInMonth; d++) {
+  const ds = `${_lpCalYear}-${String(_lpCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const cls = ['lp-cal-day'];
+  if (ds === todayStr) cls.push('lp-cal-today');
+  if (ds === selected) cls.push('lp-cal-sel');
+  html += `<button type="button" class="${cls.join(' ')}" onclick="lpCalSelect('${ds}')">${d}</button>`;
+ }
+ grid.innerHTML = html;
+}
+
+// Close calendar on outside click
+document.addEventListener('click', function(e) {
+ if (_lpCalOpen && !e.target.closest('#lpCalWrap')) lpCalClose();
+});
+
+function lpLoadTPs() {
+ const subject = document.getElementById('lpSubjectSelect').value;
+ const tpList = document.getElementById('lpTPList');
+ const loList = document.getElementById('lpLOList');
+ const tpFilter = document.getElementById('lpTPGroupFilter');
+ const loFilter = document.getElementById('lpLOGroupFilter');
+
+ if (!subject) {
+  tpList.innerHTML = '<div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Teaching Practices</div>';
+  loList.innerHTML = '<div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Learning Outcomes</div>';
+  if (tpFilter) tpFilter.innerHTML = '';
+  if (loFilter) loFilter.innerHTML = '';
+  document.getElementById('lpTPCountBadge').textContent = '0 selected';
+  document.getElementById('lpLOCountBadge').textContent = '0 selected';
+  return;
+ }
+
+ const tps = (DB.get('teachingPractices') || []).filter(t => t.subject === subject);
+ const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === subject);
+
+ // --- Render TPs grouped by group ---
+ if (tps.length === 0) {
+  tpList.innerHTML = '<div class="lp-placeholder"><i class="fas fa-info-circle"></i> No Teaching Practices found for this subject</div>';
+  if (tpFilter) tpFilter.innerHTML = '';
+ } else {
+  const groups = {};
+  tps.forEach(tp => {
+   const g = tp.group || 'General';
+   if (!groups[g]) groups[g] = [];
+   groups[g].push(tp);
+  });
+
+  // Render group filter pills
+  if (tpFilter) {
+   const gNames = Object.keys(groups).sort();
+   let fHtml = '<button class="lp-filter-chip active" data-filter-group="__all__"><i class="fas fa-layer-group"></i> All <span class="lp-filter-count">' + tps.length + '</span></button>';
+   gNames.forEach(g => {
+    fHtml += '<button class="lp-filter-chip" data-filter-group="' + g.replace(/"/g, '&quot;') + '"><span>' + g + '</span> <span class="lp-filter-count">' + groups[g].length + '</span></button>';
+   });
+   tpFilter.innerHTML = fHtml;
+   tpFilter.querySelectorAll('.lp-filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => lpFilterGroup('tp', chip.dataset.filterGroup));
+   });
+  }
+
+  let html = '';
+  Object.keys(groups).sort().forEach(group => {
+   html += `<div class="lp-group-label" data-group="${group.replace(/"/g, '&quot;')}">${group}</div>`;
+   groups[group].forEach(tp => {
+    html += `<label class="lp-tp-item" data-group="${(tp.group || 'General').replace(/"/g, '&quot;')}">
+     <input type="checkbox" value="${tp.id}" onchange="lpOnSelectionChange()">
+     <div class="lp-tp-info">
+      <span class="lp-tp-serial">TP${tp.serialNo || ''}</span>
+      <span class="lp-tp-text">${tp.practice || ''}</span>
+     </div>
+    </label>`;
+   });
+  });
+  tpList.innerHTML = html;
+ }
+
+ // --- Render LOs grouped by group ---
+ if (los.length === 0) {
+  loList.innerHTML = '<div class="lp-placeholder"><i class="fas fa-info-circle"></i> No Learning Outcomes found for this subject</div>';
+  if (loFilter) loFilter.innerHTML = '';
+ } else {
+  const loGroups = {};
+  los.forEach(lo => {
+   const g = lo.group || 'General';
+   if (!loGroups[g]) loGroups[g] = [];
+   loGroups[g].push(lo);
+  });
+
+  // Render group filter pills
+  if (loFilter) {
+   const lgNames = Object.keys(loGroups).sort();
+   let fHtml = '<button class="lp-filter-chip active" data-filter-group="__all__"><i class="fas fa-layer-group"></i> All <span class="lp-filter-count">' + los.length + '</span></button>';
+   lgNames.forEach(g => {
+    fHtml += '<button class="lp-filter-chip" data-filter-group="' + g.replace(/"/g, '&quot;') + '"><span>' + g + '</span> <span class="lp-filter-count">' + loGroups[g].length + '</span></button>';
+   });
+   loFilter.innerHTML = fHtml;
+   loFilter.querySelectorAll('.lp-filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => lpFilterGroup('lo', chip.dataset.filterGroup));
+   });
+  }
+
+  let html = '';
+  Object.keys(loGroups).sort().forEach(group => {
+   html += `<div class="lp-group-label" data-group="${group.replace(/"/g, '&quot;')}">${group}</div>`;
+   loGroups[group].forEach(lo => {
+    html += `<label class="lp-lo-item" data-group="${(lo.group || 'General').replace(/"/g, '&quot;')}">
+     <input type="checkbox" value="${lo.id}" onchange="lpOnSelectionChange()">
+     <div class="lp-lo-info">
+      <span class="lp-lo-serial">LO${lo.serialNo || ''}</span>
+      <span class="lp-lo-text">${lo.outcome || ''}</span>
+     </div>
+    </label>`;
+   });
+  });
+  loList.innerHTML = html;
+ }
+
+ lpOnSelectionChange();
+}
+
+function lpOnSelectionChange() {
+ const tpChecked = document.querySelectorAll('#lpTPList input[type=checkbox]:checked').length;
+ const loChecked = document.querySelectorAll('#lpLOList input[type=checkbox]:checked').length;
+ document.getElementById('lpTPCountBadge').textContent = tpChecked + ' selected';
+ document.getElementById('lpLOCountBadge').textContent = loChecked + ' selected';
+}
+
+function lpFilterGroup(type, group) {
+ const listId = type === 'tp' ? 'lpTPList' : 'lpLOList';
+ const filterId = type === 'tp' ? 'lpTPGroupFilter' : 'lpLOGroupFilter';
+
+ // Update active chip
+ document.querySelectorAll('#' + filterId + ' .lp-filter-chip').forEach(chip => {
+  chip.classList.toggle('active', chip.dataset.filterGroup === group);
+ });
+
+ // Show/hide items by group
+ const list = document.getElementById(listId);
+ list.querySelectorAll('[data-group]').forEach(el => {
+  el.style.display = (group === '__all__' || el.dataset.group === group) ? '' : 'none';
+ });
+}
+
+async function lpGeneratePlanAI() {
+ if (!SarvamAI.isConfigured()) {
+  showToast('Please configure your Sarvam AI API key in Settings first', 'warning');
+  return;
+ }
+
+ const subject = document.getElementById('lpSubjectSelect').value;
+ const title = (document.getElementById('lpTitleInput').value || '').trim();
+ const classGrade = (document.getElementById('lpClassInput').value || '').trim();
+ const date = document.getElementById('lpDateInput').value;
+ const duration = document.getElementById('lpDurationSelect').value;
+ const objective = (document.getElementById('lpObjectiveInput').value || '').trim();
+ const materials = (document.getElementById('lpMaterialsInput').value || '').trim();
+ const priorKnowledge = (document.getElementById('lpPriorInput').value || '').trim();
+
+ if (!subject) { showToast('Please select a subject first.', 'warning'); return; }
+
+ // Collect selected TPs
+ const selectedTPIds = [...document.querySelectorAll('#lpTPList input[type=checkbox]:checked')].map(cb => cb.value);
+ const allTPs = DB.get('teachingPractices') || [];
+ const selectedTPs = allTPs.filter(tp => selectedTPIds.includes(String(tp.id)));
+
+ // Collect selected LOs
+ const selectedLOIds = [...document.querySelectorAll('#lpLOList input[type=checkbox]:checked')].map(cb => cb.value);
+ const allLOs = DB.get('learningOutcomes') || [];
+ const selectedLOs = allLOs.filter(lo => selectedLOIds.includes(String(lo.id)));
+
+ const displayDate = date
+  ? new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  : 'Not specified';
+
+ // Show loading
+ const btn = document.getElementById('lpAIBtn');
+ const origLabel = btn.innerHTML;
+ btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+ btn.disabled = true;
+ const wrap = document.getElementById('lpOutputWrap');
+ const output = document.getElementById('lpOutput');
+ wrap.style.display = 'block';
+ output.innerHTML = `<div class="lp-ai-loading">
+  <div class="lp-ai-loading-icon"><i class="fas fa-robot"></i><div class="lp-ai-pulse"></div></div>
+  <p>Sarvam AI is generating your lesson plan&hellip;</p>
+  <small>This usually takes 5–15 seconds</small>
+ </div>`;
+ wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+ // Build prompt
+ const tpList = selectedTPs.length
+  ? selectedTPs.map(tp => `- TP${tp.serialNo || ''} (${tp.group || 'General'}): ${tp.practice || ''}`).join('\n')
+  : 'No specific TPs selected — use general good teaching practices';
+
+ const loList = selectedLOs.length
+  ? selectedLOs.map(lo => `- LO${lo.serialNo || ''} (${lo.group || 'General'}): ${lo.outcome || ''}`).join('\n')
+  : 'No specific LOs selected — define appropriate learning outcomes for the lesson';
+
+ const matList = materials || 'As appropriate for the lesson';
+
+ const totalMin = parseInt(duration) || 45;
+ const tWarmup = Math.round(totalMin * 0.10);
+ const tDirect = Math.round(totalMin * 0.20);
+ const tGuided = Math.round(totalMin * 0.25);
+ const tIndep  = Math.round(totalMin * 0.20);
+ const tDiff   = Math.round(totalMin * 0.10);
+ const tHW     = Math.round(totalMin * 0.05);
+ const tExit   = totalMin - tWarmup - tDirect - tGuided - tIndep - tDiff - tHW;
+
+ const systemPrompt = `You are an expert instructional designer and teacher trainer for Indian schools, deeply familiar with the NCF 2023 (National Curriculum Framework) and NCERT pedagogy. You generate detailed, professional, classroom-ready lesson plans. Always follow the EXACT output template provided by the user — do not add, remove, or rename any section. Use markdown formatting.`;
+
+ const userPrompt = `Generate a complete, detailed lesson plan using the EXACT template below. Fill in every placeholder with specific, practical details based on the inputs.
+
+**INPUTS:**
+- Subject: ${subject}
+- Lesson Title: ${title || subject + ' Lesson'}
+- Class / Grade: ${classGrade || 'Not specified'}
+- Date: ${displayDate}
+- Duration: ${duration}
+- Overall Objective: ${objective || 'Students will understand the core concepts of ' + (title || subject)}
+- Prior Knowledge: ${priorKnowledge || 'General foundational knowledge appropriate for the grade'}
+- Materials / Resources: ${matList}
+
+Teaching Practices (from school's TP framework):
+${tpList}
+
+Learning Outcomes (from school's LO framework):
+${loList}
+
+---
+
+**OUTPUT — Follow this EXACT template (fill in every [placeholder]):**
+
+### Lesson: ${title || subject + ' Lesson'}
+
+**Summary**
+[Write a 2-3 sentence brief summary of what the lesson covers, pedagogical approach, and expected student takeaways.]
+
+**Lesson Details**
+* **Duration:** ${duration}
+* **Learning Outcomes:** [List all targeted learning outcomes as a comma-separated list, referencing the LOs provided above]
+* **Desired Teaching Practices:** [List all teaching practices to be applied, referencing the TPs provided above]
+* **Materials Required:** [List all materials needed for this lesson]
+* **Key Concepts:** [List 3-5 key concepts students will learn]
+
+**Pedagogical Plan**
+* **Warm-up/Introduction (${tWarmup} min):** [Describe a specific warm-up activity that activates prior knowledge and sparks curiosity. Include exact questions to ask.]
+* **Direct Instruction (${tDirect} min):** [Describe the teacher-led explanation of new concepts. Be specific — include examples, analogies, visuals to use. Reference which TPs apply here.]
+* **Guided Practice (${tGuided} min):** [Describe a structured practice activity where teacher supports students step-by-step. Include sample problems or tasks. Reference which TPs apply here.]
+* **Independent Practice (${tIndep} min):** [Describe tasks students complete on their own to demonstrate understanding. Include specific exercises or worksheet details.]
+* **Differentiation Plan (${tDiff} min):** [Describe how to support struggling learners AND extend advanced students. Include specific strategies for both groups.]
+* **Homework (${tHW} min):** [Describe a meaningful homework assignment that reinforces the lesson. Be specific about what students should do at home.]
+* **Exit Ticket (${tExit} min):** [Describe a quick formative assessment to check understanding before students leave. Include the exact 1-2 questions or tasks.]
+
+**Teaching Materials/Resources**
+[List specific textbook pages, worksheet links, online resources, manipulatives, or any other resources the teacher should prepare. Be practical and specific to ${subject}.]
+
+---
+IMPORTANT RULES:
+- Follow the EXACT heading and bullet structure above — do not add extra sections or rename them.
+- Make all content specific to ${subject} and ${classGrade || 'the appropriate grade level'}.
+- Reference the actual TPs and LOs provided by their codes (e.g. TP1, LO3) in the relevant sections.
+- Be practical and classroom-ready for Indian school teachers.
+- Use clear, direct language. Avoid generic filler.`;
+
+ try {
+  const res = await SarvamAI.chat([
+   { role: 'system', content: systemPrompt },
+   { role: 'user', content: userPrompt }
+  ], { temperature: 0.6, max_tokens: 3000 });
+
+  let reply = res.choices?.[0]?.message?.content || 'No response received from Sarvam AI.';
+
+  // Strip AI reasoning/thinking blocks — not needed in lesson plan output
+  reply = reply.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
+  if (!reply) reply = 'No lesson plan content received. Please try again.';
+
+  // Build header
+  const headerHtml = `<div class="lp-plan-header">
+   <h2 class="lp-plan-title"><i class="fas fa-robot" style="margin-right:8px;font-size:16px;opacity:.7"></i>${title || subject + ' — Lesson Plan'}</h2>
+   <div class="lp-plan-meta-grid">
+    <div class="lp-plan-meta-item"><i class="fas fa-book"></i><span>Subject</span><strong>${subject}</strong></div>
+    ${classGrade ? `<div class="lp-plan-meta-item"><i class="fas fa-chalkboard"></i><span>Class</span><strong>${classGrade}</strong></div>` : ''}
+    <div class="lp-plan-meta-item"><i class="fas fa-calendar-alt"></i><span>Date</span><strong>${displayDate}</strong></div>
+    <div class="lp-plan-meta-item"><i class="fas fa-clock"></i><span>Duration</span><strong>${duration}</strong></div>
+    ${selectedTPs.length ? `<div class="lp-plan-meta-item"><i class="fas fa-chalkboard-teacher"></i><span>TPs</span><strong>${selectedTPs.length} applied</strong></div>` : ''}
+    ${selectedLOs.length ? `<div class="lp-plan-meta-item"><i class="fas fa-graduation-cap"></i><span>LOs</span><strong>${selectedLOs.length} targeted</strong></div>` : ''}
+    <div class="lp-plan-meta-item"><i class="fas fa-robot"></i><span>Generated by</span><strong>Sarvam AI</strong></div>
+   </div>
+  </div>`;
+
+  output.innerHTML = headerHtml + `<div class="lp-ai-response">${formatAIResponse(reply)}</div>
+   <div class="lp-plan-footer"><i class="fas fa-robot"></i> Generated by Sarvam AI on ${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>`;
+
+ } catch (err) {
+  output.innerHTML = `<div class="lp-ai-error"><i class="fas fa-exclamation-triangle"></i> AI generation failed: ${err.message || 'Unknown error'}.<br><small>Check your Sarvam AI API key in Settings and try again.</small></div>`;
+ } finally {
+  btn.innerHTML = origLabel;
+  btn.disabled = false;
+ }
+}
+
+function lpCopyPlan() {
+ const output = document.getElementById('lpOutput');
+ if (!output) return;
+ navigator.clipboard.writeText(output.innerText).then(() => {
+  const btn = document.querySelector('.lp-tool-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+  setTimeout(() => { btn.innerHTML = orig; }, 2000);
+ });
+}
+
+function lpOpenEditor() {
+ const output = document.getElementById('lpOutput');
+ if (!output || !output.innerHTML.trim()) { showToast('Generate a lesson plan first', 'warning'); return; }
+ const subject = document.getElementById('lpSubjectSelect').value || 'Lesson';
+ const title = (document.getElementById('lpTitleInput').value || '').trim();
+ const printCss = lpGetPrintCSS();
+ // Remove reasoning/thinking blocks before opening editor
+ let cleanHtml = output.innerHTML.replace(/<details[^>]*class="ai-thinking-block"[\s\S]*?<\/details>/gi, '');
+ const bodyHtml = `<!DOCTYPE html><html><head><style>${printCss}</style></head><body>${cleanHtml}</body></html>`;
+ openPdfEditor(bodyHtml, 'Edit Lesson Plan — ' + (title || subject));
+}
+
+function lpExportPDF() {
+ const output = document.getElementById('lpOutput');
+ if (!output || !output.innerHTML.trim()) { showToast('Generate a lesson plan first', 'warning'); return; }
+ const subject = document.getElementById('lpSubjectSelect').value || 'Lesson';
+ const title = (document.getElementById('lpTitleInput').value || '').trim();
+ const fileName = (title || subject + ' Lesson Plan').replace(/[^a-zA-Z0-9 ]/g, '').trim();
+
+ const clone = output.cloneNode(true);
+ // Remove reasoning blocks from PDF
+ clone.querySelectorAll('.ai-thinking-block').forEach(el => el.remove());
+ const wrapper = document.createElement('div');
+ wrapper.appendChild(clone);
+ Object.assign(wrapper.style, { fontFamily: "'Segoe UI',Arial,sans-serif", color: '#1e293b', fontSize: '13px', lineHeight: '1.6', padding: '0' });
+
+ const opt = {
+  margin: [12, 14, 12, 14],
+  filename: fileName + '.pdf',
+  image: { type: 'jpeg', quality: 0.98 },
+  html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+ };
+
+ showToast('Generating PDF…', 'info');
+ html2pdf().set(opt).from(wrapper).save().then(() => {
+  showToast('PDF downloaded!', 'success');
+ }).catch(err => {
+  showToast('PDF export failed: ' + err.message, 'error');
+ });
+}
+
+function lpGetPrintCSS() {
+ return `*{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;padding:28px 36px;color:#1e293b;max-width:950px;margin:0 auto;font-size:13px;line-height:1.6}
+  h2.lp-plan-title{color:#7c3aed;font-size:20px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  h2{color:#7c3aed;font-size:18px;margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #ede9fe}
+  h3{color:#374151;font-size:15px;margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid #e2e8f0}
+  h4{color:#6b7280;font-size:12px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+  p{margin:0 0 8px;line-height:1.6}
+  ul,ol{padding-left:20px;margin:4px 0 10px}
+  li{margin-bottom:4px;line-height:1.55}
+  strong{color:#1e293b}
+  hr{border:none;border-top:1px solid #e2e8f0;margin:14px 0}
+  blockquote{border-left:3px solid #7c3aed;padding:6px 12px;margin:8px 0;background:#f8fafc;border-radius:0 6px 6px 0;font-style:italic;color:#475569}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+  th,td{padding:6px 10px;border:1px solid #e2e8f0;text-align:left}
+  th{background:#f1f5f9;font-weight:700;color:#475569}
+  .lp-plan-header{margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #e2e8f0}
+  .lp-plan-meta-grid{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0}
+  .lp-plan-meta-item{display:flex;flex-direction:column;min-width:110px;gap:1px}
+  .lp-plan-meta-item span{font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .lp-plan-meta-item strong{font-size:13px;color:#111827}
+  .lp-plan-meta-item i{display:none}
+  .lp-ai-response{font-size:14px;line-height:1.65}
+  .lp-ai-response h2{color:#7c3aed;font-size:17px;margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #ede9fe}
+  .lp-ai-response h3{color:#374151;font-size:14px;margin:14px 0 6px}
+  .lp-ai-response h4{color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .lp-plan-footer{font-size:11px;color:#6b7280;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;display:flex;align-items:center;gap:6px}
+  .lp-plan-footer i{display:none}
+  @media print{body{padding:14px}.lp-plan-header{page-break-after:avoid}}`;
+}
+
+function lpPrintPlan() {
+ let content = document.getElementById('lpOutput').innerHTML;
+ // Strip reasoning blocks from print
+ content = content.replace(/<details[^>]*class="ai-thinking-block"[\s\S]*?<\/details>/gi, '');
+ const css = lpGetPrintCSS();
+ const win = window.open('', '_blank');
+ win.document.write(`<!DOCTYPE html><html><head><title>Lesson Plan</title><style>${css}</style></head><body>${content}</body></html>`);
+ win.document.close();
+ win.print();
+}
+
+function lpClearPlan() {
+ ['lpTitleInput','lpClassInput','lpObjectiveInput','lpMaterialsInput','lpPriorInput'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.value = '';
+ });
+ document.getElementById('lpSubjectSelect').value = '';
+ document.getElementById('lpTPList').innerHTML = '<div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Teaching Practices</div>';
+ document.getElementById('lpLOList').innerHTML = '<div class="lp-placeholder"><i class="fas fa-arrow-up"></i> Choose a subject above to load Learning Outcomes</div>';
+ var _tf = document.getElementById('lpTPGroupFilter'); if (_tf) _tf.innerHTML = '';
+ var _lf = document.getElementById('lpLOGroupFilter'); if (_lf) _lf.innerHTML = '';
+ document.getElementById('lpTPCountBadge').textContent = '0 selected';
+ document.getElementById('lpLOCountBadge').textContent = '0 selected';
+ document.getElementById('lpOutputWrap').style.display = 'none';
+ document.getElementById('lpOutput').innerHTML = '';
+ // Reset calendar display
+ const di = document.getElementById('lpDateInput'); if (di) di.value = '';
+ lpCalUpdateDisplay();
 }
 
 // --- AI Chat Functions ---
@@ -21821,7 +22363,31 @@ async function generateAIInsight(type) {
  'report-draft': ' Report Draft',
  'training-plan': ' Training Plan Suggestion',
  'gap-analysis': ' Data Gap Analysis',
- 'meeting-prep': ' Meeting Prep'
+ 'meeting-prep': ' Meeting Prep',
+ 'school-scorecard': ' School Scorecard',
+ 'tp-lo-alignment': ' TP-LO Alignment',
+ 'strength-weakness': ' Strengths & Gaps',
+ 'parent-community': ' Community Engagement',
+ 'monthly-comparison': ' Monthly Comparison',
+ 'best-practices': ' Best Practices',
+ 'risk-alert': ' Risk Alerts',
+ 'time-allocation': ' Time Allocation',
+ 'observation-deep-dive': ' Observation Deep Dive',
+ 'action-plan': ' Action Plan',
+ 'email-draft': ' Email Draft',
+ 'marai-progress': ' MARAI Progress',
+ 'training-attendance': ' Training Attendance',
+ 'goal-achievement': ' Goal Achievement',
+ 'worklog-summary': ' Work Log Summary',
+ 'visit-plan-execution': ' Plan vs Execution',
+ 'capacity-building': ' Growth Journey',
+ 'teacher-action-progress': ' Teacher Action Plans',
+ 'reflection-synthesis': ' Reflection Synthesis',
+ 'teacher-demographics': ' Teacher Overview',
+ 'meeting-effectiveness': ' Meeting Effectiveness',
+ 'schoolwork-impact': ' School Work Impact',
+ 'student-learning': ' Student Learning',
+ 'data-completeness': ' Data Completeness'
  };
 
  outputPanel.style.display = 'block';
@@ -21890,6 +22456,247 @@ function buildInsightPrompt(type) {
  case 'meeting-prep': {
  const profile = DB.get('userProfile') || {};
  return `Prepare a meeting brief for an upcoming cluster meeting for APF Resource Person ${profile.name || 'N/A'}.\n\nData:\n${context}\n\nBased on recent visits, observations, and pending follow-ups, provide: 1) Key discussion points for the meeting, 2) Specific teachers or schools that should be highlighted (anonymize if necessary but mention trends), 3) Outstanding follow-up items to review with the team, 4) Suggested goals to set for the next week.`;
+ }
+ case 'school-scorecard': {
+ const schoolStats = {};
+ visits.forEach(v => {
+ const s = v.school || 'Unknown';
+ if (!schoolStats[s]) schoolStats[s] = { visits: 0, lastVisit: '', obs: 0, trainings: 0 };
+ schoolStats[s].visits++;
+ if (v.date > (schoolStats[s].lastVisit || '')) schoolStats[s].lastVisit = v.date;
+ });
+ observations.forEach(o => { const s = o.school || 'Unknown'; if (schoolStats[s]) schoolStats[s].obs++; });
+ trainings.forEach(t => { const s = t.school || 'Unknown'; if (schoolStats[s]) schoolStats[s].trainings++; });
+ const top15 = Object.entries(schoolStats).sort((a,b) => b[1].visits - a[1].visits).slice(0, 15);
+ return `Generate a quick health scorecard for each school visited by this APF Resource Person.\n\nData:\n${context}\n\nSchool-wise stats:\n${top15.map(([s, d]) => `- ${s}: ${d.visits} visits, last: ${d.lastVisit || 'N/A'}, ${d.obs} observations, ${d.trainings} trainings`).join('\n')}\n\nFor each school, rate (High/Medium/Low) on: Visit Regularity, Observation Depth, Training Coverage, Follow-up Status. Then give a 1-line recommendation per school. Format as a clear table or structured list.`;
+ }
+ case 'tp-lo-alignment': {
+ const tps = DB.get('teachingPractices') || [];
+ const los = DB.get('learningOutcomes') || [];
+ const tpGroups = {}; tps.forEach(tp => { const g = tp.group || 'General'; if (!tpGroups[g]) tpGroups[g] = 0; tpGroups[g]++; });
+ const loGroups = {}; los.forEach(lo => { const g = lo.group || 'General'; if (!loGroups[g]) loGroups[g] = 0; loGroups[g]++; });
+ return `Analyze the alignment between Teaching Practices (TPs) and Learning Outcomes (LOs) in this APF's framework.\n\nData:\n${context}\n\nTP groups:\n${Object.entries(tpGroups).map(([g,c]) => `- ${g}: ${c} practices`).join('\n')}\n\nLO groups:\n${Object.entries(loGroups).map(([g,c]) => `- ${g}: ${c} outcomes`).join('\n')}\n\nTotal TPs: ${tps.length}, Total LOs: ${los.length}\n\nAnalyze: 1) Which TP groups have corresponding LO groups? 2) Which LO groups lack matching TPs (and vice versa)? 3) How well does classroom observation data reflect TP coverage? 4) Recommendations to improve alignment. 5) Suggest which TPs are most critical for each LO group.`;
+ }
+ case 'strength-weakness': {
+ const profile = DB.get('userProfile') || {};
+ return `Perform a strengths and gaps analysis for the cluster/block managed by APF Resource Person ${profile.name || 'N/A'} (Block: ${profile.block || 'N/A'}, Cluster: ${profile.cluster || 'N/A'}).\n\nData:\n${context}\n\nAnalyze: 1) Top 3-5 cluster-level STRENGTHS (what's going well — visit regularity, teacher engagement, training completion, etc.), 2) Top 3-5 GAPS or areas needing improvement (low visit schools, poor follow-up closure, training gaps), 3) Quick wins — things that can be improved immediately, 4) Long-term development areas. Format with clear headers and bullet points.`;
+ }
+ case 'parent-community': {
+ const communityVisits = visits.filter(v => (v.purpose || '').toLowerCase().includes('community') || (v.purpose || '').toLowerCase().includes('parent') || (v.purpose || '').toLowerCase().includes('smc') || (v.purpose || '').toLowerCase().includes('sdmc'));
+ return `Analyze parent and community engagement trends for this APF Resource Person.\n\nData:\n${context}\n\nCommunity/parent-related visits: ${communityVisits.length}\n${communityVisits.slice(0, 10).map(v => `- ${v.date}: ${v.school} — ${v.purpose || 'N/A'}`).join('\n') || 'No explicit community visits found'}\n\nBased on all available data: 1) How often are parents/community members being engaged? 2) Which schools show strong community participation? 3) Opportunities to increase parent involvement, 4) Suggest 3-4 actionable community engagement activities for next month. Even if explicit community data is limited, infer from visit patterns and provide useful suggestions.`;
+ }
+ case 'monthly-comparison': {
+ const now = new Date();
+ const thisMonth = now.toISOString().slice(0, 7);
+ const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+ const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString().slice(0, 7);
+ const countByMonth = (arr, field) => { const m = {}; arr.forEach(x => { const mo = (x[field] || '').slice(0, 7); if (mo) m[mo] = (m[mo] || 0) + 1; }); return m; };
+ const visitsByMonth = countByMonth(visits, 'date');
+ const obsByMonth = countByMonth(observations, 'date');
+ const trainByMonth = countByMonth(trainings, 'date');
+ return `Compare monthly progress for this APF Resource Person across the last 3 months.\n\nData:\n${context}\n\nVisits by month: ${[twoMonthsAgo, lastMonth, thisMonth].map(m => `${m}: ${visitsByMonth[m] || 0}`).join(', ')}\nObservations by month: ${[twoMonthsAgo, lastMonth, thisMonth].map(m => `${m}: ${obsByMonth[m] || 0}`).join(', ')}\nTrainings by month: ${[twoMonthsAgo, lastMonth, thisMonth].map(m => `${m}: ${trainByMonth[m] || 0}`).join(', ')}\n\nProvide: 1) Month-over-month trend analysis (improving/declining/stable), 2) What went well this month vs last, 3) Areas where performance dropped, 4) Specific targets for next month based on the trend. Use percentage changes where possible.`;
+ }
+ case 'best-practices': {
+ const obsTPs = observations.map(o => (o.tp || o.teachingPractice || '')).filter(Boolean);
+ const tpFreq = {}; obsTPs.forEach(tp => { tpFreq[tp] = (tpFreq[tp] || 0) + 1; });
+ const topTPs = Object.entries(tpFreq).sort((a,b) => b[1] - a[1]).slice(0, 10);
+ return `Identify the best and most effective teaching practices observed across schools.\n\nData:\n${context}\n\nMost frequently observed TPs:\n${topTPs.map(([tp, c]) => `- ${tp}: observed ${c} times`).join('\n') || 'No TP data available'}\n\nTotal observations: ${observations.length}\n\nProvide: 1) Top 5 most effective teaching practices and WHY they work, 2) Schools/teachers where these practices are strongest, 3) How to scale these practices to other schools, 4) Specific mentoring tips for teachers struggling with these TPs, 5) Examples of how these can be adapted for different subjects/grades.`;
+ }
+ case 'risk-alert': {
+ const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+ const schoolLastVisit = {};
+ visits.forEach(v => { const s = v.school || 'Unknown'; if (!schoolLastVisit[s] || v.date > schoolLastVisit[s]) schoolLastVisit[s] = v.date; });
+ const notVisited = Object.entries(schoolLastVisit).filter(([s, d]) => d < thirtyDaysAgo);
+ const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
+ const overdueFU = pendingFU.filter(f => f.dueDate && f.dueDate < new Date().toISOString().split('T')[0]);
+ return `Generate risk alerts for this APF Resource Person's cluster.\n\nData:\n${context}\n\nSchools NOT visited in the last 30 days (${notVisited.length}):\n${notVisited.slice(0, 15).map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All schools visited recently'}\n\nOverdue follow-ups (${overdueFU.length}):\n${overdueFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate})`).join('\n') || 'None'}\n\nTotal pending follow-ups: ${pendingFU.length}\n\nProvide: 1) 🔴 HIGH RISK items requiring immediate action, 2) 🟡 MEDIUM RISK items to address this week, 3) 🟢 LOW RISK items to monitor, 4) For each risk: what could go wrong if not addressed, 5) Recommended action with timeline.`;
+ }
+ case 'time-allocation': {
+ const purposeCount = {};
+ visits.forEach(v => { const p = v.purpose || 'General Visit'; purposeCount[p] = (purposeCount[p] || 0) + 1; });
+ const schoolVisitCount = {};
+ visits.forEach(v => { const s = v.school || 'Unknown'; schoolVisitCount[s] = (schoolVisitCount[s] || 0) + 1; });
+ const topSchools = Object.entries(schoolVisitCount).sort((a,b) => b[1] - a[1]).slice(0, 10);
+ const bottomSchools = Object.entries(schoolVisitCount).sort((a,b) => a[1] - b[1]).slice(0, 5);
+ return `Analyze how this APF Resource Person's time is distributed across schools and activities.\n\nData:\n${context}\n\nVisit purposes breakdown:\n${Object.entries(purposeCount).sort((a,b) => b[1] - a[1]).map(([p, c]) => `- ${p}: ${c} visits (${(c / visits.length * 100).toFixed(1)}%)`).join('\n')}\n\nMost visited schools:\n${topSchools.map(([s, c]) => `- ${s}: ${c} visits`).join('\n')}\n\nLeast visited schools:\n${bottomSchools.map(([s, c]) => `- ${s}: ${c} visits`).join('\n')}\n\nTotal visits: ${visits.length}, Total schools: ${Object.keys(schoolVisitCount).length}\n\nProvide: 1) Where is most time being spent and is it justified? 2) Under-served schools that need more attention, 3) Activity balance — enough observations vs trainings vs general visits? 4) Optimized weekly schedule suggestion, 5) Time-saving tips.`;
+ }
+ case 'observation-deep-dive': {
+ const engLevels = {};
+ observations.forEach(o => { const e = o.engagement || o.engagementLevel || 'Unknown'; engLevels[e] = (engLevels[e] || 0) + 1; });
+ const subjects = {};
+ observations.forEach(o => { const s = o.subject || 'Unknown'; subjects[s] = (subjects[s] || 0) + 1; });
+ const grades = {};
+ observations.forEach(o => { const g = o.grade || o.class || 'Unknown'; grades[g] = (grades[g] || 0) + 1; });
+ return `Perform a deep-dive analysis of classroom observations.\n\nData:\n${context}\n\nTotal observations: ${observations.length}\n\nEngagement levels:\n${Object.entries(engLevels).map(([e, c]) => `- ${e}: ${c}`).join('\n')}\n\nSubject-wise:\n${Object.entries(subjects).sort((a,b) => b[1] - a[1]).map(([s, c]) => `- ${s}: ${c} observations`).join('\n')}\n\nGrade-wise:\n${Object.entries(grades).sort((a,b) => b[1] - a[1]).map(([g, c]) => `- ${g}: ${c} observations`).join('\n')}\n\nProvide: 1) Overall observation quality summary, 2) Engagement level trends — what's working, what's not, 3) Subject-wise patterns (which subjects need more support?), 4) Grade-wise analysis (which grades struggle most?), 5) Common teaching challenges observed, 6) Top 5 specific feedback points to share with teachers, 7) How to improve your own observation practice.`;
+ }
+ case 'action-plan': {
+ const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
+ const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+ const lastWeekVisits = visits.filter(v => v.date >= weekAgo);
+ const schoolLastVisit = {};
+ visits.forEach(v => { const s = v.school || 'Unknown'; if (!schoolLastVisit[s] || v.date > schoolLastVisit[s]) schoolLastVisit[s] = v.date; });
+ const staleSchools = Object.entries(schoolLastVisit).filter(([s, d]) => d < weekAgo).sort((a,b) => a[1].localeCompare(b[1])).slice(0, 5);
+ return `Create a prioritized action plan for the upcoming week for this APF Resource Person.\n\nData:\n${context}\n\nLast week's visits (${lastWeekVisits.length}):\n${lastWeekVisits.map(v => `- ${v.date}: ${v.school} — ${v.purpose || 'General'}`).join('\n') || 'None'}\n\nPending follow-ups (${pendingFU.length}):\n${pendingFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate || 'No date'})`).join('\n') || 'None'}\n\nSchools not visited recently:\n${staleSchools.map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All recent'}\n\nGenerate a day-by-day action plan (Monday-Saturday) including: 1) Which schools to visit each day and why, 2) Which follow-ups to close each day, 3) Observations to plan, 4) Training sessions to conduct, 5) Admin/documentation tasks, 6) Contingency buffer time. Make it realistic and actionable.`;
+ }
+ case 'email-draft': {
+ const profile = DB.get('userProfile') || {};
+ const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+ const recentVisits = visits.filter(v => v.date >= weekAgo);
+ const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
+ return `Draft a professional email update that this APF Resource Person can send to their coordinator or district team.\n\nProfile: ${profile.name || 'N/A'}, Block: ${profile.block || 'N/A'}, Cluster: ${profile.cluster || 'N/A'}\n\nData:\n${context}\n\nRecent visits (last 7 days): ${recentVisits.length}\n${recentVisits.slice(0, 8).map(v => `- ${v.date}: ${v.school} — ${v.purpose || 'General'}`).join('\n') || 'None'}\n\nPending follow-ups: ${pendingFU.length}\nTotal observations: ${observations.length}\nTotal trainings: ${trainings.length}\n\nDraft a concise, professional email with: 1) Subject line, 2) Greeting, 3) Summary of this week's activities, 4) Key highlights/achievements, 5) Challenges encountered, 6) Support needed (if any), 7) Plan for next week, 8) Professional closing. Keep it under 300 words, formal but warm tone.`;
+ }
+ case 'marai-progress': {
+ const marai = DB.get('maraiTracking') || [];
+ const stageCount = {};
+ marai.forEach(m => { const s = m.stage || 'Unknown'; stageCount[s] = (stageCount[s] || 0) + 1; });
+ const teacherStages = {};
+ marai.forEach(m => {
+ const t = m.teacher || 'Unknown';
+ if (!teacherStages[t]) teacherStages[t] = [];
+ teacherStages[t].push({ stage: m.stage, date: m.date, school: m.school });
+ });
+ const stuckTeachers = Object.entries(teacherStages).filter(([t, entries]) => entries.length === 1 && entries[0].date && entries[0].date < new Date(Date.now() - 60*86400000).toISOString().split('T')[0]);
+ return `Analyze the MARAI (Motivation → Awareness → Readiness → Action → Internalization) stage progression of teachers.\n\nData:\n${context}\n\nTotal MARAI records: ${marai.length}\nTeachers tracked: ${Object.keys(teacherStages).length}\n\nStage distribution:\n${Object.entries(stageCount).map(([s,c]) => `- ${s}: ${c} records`).join('\n') || 'No data'}\n\nTeachers potentially stalled (single record, 60+ days old): ${stuckTeachers.length}\n${stuckTeachers.slice(0, 10).map(([t, e]) => `- ${t} (${e[0].school || 'N/A'}): stuck at '${e[0].stage}' since ${e[0].date}`).join('\n') || 'None detected'}\n\nSample teacher journeys:\n${Object.entries(teacherStages).slice(0, 8).map(([t, entries]) => `- ${t}: ${entries.map(e => e.stage).join(' → ')}`).join('\n')}\n\nProvide: 1) Overall MARAI health — what % teachers are at each stage? 2) Stage transition velocity — how fast are teachers progressing? 3) Stalled teachers who need immediate intervention, 4) Which stages have the highest drop-off? 5) Recommendations for moving teachers to the next stage, 6) Success stories (teachers who reached Action/Internalization).`;
+ }
+ case 'training-attendance': {
+ const allAttendees = [];
+ trainings.forEach(t => {
+ (t.attendanceList || []).forEach(a => {
+ allAttendees.push({ name: a.name || 'Unknown', school: a.school || '', training: t.title || t.topic || 'Untitled', date: t.date });
+ });
+ });
+ const attendeeCounts = {};
+ allAttendees.forEach(a => { attendeeCounts[a.name] = (attendeeCounts[a.name] || 0) + 1; });
+ const topAttendees = Object.entries(attendeeCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+ const teacherRecs = DB.get('teacherRecords') || [];
+ const attendedNames = new Set(allAttendees.map(a => a.name));
+ const neverAttended = teacherRecs.filter(t => !attendedNames.has(t.name)).slice(0, 10);
+ return `Analyze training attendance patterns for this APF Resource Person's cluster.\n\nData:\n${context}\n\nTotal trainings conducted: ${trainings.length}\nTotal attendance records: ${allAttendees.length}\nUnique attendees: ${Object.keys(attendeeCounts).length}\n\nMost frequent attendees:\n${topAttendees.map(([n,c]) => `- ${n}: attended ${c} trainings`).join('\n') || 'No data'}\n\nTeachers in records who NEVER attended training:\n${neverAttended.map(t => `- ${t.name} (${t.school || 'N/A'})`).join('\n') || 'None or no teacher records'}\n\nProvide: 1) Training coverage rate — what % of known teachers have been trained? 2) Who are the most engaged teachers (repeat attendees)? 3) Teachers/schools being left behind, 4) Subject/topic gaps in training, 5) Optimal training schedule recommendations, 6) Teacher peer-mentoring suggestions based on attendance patterns.`;
+ }
+ case 'goal-achievement': {
+ const goals = DB.get('goalTargets') || [];
+ const now = new Date();
+ const currentMonth = now.toISOString().slice(0, 7);
+ const monthlyActuals = {};
+ visits.forEach(v => { const m = (v.date || '').slice(0, 7); if (m) monthlyActuals[m] = (monthlyActuals[m] || { v: 0, t: 0, o: 0 }); monthlyActuals[m].v++; });
+ trainings.forEach(t => { const m = (t.date || '').slice(0, 7); if (m) { if (!monthlyActuals[m]) monthlyActuals[m] = { v: 0, t: 0, o: 0 }; monthlyActuals[m].t++; } });
+ observations.forEach(o => { const m = (o.date || '').slice(0, 7); if (m) { if (!monthlyActuals[m]) monthlyActuals[m] = { v: 0, t: 0, o: 0 }; monthlyActuals[m].o++; } });
+ const goalSummary = goals.slice(-6).map(g => {
+ const a = monthlyActuals[g.monthKey] || { v: 0, t: 0, o: 0 };
+ const tgt = g.targets || {};
+ return `${g.monthKey}: Visits ${a.v}/${tgt.visits || '?'}, Trainings ${a.t}/${tgt.trainings || '?'}, Observations ${a.o}/${tgt.observations || '?'}`;
+ });
+ return `Analyze goal achievement for this APF Resource Person — compare targets vs actual performance.\n\nData:\n${context}\n\nGoal data (last 6 months, format: actual/target):\n${goalSummary.join('\n') || 'No goal data available'}\n\nCurrent month (${currentMonth}) progress:\n${monthlyActuals[currentMonth] ? `Visits: ${monthlyActuals[currentMonth].v}, Trainings: ${monthlyActuals[currentMonth].t}, Observations: ${monthlyActuals[currentMonth].o}` : 'No data yet'}\n\nProvide: 1) Overall achievement rate (% goals met), 2) Which goal types are consistently missed? 3) Month-over-month improvement trajectory, 4) Realistic target recommendations for next month, 5) Motivational insights — celebrate wins, 6) Strategies to close the gap on missed targets.`;
+ }
+ case 'worklog-summary': {
+ const worklog = DB.get('worklog') || [];
+ const typeCount = {};
+ worklog.forEach(w => { const t = w.type || 'Other'; typeCount[t] = (typeCount[t] || 0) + 1; });
+ const locationCount = {};
+ worklog.forEach(w => { const l = w.location || 'Unknown'; locationCount[l] = (locationCount[l] || 0) + 1; });
+ const last30 = worklog.filter(w => w.date >= new Date(Date.now() - 30*86400000).toISOString().split('T')[0]);
+ return `Summarize and analyze the work log of this APF Resource Person.\n\nData:\n${context}\n\nTotal work log entries: ${worklog.length}\nLast 30 days entries: ${last30.length}\n\nWork type distribution:\n${Object.entries(typeCount).sort((a,b) => b[1] - a[1]).map(([t,c]) => `- ${t}: ${c} entries (${(c/worklog.length*100).toFixed(1)}%)`).join('\n') || 'No data'}\n\nLocation distribution:\n${Object.entries(locationCount).sort((a,b) => b[1] - a[1]).slice(0, 8).map(([l,c]) => `- ${l}: ${c} entries`).join('\n') || 'No data'}\n\nRecent entries:\n${last30.slice(-10).map(w => `- ${w.date}: ${w.type || 'N/A'} at ${w.location || 'N/A'} — ${(w.description || '').slice(0, 60)}`).join('\n') || 'None'}\n\nProvide: 1) Work pattern analysis — busiest/slowest days, 2) Activity type balance, 3) Field vs office time ratio, 4) Outcome quality from entries, 5) Productivity trends, 6) Suggestions to optimize your work week.`;
+ }
+ case 'visit-plan-execution': {
+ const vpEntries = DB.get('visitPlanEntries') || [];
+ const statusCount = {};
+ vpEntries.forEach(v => { const s = v.status || 'Planned'; statusCount[s] = (statusCount[s] || 0) + 1; });
+ const total = vpEntries.length;
+ const completed = vpEntries.filter(v => (v.status || '').toLowerCase() === 'completed' || (v.status || '').toLowerCase() === 'done').length;
+ const domainCount = {};
+ vpEntries.forEach(v => { const d = v.domain || 'General'; domainCount[d] = (domainCount[d] || 0) + 1; });
+ return `Analyze visit plan execution — how well does this APF Resource Person follow their planned schedule?\n\nData:\n${context}\n\nTotal planned entries: ${total}\nExecution rate: ${total ? ((completed/total*100).toFixed(1) + '%') : 'N/A'}\n\nStatus distribution:\n${Object.entries(statusCount).map(([s,c]) => `- ${s}: ${c} (${(c/total*100).toFixed(1)}%)`).join('\n') || 'No data'}\n\nDomain distribution:\n${Object.entries(domainCount).sort((a,b) => b[1] - a[1]).map(([d,c]) => `- ${d}: ${c} planned visits`).join('\n') || 'No data'}\n\nRecent planned visits:\n${vpEntries.slice(-10).map(v => `- ${v.date}: ${v.venue || 'N/A'} — ${v.objective || 'N/A'} [${v.status || 'Planned'}]`).join('\n') || 'None'}\n\nProvide: 1) Plan adherence rate and trend, 2) Common reasons for deviation, 3) Which domains/stakeholders get deprioritized? 4) Day-of-week patterns (which days see more cancellations?), 5) Suggestions to improve plan-to-execution conversion, 6) Ideal planning template based on patterns.`;
+ }
+ case 'capacity-building': {
+ const cb = DB.get('selfCapacityBuilding') || [];
+ const growth = DB.get('growthAssessments') || [];
+ const actionPlans = DB.get('growthActionPlans') || [];
+ const typeCount = {};
+ cb.forEach(c => { const t = c.type || 'Other'; typeCount[t] = (typeCount[t] || 0) + 1; });
+ const categoryCount = {};
+ cb.forEach(c => { const cat = c.category || 'General'; categoryCount[cat] = (categoryCount[cat] || 0) + 1; });
+ const totalHours = cb.reduce((sum, c) => sum + (parseFloat(c.hours) || 0), 0);
+ const completedAP = actionPlans.filter(a => a.status === 'completed' || a.status === 'done').length;
+ return `Analyze the professional growth and capacity building journey of this APF Resource Person.\n\nData:\n${context}\n\nCapacity building entries: ${cb.length}\nTotal learning hours: ${totalHours}\nGrowth self-assessments: ${growth.length}\nGrowth action plans: ${actionPlans.length} (completed: ${completedAP})\n\nBy type:\n${Object.entries(typeCount).sort((a,b) => b[1] - a[1]).map(([t,c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nBy category:\n${Object.entries(categoryCount).sort((a,b) => b[1] - a[1]).map(([cat,c]) => `- ${cat}: ${c}`).join('\n') || 'No data'}\n\nRecent activities:\n${cb.slice(-8).map(c => `- ${c.date || 'N/A'}: ${c.title || 'Untitled'} (${c.type || 'N/A'}) — ${c.status || 'N/A'}`).join('\n') || 'None'}\n\nProvide: 1) Overall professional development health score, 2) Learning diversity — are you exploring enough areas? 3) Course/book/workshop completion rate, 4) Skill gaps based on growth assessments, 5) Action plan progress, 6) Personalized next-steps for professional growth.`;
+ }
+ case 'teacher-action-progress': {
+ const tap = DB.get('teacherActionPlans') || [];
+ const playRuns = DB.get('interventionPlaybookRuns') || [];
+ const completed = tap.filter(a => a.status === 'done').length;
+ const pending = tap.filter(a => a.status !== 'done').length;
+ const overdue = tap.filter(a => a.status !== 'done' && a.dueDate && a.dueDate < new Date().toISOString().split('T')[0]).length;
+ const byTeacher = {};
+ tap.forEach(a => { const t = a.teacher || 'Unknown'; if (!byTeacher[t]) byTeacher[t] = { total: 0, done: 0 }; byTeacher[t].total++; if (a.status === 'done') byTeacher[t].done++; });
+ const byPlaybook = {};
+ playRuns.forEach(r => { const p = r.playbookTitle || r.playbookKey || 'Unknown'; byPlaybook[p] = (byPlaybook[p] || 0) + 1; });
+ return `Analyze teacher action plan progress and intervention playbook effectiveness.\n\nData:\n${context}\n\nTeacher action plans: ${tap.length} (completed: ${completed}, pending: ${pending}, overdue: ${overdue})\nPlaybook runs: ${playRuns.length}\n\nCompletion by teacher:\n${Object.entries(byTeacher).slice(0, 10).map(([t, d]) => `- ${t}: ${d.done}/${d.total} done (${(d.done/d.total*100).toFixed(0)}%)`).join('\n') || 'No data'}\n\nPlaybook usage:\n${Object.entries(byPlaybook).sort((a,b) => b[1] - a[1]).map(([p,c]) => `- ${p}: used ${c} times`).join('\n') || 'No data'}\n\nProvide: 1) Overall action plan completion rate, 2) Teachers with best/worst completion, 3) Overdue items needing immediate attention, 4) Which playbooks are most effective? 5) Recommendations to improve follow-through, 6) Suggest new intervention strategies for struggling teachers.`;
+ }
+ case 'reflection-synthesis': {
+ const reflections = DB.get('reflections') || [];
+ const moods = {};
+ reflections.forEach(r => { const m = r.mood || 'Neutral'; moods[m] = (moods[m] || 0) + 1; });
+ return `Synthesize insights from this APF Resource Person's monthly reflections.\n\nData:\n${context}\n\nTotal reflections: ${reflections.length}\n\nMood distribution:\n${Object.entries(moods).map(([m,c]) => `- ${m}: ${c} months`).join('\n') || 'No data'}\n\nRecent reflections:\n${reflections.slice(-5).map(r => `Month: ${r.month || 'N/A'}\n  Mood: ${r.mood || 'N/A'}\n  Went Well: ${(r.wentWell || '').slice(0, 100)}\n  Challenges: ${(r.challenges || '').slice(0, 100)}\n  Learnings: ${(r.learnings || '').slice(0, 100)}`).join('\n\n') || 'No reflections found'}\n\nProvide: 1) Emotional trajectory — mood trend over months, 2) Recurring themes in 'what went well', 3) Persistent challenges that keep appearing, 4) Growth patterns visible in learnings, 5) Unaddressed concerns needing attention, 6) Positive affirmations based on achievements, 7) Suggestions for deeper self-reflection next month.`;
+ }
+ case 'teacher-demographics': {
+ const teachers = DB.get('teacherRecords') || [];
+ const bySchool = {};
+ teachers.forEach(t => { const s = t.school || 'Unknown'; bySchool[s] = (bySchool[s] || 0) + 1; });
+ const byDesignation = {};
+ teachers.forEach(t => { const d = t.designation || 'Unknown'; byDesignation[d] = (byDesignation[d] || 0) + 1; });
+ const bySubject = {};
+ teachers.forEach(t => { const s = t.subject || 'Unknown'; bySubject[s] = (bySubject[s] || 0) + 1; });
+ const observed = new Set(observations.map(o => o.teacher).filter(Boolean));
+ const observedCount = teachers.filter(t => observed.has(t.name)).length;
+ return `Analyze the teacher demographic profile and observation coverage in this cluster.\n\nData:\n${context}\n\nTotal teachers in records: ${teachers.length}\nTeachers observed at least once: ${observedCount} (${teachers.length ? (observedCount/teachers.length*100).toFixed(1) : 0}%)\n\nBy school:\n${Object.entries(bySchool).sort((a,b) => b[1] - a[1]).slice(0, 10).map(([s,c]) => `- ${s}: ${c} teachers`).join('\n') || 'No data'}\n\nBy designation:\n${Object.entries(byDesignation).sort((a,b) => b[1] - a[1]).map(([d,c]) => `- ${d}: ${c}`).join('\n') || 'No data'}\n\nBy subject:\n${Object.entries(bySubject).sort((a,b) => b[1] - a[1]).map(([s,c]) => `- ${s}: ${c}`).join('\n') || 'No data'}\n\nProvide: 1) Cluster teacher profile summary, 2) School-wise teacher density, 3) Subject coverage gaps, 4) Observation coverage — who hasn't been observed yet? 5) Experience distribution insights, 6) Teachers who need priority engagement.`;
+ }
+ case 'meeting-effectiveness': {
+ const meetings = DB.get('meetings') || [];
+ const typeCount = {};
+ meetings.forEach(m => { const t = m.type || 'General'; typeCount[t] = (typeCount[t] || 0) + 1; });
+ let totalActions = 0, doneActions = 0;
+ meetings.forEach(m => { (m.actionItems || []).forEach(a => { totalActions++; if (a.done) doneActions++; }); });
+ return `Analyze meeting effectiveness and action item follow-through.\n\nData:\n${context}\n\nTotal meetings: ${meetings.length}\nMeeting types:\n${Object.entries(typeCount).sort((a,b) => b[1] - a[1]).map(([t,c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nAction items: ${totalActions} total, ${doneActions} completed (${totalActions ? (doneActions/totalActions*100).toFixed(1) : 0}% follow-through)\n\nRecent meetings:\n${meetings.slice(-8).map(m => `- ${m.date || 'N/A'}: ${m.title || 'Untitled'} (${m.type || 'N/A'}) — ${(m.actionItems || []).length} action items`).join('\n') || 'None'}\n\nProvide: 1) Meeting frequency analysis — too many/too few? 2) Action item follow-through rate, 3) Meetings that generated the most decisions, 4) Patterns — which meeting types are most productive? 5) Suggestions to improve meeting effectiveness, 6) Template for better meeting agendas.`;
+ }
+ case 'schoolwork-impact': {
+ const sw = DB.get('schoolWork') || [];
+ const typeCount = {};
+ sw.forEach(s => { const t = s.type || 'Other'; typeCount[t] = (typeCount[t] || 0) + 1; });
+ const statusCount = {};
+ sw.forEach(s => { const st = s.status || 'Unknown'; statusCount[st] = (statusCount[st] || 0) + 1; });
+ const schoolCount = {};
+ sw.forEach(s => { const sc = s.school || 'Unknown'; schoolCount[sc] = (schoolCount[sc] || 0) + 1; });
+ return `Analyze the impact and patterns of school-based work activities.\n\nData:\n${context}\n\nTotal school work entries: ${sw.length}\n\nBy type:\n${Object.entries(typeCount).sort((a,b) => b[1] - a[1]).map(([t,c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nBy status:\n${Object.entries(statusCount).map(([s,c]) => `- ${s}: ${c}`).join('\n') || 'No data'}\n\nBy school:\n${Object.entries(schoolCount).sort((a,b) => b[1] - a[1]).slice(0, 8).map(([s,c]) => `- ${s}: ${c} activities`).join('\n') || 'No data'}\n\nRecent activities:\n${sw.slice(-8).map(s => `- ${s.date || 'N/A'}: ${s.title || 'Untitled'} at ${s.school || 'N/A'} — ${s.outcome || 'No outcome recorded'}`).join('\n') || 'None'}\n\nProvide: 1) What types of school work are most common? 2) Completion rates, 3) Schools with most/least engagement, 4) Outcomes quality assessment, 5) Impact measurement framework suggestion, 6) Priorities for next month's school-based work.`;
+ }
+ case 'student-learning': {
+ const studentRecs = DB.get('schoolStudentRecords') || [];
+ const schoolCount = studentRecs.length;
+ return `Analyze student learning levels across schools in this cluster.\n\nData:\n${context}\n\nSchool-level student records: ${schoolCount}\n\nData sample:\n${studentRecs.slice(0, 10).map(r => `- ${r.school || 'Unknown'} (Class ${r.class || '?'}): ${JSON.stringify(r.learningLevels || r).slice(0, 150)}`).join('\n') || 'No student data available'}\n\nTotal observations: ${observations.length}\nSubjects observed: ${[...new Set(observations.map(o => o.subject).filter(Boolean))].join(', ') || 'N/A'}\n\nProvide: 1) Student learning level overview by school, 2) Which classes/grades show the most gaps? 3) Correlation between observation quality and student outcomes (if inferable), 4) Schools that need urgent student support, 5) Subject-wise student performance trends, 6) Recommended classroom interventions based on learning levels. If student data is limited, suggest data collection strategies.`;
+ }
+ case 'data-completeness': {
+ const collections = [
+ { name: 'Visits', data: visits, key: 'visits' },
+ { name: 'Trainings', data: trainings, key: 'trainings' },
+ { name: 'Observations', data: observations, key: 'observations' },
+ { name: 'Follow-ups', data: followups, key: 'followupStatus' },
+ { name: 'Teacher Records', data: DB.get('teacherRecords') || [], key: 'teacherRecords' },
+ { name: 'Meetings', data: DB.get('meetings') || [], key: 'meetings' },
+ { name: 'Work Log', data: DB.get('worklog') || [], key: 'worklog' },
+ { name: 'Reflections', data: DB.get('reflections') || [], key: 'reflections' },
+ { name: 'MARAI Tracking', data: DB.get('maraiTracking') || [], key: 'maraiTracking' },
+ { name: 'School Work', data: DB.get('schoolWork') || [], key: 'schoolWork' },
+ { name: 'Capacity Building', data: DB.get('selfCapacityBuilding') || [], key: 'selfCapacityBuilding' },
+ { name: 'Growth Assessments', data: DB.get('growthAssessments') || [], key: 'growthAssessments' },
+ { name: 'Goal Targets', data: DB.get('goalTargets') || [], key: 'goalTargets' },
+ { name: 'Planner Tasks', data: DB.get('plannerTasks') || [], key: 'plannerTasks' },
+ { name: 'Visit Plan', data: DB.get('visitPlanEntries') || [], key: 'visitPlanEntries' },
+ { name: 'Ideas', data: DB.get('ideas') || [], key: 'ideas' },
+ { name: 'Notes', data: DB.get('notes') || [], key: 'notes' },
+ { name: 'Contacts', data: DB.get('contacts') || [], key: 'contacts' },
+ ];
+ const summary = collections.map(c => `- ${c.name}: ${c.data.length} records`);
+ const empty = collections.filter(c => c.data.length === 0).map(c => c.name);
+ const hasProfile = !!(DB.get('userProfile') || {}).name;
+ return `Perform a comprehensive data quality and completeness audit for this APF Resource Person's dashboard.\n\nData:\n${context}\n\nCollection sizes:\n${summary.join('\n')}\n\nEmpty collections (0 records): ${empty.join(', ') || 'None — all have data!'}\nProfile configured: ${hasProfile ? 'Yes' : 'No'}\n\nProvide: 1) Overall DATA HEALTH SCORE (out of 100), 2) Collections with good data (praise these), 3) Empty or sparse collections that need attention, 4) For each sparse collection — why it matters and how to start populating it, 5) Data quality issues (e.g., missing dates/schools in records), 6) Prioritized recommendations to improve overall data quality, 7) Estimated time to fill gaps. Be encouraging but honest.`;
  }
  default:
  return `Provide helpful insights based on this APF Resource Person's data:\n${context}`;
