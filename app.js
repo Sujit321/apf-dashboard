@@ -12803,27 +12803,18 @@ function setFollowupOwner(id) {
  const item = collectFollowupItems().find(f => f.id === id);
  if (!item) return;
  entry = upsertFollowupLifecycle(statusList, item).entry;
- }
-
- const currentOwner = (entry.owner || '').trim() || getDefaultFollowupOwner();
- const nextOwner = prompt('Assign action owner', currentOwner);
- if (nextOwner === null) return;
- const owner = nextOwner.trim();
- if (!owner) {
- showToast('Owner cannot be empty', 'error');
- return;
- }
- if (owner === (entry.owner || '').trim()) {
- showToast('Owner unchanged', 'info');
- return;
- }
-
- entry.owner = owner;
- entry.updatedAt = new Date().toISOString();
- addFollowupHistory(entry, 'owner-updated', `Owner changed to ${owner}`);
  DB.set('followupStatus', statusList);
- renderFollowups();
- showToast('Owner updated');
+ }
+ const currentOwner = (entry.owner || '').trim() || getDefaultFollowupOwner();
+ _openFuQuickModal({
+ type: 'owner',
+ id,
+ title: 'Assign Owner',
+ icon: 'fa-user-pen',
+ label: 'Action Owner',
+ placeholder: 'Enter name...',
+ value: currentOwner
+ });
 }
 
 function setFollowupDueDate(id) {
@@ -12833,27 +12824,78 @@ function setFollowupDueDate(id) {
  const item = collectFollowupItems().find(f => f.id === id);
  if (!item) return;
  entry = upsertFollowupLifecycle(statusList, item).entry;
+ DB.set('followupStatus', statusList);
  }
-
  const currentDue = normalizeDateOnly(entry.dueDate) || normalizeDateOnly(new Date());
- const dueInput = prompt('Set SLA due date (YYYY-MM-DD)', currentDue);
- if (dueInput === null) return;
- const dueDate = normalizeDateOnly(dueInput);
- if (!dueDate) {
- showToast('Invalid date format. Use YYYY-MM-DD.', 'error');
- return;
- }
- if (dueDate === normalizeDateOnly(entry.dueDate)) {
- showToast('SLA date unchanged', 'info');
- return;
- }
+ const slaSource = ACTION_CLOSURE_SLA_DAYS[entry.source] || 14;
+ _openFuQuickModal({
+ type: 'sla',
+ id,
+ title: 'Set SLA Due Date',
+ icon: 'fa-calendar-day',
+ label: 'SLA Due Date',
+ value: currentDue,
+ slaHint: `Default SLA: ${slaSource} days from source date`
+ });
+}
 
+function _openFuQuickModal(opts) {
+ document.getElementById('fuQmTitle').textContent = opts.title;
+ document.getElementById('fuQmIcon').className = 'fas ' + opts.icon;
+ document.getElementById('fuQmLabel').textContent = opts.label;
+ document.getElementById('fuQmId').value = opts.id;
+ document.getElementById('fuQmType').value = opts.type;
+ const inp = document.getElementById('fuQmInput');
+ const dateInp = document.getElementById('fuQmDateInput');
+ const hint = document.getElementById('fuQmHint');
+ if (opts.type === 'sla') {
+ inp.style.display = 'none';
+ dateInp.style.display = 'block';
+ dateInp.value = opts.value || '';
+ hint.textContent = opts.slaHint || '';
+ hint.style.display = opts.slaHint ? 'block' : 'none';
+ setTimeout(() => dateInp.focus(), 80);
+ } else {
+ inp.style.display = 'block';
+ dateInp.style.display = 'none';
+ inp.value = opts.value || '';
+ inp.placeholder = opts.placeholder || '';
+ hint.style.display = 'none';
+ setTimeout(() => { inp.focus(); inp.select(); }, 80);
+ }
+ document.getElementById('fuQuickModal').style.display = 'flex';
+}
+
+function closeFuQuickModal() {
+ document.getElementById('fuQuickModal').style.display = 'none';
+}
+
+function saveFuQuickModal() {
+ const id = document.getElementById('fuQmId').value;
+ const type = document.getElementById('fuQmType').value;
+ const statusList = DB.get('followupStatus') || [];
+ const entry = statusList.find(f => f.id === id);
+ if (!entry) { closeFuQuickModal(); return; }
+
+ if (type === 'sla') {
+ const val = document.getElementById('fuQmDateInput').value;
+ const dueDate = normalizeDateOnly(val);
+ if (!dueDate) { showToast('Please select a valid date.', 'error'); return; }
  entry.dueDate = dueDate;
  entry.updatedAt = new Date().toISOString();
  addFollowupHistory(entry, 'sla-updated', `SLA updated to ${dueDate}`);
+ showToast('SLA date updated', 'success');
+ } else {
+ const owner = document.getElementById('fuQmInput').value.trim();
+ if (!owner) { showToast('Owner cannot be empty.', 'error'); return; }
+ entry.owner = owner;
+ entry.updatedAt = new Date().toISOString();
+ addFollowupHistory(entry, 'owner-updated', `Owner changed to ${owner}`);
+ showToast('Owner updated', 'success');
+ }
  DB.set('followupStatus', statusList);
+ closeFuQuickModal();
  renderFollowups();
- showToast('SLA date updated');
 }
 
 function linkFollowupEvidence(id) {

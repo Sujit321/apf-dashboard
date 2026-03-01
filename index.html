@@ -1724,6 +1724,28 @@
 
  <div id="followupsContainer" class="followups-list"></div>
 
+ <!-- Follow-up Quick Edit Modal (SLA / Owner) -->
+ <div id="fuQuickModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeFuQuickModal()">
+ <div class="modal modal-sm">
+ <div class="modal-header">
+ <h2><i id="fuQmIcon" class="fas fa-calendar-day"></i>&nbsp;<span id="fuQmTitle">Set SLA</span></h2>
+ <button class="modal-close" onclick="closeFuQuickModal()"><i class="fas fa-times"></i></button>
+ </div>
+ <div class="modal-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+ <input type="hidden" id="fuQmId">
+ <input type="hidden" id="fuQmType">
+ <label class="form-label" id="fuQmLabel">Value</label>
+ <input id="fuQmInput" class="form-control" type="text" style="display:block" placeholder="Enter value..." onkeydown="if(event.key==='Enter')saveFuQuickModal()">
+ <input id="fuQmDateInput" class="form-control" type="date" style="display:none" onkeydown="if(event.key==='Enter')saveFuQuickModal()">
+ <div id="fuQmHint" style="display:none;font-size:12px;color:var(--text-muted);padding:6px 10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)"></div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-ghost" onclick="closeFuQuickModal()">Cancel</button>
+ <button class="btn btn-primary" onclick="saveFuQuickModal()"><i class="fas fa-save"></i> Save</button>
+ </div>
+ </div>
+ </div>
+
  <!-- Manual Follow-up Modal -->
  <div id="manualFollowupModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeManualFollowupModal()">
  <div class="modal modal-sm">
