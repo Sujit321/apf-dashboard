@@ -1,0 +1,22 @@
+{
+    "name": "APF Resource Person Dashboard",
+    "short_name": "APF RP Tool",
+    "description": "Offline-first tool for tracking school visits and teaching practices",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4f46e5",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
