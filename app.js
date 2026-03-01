@@ -24047,6 +24047,7 @@ function _buildImportGuideHTML() {
  ['Teacher Engagement Level', 'Engagement level', true, 'More Engaged / Engaged / Less Engaged'],
  ['Practice Type', 'Practice type', true, ''],
  ['Practice Master: Practice Serial No', 'Practice serial no.', true, ''],
+ ['Outcome Serial / Learning Outcome Serial / LO Serial', 'Linked LO serial', false, 'Auto-links observation to a Learning Outcome'],
  ['Practice', 'Practice description', false, ''],
  ['Group', 'Group name', false, ''],
  ['Subject', 'Subject', false, ''],
@@ -24124,7 +24125,31 @@ function _buildImportGuideHTML() {
  'Column matching is fully case-insensitive. Imported attendees are also <strong>auto-saved to Teacher Records</strong> (if not already present). Must select a training session before importing.'
  )}
 
- ${section('fa-calendar-check', '#ef4444', '5. Visit Plan (Plan vs Execution)',
+ ${section('fa-tasks', '#0ea5e9', '6. Teaching Practices',
+ 'Import teaching practices list per subject. Dedup: subject + practice text.',
+ [
+ ['Group / Theme / Content', 'Practice group or theme', true, 'E.g. Classroom Management, Pedagogy'],
+ ['Practice Serial No / Serial / No.', 'Unique serial ID', true, 'E.g. TP-01, CM-3'],
+ ['Teaching Practice / Practice', 'Practice description text', true, ''],
+ ['Class / Classes', 'Applicable classes', false, 'E.g. 6-8, Primary'],
+ ['Effect Tracking / ET', 'Track effect?', false, 'y = yes, anything else = no']
+ ],
+ 'Must select a <strong>subject</strong> in the import modal. All imported practices are appended to the selected subject — existing practices are not deleted. Duplicate handling: rows with empty practice text are skipped.'
+ )}
+
+ ${section('fa-graduation-cap', '#06b6d4', '7. Learning Outcomes (LOs)',
+ 'Import learning outcomes per subject. Subject is selected in the import modal.',
+ [
+ ['ID / No / Serial / Code / LO', 'Outcome serial/ID', true, 'E.g. LO-01, M-G6-1; used to link with observations'],
+ ['Learning Outcome / Outcome / Description / Statement / Objective', 'Outcome description text', true, ''],
+ ['Group / Theme / Category / Domain / Strand / Area', 'Outcome group', false, 'Optional; falls back to \'General / Ungrouped\''],
+ ['Class / Grade / Level', 'Applicable class/grade', false, 'E.g. Class 6, Grade 3-5'],
+ ['Effect Tracking / ET', 'Track effect?', false, 'y = yes, anything else = no']
+ ],
+ 'Must select a <strong>subject</strong> before importing. LO Serial values here are what should be entered in the <code>Outcome Serial</code> column of the DMT Observations import to link observations to outcomes.'
+ )}
+
+ ${section('fa-calendar-check', '#ef4444', '8. Visit Plan (Plan vs Execution)',
  'Column-position based (A-P order, not header names). Two-sheet Excel file.',
  [
  ['Column A', 'Date', true, 'Excel serial number or date string; blank rows inherit previous date'],
@@ -24154,7 +24179,7 @@ function _buildImportGuideHTML() {
  <h4 style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 10px"><i class="fas fa-sitemap" style="color:var(--accent);margin-right:7px"></i>Data Flow Overview</h4>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--text-secondary)">
  <div style="padding:8px 12px;background:rgba(99,102,241,0.06);border-radius:7px;border-left:3px solid #6366f1">
- <strong style="color:#818cf8">DMT Excel</strong><br>Observations &middot; School Profiles &middot; Teacher Records &middot; Contacts
+ <strong style="color:#818cf8">DMT Excel</strong><br>Observations &middot; links to TP &amp; LO serials
  </div>
  <div style="padding:8px 12px;background:rgba(245,158,11,0.06);border-radius:7px;border-left:3px solid #f59e0b">
  <strong style="color:#fbbf24">Visits Excel</strong><br>School Visit Records
@@ -24164,6 +24189,12 @@ function _buildImportGuideHTML() {
  </div>
  <div style="padding:8px 12px;background:rgba(139,92,246,0.06);border-radius:7px;border-left:3px solid #8b5cf6">
  <strong style="color:#a78bfa">Attendance Excel</strong><br>Training Attendance + Teacher Records
+ </div>
+ <div style="padding:8px 12px;background:rgba(14,165,233,0.06);border-radius:7px;border-left:3px solid #0ea5e9">
+ <strong style="color:#38bdf8">Teaching Practices Excel</strong><br>Practice list per subject (Group &middot; Serial &middot; Description)
+ </div>
+ <div style="padding:8px 12px;background:rgba(6,182,212,0.06);border-radius:7px;border-left:3px solid #06b6d4">
+ <strong style="color:#22d3ee">Learning Outcomes Excel</strong><br>LO list per subject (ID &middot; Outcome text &middot; Grade)
  </div>
  <div style="padding:8px 12px;background:rgba(239,68,68,0.06);border-radius:7px;border-left:3px solid #ef4444;grid-column:1/-1">
  <strong style="color:#f87171">Visit Plan Excel</strong><br>Visit Plan Entries + Dropdown Options (Sheet4)
