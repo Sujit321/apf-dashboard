@@ -13082,9 +13082,23 @@ function toggleFollowupPin(id) {
  showToast(r.entry.pinned ? 'Follow-up pinned to top' : 'Follow-up unpinned', 'info');
 }
 
+let _fuHideTargetId = null;
+
 function hideFollowup(id) {
- if (!confirm('Hide this follow-up? Use the \'Hidden\' filter to restore it.')) return;
- const r = _getOrCreateFollowupEntry(id);
+ _fuHideTargetId = id;
+ document.getElementById('fuHideConfirmModal').style.display = 'flex';
+}
+
+function cancelHideFollowup() {
+ _fuHideTargetId = null;
+ document.getElementById('fuHideConfirmModal').style.display = 'none';
+}
+
+function confirmHideFollowup() {
+ document.getElementById('fuHideConfirmModal').style.display = 'none';
+ if (!_fuHideTargetId) return;
+ const r = _getOrCreateFollowupEntry(_fuHideTargetId);
+ _fuHideTargetId = null;
  if (!r) return;
  r.entry.hidden = true;
  r.entry.updatedAt = new Date().toISOString();

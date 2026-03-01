@@ -1780,6 +1780,23 @@
  </div>
  </div>
 
+ <!-- Hide Confirm Modal -->
+ <div id="fuHideConfirmModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)cancelHideFollowup()">
+ <div class="modal" style="max-width:380px">
+ <div class="modal-header" style="padding:16px 20px">
+ <h2 style="font-size:16px"><i class="fas fa-eye-slash" style="color:var(--text-muted)"></i>&nbsp; Hide Follow-up</h2>
+ <button class="modal-close" onclick="cancelHideFollowup()"><i class="fas fa-times"></i></button>
+ </div>
+ <div class="modal-body" style="padding:16px 20px">
+ <p style="margin:0;color:var(--text-secondary);font-size:14px">This follow-up will be hidden from your list. You can restore it anytime by selecting <strong style="color:var(--text-primary)">Hidden</strong> from the status filter.</p>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-ghost" onclick="cancelHideFollowup()">Cancel</button>
+ <button class="btn btn-primary" onclick="confirmHideFollowup()" style="background:var(--text-muted);border-color:var(--text-muted)"><i class="fas fa-eye-slash"></i> Hide</button>
+ </div>
+ </div>
+ </div>
+
  <!-- Follow-up Note Modal -->
  <div id="fuNoteModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeFuNoteModal()">
  <div class="modal modal-sm">
@@ -1790,7 +1807,7 @@
  <div class="modal-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
  <input type="hidden" id="fuNoteTargetId">
  <label class="form-label">Note <span style="color:var(--danger)">*</span></label>
- <textarea id="fuNoteText" class="form-control" rows="4" placeholder="Write your note about this follow-up..." onkeydown="if(event.ctrlKey&&event.key==='Enter')saveFuNote()"></textarea>
+ <textarea id="fuNoteText" class="note-textarea" rows="4" placeholder="Write your note about this follow-up..." onkeydown="if(event.ctrlKey&&event.key==='Enter')saveFuNote()"></textarea>
  <span style="font-size:11px;color:var(--text-muted)"><i class="fas fa-keyboard"></i> Ctrl+Enter to save</span>
  </div>
  <div class="modal-footer">
