@@ -29398,6 +29398,13 @@ function deleteTeacherActionPlan(id) {
  renderTeacherJourney();
 }
 
+function deleteInterventionPlaybookRun(id) {
+ let runs = DB.get('interventionPlaybookRuns') || [];
+ runs = runs.filter(r => r.id !== id);
+ DB.set('interventionPlaybookRuns', runs);
+ renderTeacherJourney();
+}
+
 function renderTeacherJourneySection() {
  const teachers = _buildTeacherProfiles();
  const sel = document.getElementById('tjTeacherSelect');
@@ -29760,7 +29767,7 @@ function renderTeacherJourney() {
  </div>
  ${playbookRuns.length > 0 ? `<div style="margin-top:12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-secondary,#f8fafc)">
  <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Recent playbook runs</div>
- ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px"><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> · +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} · ${fmtDateShort(r.runAt)}</div>`).join('')}
+ ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> · +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} · ${fmtDateShort(r.runAt)}</span><button onclick="deleteInterventionPlaybookRun('${r.id}')" title="Delete this run log" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">&times;</button></div>`).join('')}
  </div>` : ''}
  ` : `<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="fas fa-check-circle" style="font-size:22px;opacity:0.35;margin-bottom:8px;display:block"></i>No critical recurring patterns found right now. Continue monitoring.</div>`);
 
