@@ -211,6 +211,10 @@
  data-tooltip="Teaching Practices">
  <i class="fas fa-layer-group"></i><span>Teaching Practices</span>
  </a>
+ <a href="#" class="nav-item" data-section="learningoutcomes" id="nav-learningoutcomes"
+ data-tooltip="Learning Outcomes">
+ <i class="fas fa-bullseye"></i><span>Learning Outcomes</span>
+ </a>
  <a href="#" class="nav-item" data-section="schoolwork" id="nav-schoolwork"
  data-tooltip="School Work">
  <i class="fas fa-chalkboard"></i><span>School Work</span>
@@ -2282,7 +2286,248 @@
  </div>
  </div>
 
- <!-- ==================== SCHOOL-BASED WORK SECTION ==================== -->
+ <!-- ==================== LEARNING OUTCOMES SECTION ==================== -->
+<section class="content-section" id="section-learningoutcomes">
+<div class="section-header">
+<div>
+<h1><i class="fas fa-bullseye"></i> Learning Outcomes</h1>
+<p class="section-subtitle">Manage subject-wise learning outcomes and frameworks for classroom observations</p>
+</div>
+<div class="header-actions">
+<button class="btn btn-outline" onclick="exportLoFrameworkPDF()">
+<i class="fas fa-file-pdf"></i> Export PDF
+</button>
+<button class="btn btn-outline" onclick="openLoImportModal()">
+<i class="fas fa-file-excel"></i> Import Excel
+</button>
+<button class="btn btn-primary" onclick="openLoEditModal()">
+<i class="fas fa-plus"></i> Add Outcome
+</button>
+</div>
+</div>
+
+<!-- Filter Bar -->
+<div class="lo-filter-bar"
+style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+<select id="loSubjectFilter" class="filter-select"
+onchange="_pageState.learningOutcomes=1;renderLearningOutcomes()" style="min-width:200px">
+<option value=""> Select Subject </option>
+</select>
+<select id="loStatusFilter" class="filter-select"
+onchange="_pageState.learningOutcomes=1;renderLearningOutcomes()" style="min-width:140px">
+<option value="all">All Impact</option>
+<option value="high_impact"> High Impact</option>
+<option value="moderate_impact"> Moderate</option>
+<option value="low_impact"> Low Impact</option>
+<option value="no_data"> No Data</option>
+</select>
+<div class="search-wrap" style="flex:1;min-width:200px;position:relative">
+<i class="fas fa-search"
+style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
+<input type="text" id="loSearchInput" class="filter-input"
+placeholder="Search outcome ID or description..."
+oninput="_pageState.learningOutcomes=1;renderLearningOutcomes()"
+style="width:100%;padding-left:38px">
+</div>
+<button class="btn btn-danger-outline" onclick="deleteSubjectLOs()" id="loDeleteSubjectBtn"
+style="display:none">
+<i class="fas fa-trash-alt"></i> Delete Subject
+</button>
+</div>
+
+<!-- Tab Strip -->
+<div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">
+<button id="loTabOutcomes" class="btn btn-ghost" onclick="switchLoTab('outcomes')"
+style="border-radius:8px 8px 0 0;padding:10px 20px;font-size:13px;font-weight:600;border-bottom:2px solid var(--accent);color:var(--accent);margin-bottom:-2px">
+<i class="fas fa-list-ul"></i> Outcomes
+</button>
+<button id="loTabAnalytics" class="btn btn-ghost" onclick="switchLoTab('analytics')"
+style="border-radius:8px 8px 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:-2px">
+<i class="fas fa-chart-bar"></i> Analytics
+</button>
+<button id="loTabMapping" class="btn btn-ghost" onclick="switchLoTab('mapping')"
+style="border-radius:8px 8px 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:-2px">
+<i class="fas fa-user-check"></i> Teacher Mapping
+</button>
+<button id="loTabAI" class="btn btn-ghost" onclick="switchLoTab('ai')"
+style="border-radius:8px 8px 0 0;padding:10px 20px;font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:-2px">
+<i class="fas fa-robot"></i> AI Suggest
+</button>
+</div>
+
+<!-- Outcomes Tab Content -->
+<div id="loOutcomesTab">
+<div id="learningOutcomesContainer">
+<div class="empty-state">
+<i class="fas fa-bullseye"></i>
+<h3>No Learning Outcomes Found</h3>
+<p>Select a subject from the dropdown or import an Excel file to get started.</p>
+</div>
+</div>
+</div>
+
+<!-- Analytics Tab Content -->
+<div id="loAnalyticsTab" style="display:none">
+<div id="loAnalyticsContainer">
+<div class="empty-state">
+<i class="fas fa-chart-bar"></i>
+<h3>Select a Subject</h3>
+<p>Pick a subject above to see analytics linking observations to each learning outcome.</p>
+</div>
+</div>
+</div>
+
+<!-- Teacher Mapping Tab Content -->
+<div id="loMappingTab" style="display:none">
+<div id="loMappingContainer">
+<div class="empty-state">
+<i class="fas fa-user-check"></i>
+<h3>Teacher Outcome Mapping</h3>
+<p>Select a subject above, then assign outcomes to teachers and track their adoption journey.</p>
+</div>
+</div>
+</div>
+
+<!-- AI Suggestions Tab Content -->
+<div id="loAITab" style="display:none">
+<div id="loAIContainer">
+<div class="empty-state">
+<i class="fas fa-robot"></i>
+<h3>AI Outcome Recommendations</h3>
+<p>Select a subject above to get AI-powered suggestions on which outcomes to focus on next.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- LO Teacher Assignment Modal -->
+<div class="modal-overlay" id="loAssignModal">
+<div class="modal" style="max-width:550px">
+<div class="modal-header">
+<h2 id="loAssignModalTitle"><i class="fas fa-user-plus"></i> Assign to Teacher</h2>
+<button class="modal-close" onclick="closeModal('loAssignModal')">&times;</button>
+</div>
+<div class="modal-body" style="padding:24px">
+<input type="hidden" id="loAssignEditId">
+<div class="form-row">
+<div class="form-group">
+<label><i class="fas fa-user" style="color:#6366f1"></i> Teacher Name</label>
+<input type="text" id="loAssignTeacher" placeholder="e.g. Rani Devi"
+list="loAssignTeacherList" required>
+<datalist id="loAssignTeacherList"></datalist>
+</div>
+<div class="form-group">
+<label><i class="fas fa-school" style="color:#f59e0b"></i> School</label>
+<input type="text" id="loAssignSchool" placeholder="e.g. GOVT PS Chandpara"
+list="loAssignSchoolList">
+<datalist id="loAssignSchoolList"></datalist>
+</div>
+</div>
+<div class="form-group">
+<label><i class="fas fa-bullseye" style="color:#10b981"></i> Select Outcomes to Assign</label>
+<div id="loAssignOutcomeList"
+style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;display:grid;gap:4px">
+</div>
+</div>
+<div class="form-group">
+<label><i class="fas fa-sticky-note" style="color:#ec4899"></i> Notes <span
+style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
+<input type="text" id="loAssignNotes"
+placeholder="e.g. Focus on reading comprehension this month">
+</div>
+<div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px">
+<button class="btn btn-outline" onclick="closeModal('loAssignModal')">Cancel</button>
+<button class="btn btn-primary" onclick="saveLoAssignment()"><i class="fas fa-save"></i> Save Assignment</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- LO Import Modal -->
+<div class="modal-overlay" id="loImportModal">
+<div class="modal" style="max-width:500px">
+<div class="modal-header">
+<h2><i class="fas fa-file-excel"></i> Import Learning Outcomes</h2>
+<button class="modal-close" onclick="closeModal('loImportModal')">&times;</button>
+</div>
+<div class="modal-body" style="padding:24px">
+<div class="form-group">
+<label><i class="fas fa-book"></i> Subject Name</label>
+<input type="text" id="loImportSubject" placeholder="e.g. English, Math, Science" required
+list="loSubjectList">
+<datalist id="loSubjectList"></datalist>
+</div>
+<div class="form-group" style="margin-top:20px">
+<label><i class="fas fa-upload"></i> Excel File</label>
+<div style="border:2px dashed var(--border);border-radius:8px;padding:30px;text-align:center;background:var(--bg-secondary);cursor:pointer"
+onclick="document.getElementById('loImportFileInput').click()">
+<i class="fas fa-cloud-upload-alt"
+style="font-size:32px;color:var(--primary);margin-bottom:12px"></i>
+<p id="loImportFileName" style="color:var(--text-primary);font-weight:500">Click to browse file</p>
+<p style="font-size:12px;color:var(--text-muted);margin-top:6px">Must have columns: <strong>Group, ID, Learning Outcome</strong><br>Optional: ET, Class</p>
+</div>
+<input type="file" id="loImportFileInput" accept=".xlsx,.xls,.csv" style="display:none"
+onchange="document.getElementById('loImportFileName').innerText=this.files[0]?this.files[0].name:'Click to browse file'">
+</div>
+<div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px">
+<button class="btn btn-outline" onclick="closeModal('loImportModal')">Cancel</button>
+<button class="btn btn-primary" onclick="processLoImport()"><i class="fas fa-save"></i> Import &amp; Save</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- LO Edit Modal -->
+<div class="modal-overlay" id="loEditModal">
+<div class="modal" style="max-width:600px">
+<div class="modal-header">
+<h2 id="loEditModalTitle"><i class="fas fa-pen"></i> Add/Edit Outcome</h2>
+<button class="modal-close" onclick="closeModal('loEditModal')">&times;</button>
+</div>
+<div class="modal-body" style="padding:24px">
+<input type="hidden" id="loEditId">
+<div class="form-row">
+<div class="form-group">
+<label>Subject</label>
+<input type="text" id="loEditSubject" required>
+</div>
+<div class="form-group">
+<label>ID / Serial No.</label>
+<input type="text" id="loEditSerial" placeholder="e.g. LO-001" required>
+</div>
+</div>
+<div class="form-group">
+<label>Group / Category</label>
+<input type="text" id="loEditGroup" placeholder="e.g. Reading Comprehension" required>
+</div>
+<div class="form-group">
+<label>Learning Outcome Description</label>
+<textarea id="loEditOutcome" rows="4" required></textarea>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Applicable Classes</label>
+<input type="text" id="loEditClasses" placeholder="e.g. 1,2,3,4,5">
+</div>
+<div class="form-group" style="display:flex;align-items:center;padding-bottom:10px">
+<label class="settings-toggle" for="loEditEffect"
+style="gap:10px;margin:0;cursor:pointer;display:flex;align-items:center">
+<input type="checkbox" id="loEditEffect">
+<span class="settings-toggle-slider" style="flex-shrink:0"></span>
+<span class="settings-toggle-label"
+style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:auto">Effect Tracking (ET)</span>
+</label>
+</div>
+</div>
+<div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px">
+<button class="btn btn-outline" onclick="closeModal('loEditModal')">Cancel</button>
+<button class="btn btn-primary" onclick="saveLoEdit()"><i class="fas fa-save"></i> Save Outcome</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ==================== SCHOOL-BASED WORK SECTION ==================== -->
  <section class="content-section" id="section-schoolwork">
  <div class="section-header">
  <div>
@@ -5144,6 +5389,12 @@ function getOrCreateFolder() {
  <input type="text" id="observationPracticeSerial" placeholder="e.g. TP-016"
  list="obsPracticeSerialList" onchange="autoFillObservationPractice()">
  <datalist id="obsPracticeSerialList"></datalist>
+ </div>
+ <div class="form-group">
+ <label for="observationOutcomeSerial">Learning Outcome Serial</label>
+ <input type="text" id="observationOutcomeSerial" placeholder="e.g. LO-013"
+ list="obsOutcomeSerialList">
+ <datalist id="obsOutcomeSerialList"></datalist>
  </div>
  </div>
  <div class="form-group">

@@ -463,7 +463,7 @@ const SessionPersist = {
 // Unsaved changes tracking
 let hasUnsavedChanges = false;
 let lastEncSaveTime = null;
-const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns'];
+const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments'];
 
 // ===== Google Drive Auto-Backup (via Google Apps Script) =====
 const GoogleDriveSync = {
@@ -1775,6 +1775,7 @@ function refreshSection(section) {
  case 'teachers': renderTeacherGrowth(); break;
  case 'teacherjourney': renderTeacherJourneySection(); break;
  case 'teachingpractices': renderTeachingPractices(); break;
+ case 'learningoutcomes': renderLearningOutcomes(); break;
  case 'marai': renderMaraiTracking(); break;
  case 'schoolwork': renderSchoolWork(); break;
  case 'visitplan': renderVisitPlan(); break;
@@ -5906,6 +5907,19 @@ function populateObsDataLists() {
  blockFilter.value = current || 'all';
  }
 
+ // Populate Learning Outcome Serial datalist from Learning Outcomes DB
+ const los = DB.get('learningOutcomes') || [];
+ const obsSubjectForLO = (document.getElementById('observationSubject')?.value || '').trim().toLowerCase();
+ const relevantLOs = obsSubjectForLO
+ ? los.filter(l => (l.subject || '').toLowerCase().includes(obsSubjectForLO))
+ : los;
+ const outcomeSerialList = document.getElementById('obsOutcomeSerialList');
+ if (outcomeSerialList) {
+ outcomeSerialList.innerHTML = relevantLOs
+ .map(l => `<option value="${escapeHtml(l.serialNo)}" label="${escapeHtml((l.outcome || '').substring(0, 60))}">`) 
+ .join('');
+ }
+
  // Populate Practice Serial datalist from Teaching Practices DB
  const tps = DB.get('teachingPractices') || [];
  const serialList = document.getElementById('obsPracticeSerialList');
@@ -5969,6 +5983,7 @@ function openObservationModal(id) {
  document.getElementById('observationEngagement').value = o.engagementLevel || '';
  document.getElementById('observationPracticeType').value = o.practiceType || '';
  document.getElementById('observationPracticeSerial').value = o.practiceSerial || '';
+ document.getElementById('observationOutcomeSerial').value = o.outcomeSerial || '';
  document.getElementById('observationPractice').value = o.practice || '';
  document.getElementById('observationGroup').value = o.group || '';
  document.getElementById('observationTopic').value = o.topic || '';
@@ -6011,6 +6026,7 @@ function saveObservation(e) {
  engagementLevel: document.getElementById('observationEngagement').value,
  practiceType: document.getElementById('observationPracticeType').value,
  practiceSerial: document.getElementById('observationPracticeSerial').value.trim(),
+ outcomeSerial: document.getElementById('observationOutcomeSerial').value.trim(),
  practice: document.getElementById('observationPractice').value.trim(),
  group: document.getElementById('observationGroup').value.trim(),
  topic: document.getElementById('observationTopic').value.trim(),
@@ -6523,6 +6539,7 @@ async function executeFilteredImport() {
  engagementLevel: (row['Teacher Engagement Level'] || '').trim(),
  practiceType: (row['Practice Type'] || '').trim(),
  practiceSerial: (row['Practice Master: Practice Serial No'] || '').trim(),
+ outcomeSerial: (row['Outcome Serial'] || row['Learning Outcome Serial'] || row['LO Serial'] || '').trim(),
  practice: (row['Practice'] || '').trim(),
  group: (row['Group'] || '').trim(),
  subject: (row['Subject'] || '').trim(),
@@ -6818,6 +6835,7 @@ async function importDMTExcel(event) {
  engagementLevel: (row['Teacher Engagement Level'] || '').trim(),
  practiceType: (row['Practice Type'] || '').trim(),
  practiceSerial: (row['Practice Master: Practice Serial No'] || '').trim(),
+ outcomeSerial: (row['Outcome Serial'] || row['Learning Outcome Serial'] || row['LO Serial'] || '').trim(),
  practice: (row['Practice'] || '').trim(),
  group: (row['Group'] || '').trim(),
  subject: (row['Subject'] || '').trim(),
@@ -26514,6 +26532,1269 @@ function processTpImport() {
 window.editTP = openTpEditModal;
 window.deleteTP = deleteTP;
 
+// ===== LEARNING OUTCOMES =====
+
+// Resolve an observation's LO serial: use outcomeSerial first,
+// then fall back to practiceSerial ONLY if it is a known LO serial.
+function getObsLOSerial(o, loSerialSet) {
+  const os = (o.outcomeSerial || '').trim();
+  if (os) return os;
+  const ps = (o.practiceSerial || '').trim();
+  return (loSerialSet && loSerialSet.has(ps)) ? ps : '';
+}
+
+function renderLearningOutcomes() {
+  const los = DB.get('learningOutcomes') || [];
+  const container = document.getElementById('learningOutcomesContainer');
+  const subjectFilter = document.getElementById('loSubjectFilter');
+  const searchInput = document.getElementById('loSearchInput');
+  const delBtn = document.getElementById('loDeleteSubjectBtn');
+  if (!container || !subjectFilter) return;
+
+  // Populate Subject Filter & Datalist
+  const subjects = [...new Set(los.map(l => l.subject))].sort();
+  const currentSubject = subjectFilter.value;
+  let subjHtml = '<option value=""> Select Subject </option>';
+  subjects.forEach(s => subjHtml += `<option value="${s}" ${s === currentSubject ? 'selected' : ''}>${escapeHtml(s)}</option>`);
+  subjectFilter.innerHTML = subjHtml;
+
+  const datalist = document.getElementById('loSubjectList');
+  if (datalist) datalist.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">`).join('');
+
+  const activeSubject = subjectFilter.value;
+  if (delBtn) delBtn.style.display = activeSubject ? 'block' : 'none';
+
+  if (!activeSubject) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon" style="background:#e0e7ff;color:#6366f1;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <h3>No Subject Selected</h3>
+        <p>Select a subject from the dropdown above or click "Import Excel" to add a new subject framework.</p>
+        ${subjects.length > 0 ? `<div style="margin-top:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          ${subjects.map(s => `<button class="btn btn-outline btn-sm" onclick="document.getElementById('loSubjectFilter').value='${s}';renderLearningOutcomes()">${escapeHtml(s)}</button>`).join('')}
+        </div>` : ''}
+      </div>`;
+    return;
+  }
+
+  // Build observation data per outcome serial for this subject
+  const observations = DB.get('observations') || [];
+  const subjectLower = activeSubject.toLowerCase();
+  const loSerialSet = new Set(los.filter(l => l.subject === activeSubject).map(l => l.serialNo).filter(Boolean));
+  const obsPerOutcome = {};
+  observations.filter(o => (o.subject || '').toLowerCase().includes(subjectLower)).forEach(o => {
+    const serial = getObsLOSerial(o, loSerialSet);
+    const status = (o.observationStatus || '').trim();
+    if (serial && status !== 'Not_Observed') {
+      if (!obsPerOutcome[serial]) obsPerOutcome[serial] = { count: 0, lastDate: '', yesTeachers: new Set(), allTeachers: new Set() };
+      obsPerOutcome[serial].count++;
+      if (o.date > (obsPerOutcome[serial].lastDate || '')) obsPerOutcome[serial].lastDate = o.date;
+      if (o.teacher) {
+        obsPerOutcome[serial].allTeachers.add(o.teacher.toLowerCase());
+        if (status === 'Yes') obsPerOutcome[serial].yesTeachers.add(o.teacher.toLowerCase());
+      }
+    }
+  });
+
+  const getImpactLevel = (serial) => {
+    const obs = obsPerOutcome[serial];
+    if (!obs || obs.count === 0) return { level: 'no_data', label: 'No Data', icon: 'fa-minus-circle', adopted: 0, total: 0, pct: 0 };
+    const adopted = obs.yesTeachers.size;
+    const total = obs.allTeachers.size;
+    const pct = total > 0 ? Math.round((adopted / total) * 100) : 0;
+    if (pct >= 75) return { level: 'high_impact', label: 'High Impact', icon: 'fa-fire', adopted, total, pct };
+    if (pct >= 25) return { level: 'moderate_impact', label: 'Moderate', icon: 'fa-chart-line', adopted, total, pct };
+    return { level: 'low_impact', label: 'Low Impact', icon: 'fa-exclamation-triangle', adopted, total, pct };
+  };
+
+  const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const impactFilter = document.getElementById('loStatusFilter')?.value || 'all';
+  let filtered = los.filter(l => l.subject === activeSubject);
+
+  if (searchTerm) {
+    filtered = filtered.filter(l =>
+      (l.serialNo || '').toLowerCase().includes(searchTerm) ||
+      (l.outcome || '').toLowerCase().includes(searchTerm) ||
+      (l.group || '').toLowerCase().includes(searchTerm)
+    );
+  }
+
+  if (impactFilter !== 'all') {
+    filtered = filtered.filter(l => getImpactLevel(l.serialNo).level === impactFilter);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state small">
+        <i class="fas fa-search"></i>
+        <p>No outcomes found matching your criteria.</p>
+      </div>`;
+    return;
+  }
+
+  // Group by Category/Group
+  const grouped = {};
+  filtered.forEach(l => {
+    const g = l.group || 'Ungrouped Outcomes';
+    if (!grouped[g]) grouped[g] = [];
+    grouped[g].push(l);
+  });
+
+  // Stats bar
+  const groupCount = Object.keys(grouped).length;
+  const highCount = filtered.filter(l => getImpactLevel(l.serialNo).level === 'high_impact').length;
+  const modCount = filtered.filter(l => getImpactLevel(l.serialNo).level === 'moderate_impact').length;
+  const lowCount = filtered.filter(l => getImpactLevel(l.serialNo).level === 'low_impact').length;
+  const noDataCount = filtered.filter(l => getImpactLevel(l.serialNo).level === 'no_data').length;
+  const totalObs = filtered.reduce((sum, l) => sum + (obsPerOutcome[l.serialNo]?.count || 0), 0);
+
+  let html = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-bottom:20px">
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#6366f1">${filtered.length}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="fas fa-clipboard-list"></i> Total</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#10b981">${highCount}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="fas fa-fire"></i> High Impact</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#f59e0b">${modCount}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="fas fa-chart-line"></i> Moderate</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#ef4444">${lowCount}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="fas fa-exclamation-triangle"></i> Low Impact</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#94a3b8">${noDataCount}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="fas fa-minus-circle"></i> No Data</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#8b5cf6">${groupCount}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="fas fa-layer-group"></i> Groups</div>
+      </div>
+    </div>`;
+
+  // Sort groups alphabetically (Ungrouped at end)
+  const sortedGroups = Object.keys(grouped).sort((a, b) =>
+    a === 'Ungrouped Outcomes' ? 1 : b === 'Ungrouped Outcomes' ? -1 : a.localeCompare(b));
+
+  sortedGroups.forEach(g => {
+    const outcomes = grouped[g];
+    outcomes.sort((a, b) => (a.serialNo || '').localeCompare(b.serialNo || '', undefined, { numeric: true }));
+
+    html += `
+      <div class="card" style="margin-bottom:20px;overflow:hidden">
+        <div class="card-header" style="background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:14px 20px;cursor:pointer" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; const i = this.querySelector('i.fa-chevron-down, i.fa-chevron-up'); if(i){i.classList.toggle('fa-chevron-down'); i.classList.toggle('fa-chevron-up');}">
+          <h3 style="margin:0;font-size:15px;color:var(--text-primary);display:flex;align-items:center;gap:10px;justify-content:space-between;width:100%">
+            <div style="display:flex;align-items:center;gap:10px">
+              <i class="fas fa-layer-group" style="color:#6366f1"></i>
+              ${escapeHtml(g)}
+              <span style="background:#e2e8f0;color:#475569;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600">${outcomes.length}</span>
+            </div>
+            <i class="fas fa-chevron-up" style="color:var(--text-muted);font-size:12px"></i>
+          </h3>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:1px;background:var(--border)">
+            ${outcomes.map(lo => {
+              const impact = getImpactLevel(lo.serialNo);
+              const obsData = obsPerOutcome[lo.serialNo] || { count: 0, lastDate: '', allTeachers: new Set() };
+              const teacherCount = obsData.allTeachers?.size || 0;
+              return `
+                <div style="background:var(--card-bg);padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+                  <div style="min-width:90px;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+                    <span style="display:inline-block;background:#fef3c7;color:#d97706;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;font-family:monospace;border:1px solid #fde68a">${escapeHtml(lo.serialNo || '-')}</span>
+                    <span class="tp-status-badge ${impact.level}"><i class="fas ${impact.icon}"></i> ${impact.label}</span>
+                    ${impact.total > 0 ? `<span style="font-size:10px;color:var(--text-muted)">${impact.adopted}/${impact.total} adopted</span>` : ''}
+                  </div>
+                  <div style="flex:1">
+                    <p style="margin:0 0 8px;color:var(--text-primary);font-size:14px;line-height:1.5">${escapeHtml(lo.outcome || '')}</p>
+                    <div style="display:flex;gap:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;align-items:center">
+                      ${lo.classes ? `<span title="Applicable Classes"><i class="fas fa-users" style="color:#94a3b8"></i> Classes: ${escapeHtml(lo.classes)}</span>` : ''}
+                      <span style="color:${obsData.count > 0 ? '#10b981' : '#94a3b8'}" title="Observations"><i class="fas fa-eye"></i> ${obsData.count} obs</span>
+                      ${teacherCount > 0 ? `<span style="color:#6366f1"><i class="fas fa-chalkboard-teacher"></i> ${teacherCount} teacher${teacherCount > 1 ? 's' : ''}</span>` : ''}
+                      ${obsData.lastDate ? `<span style="color:#8b5cf6"><i class="fas fa-calendar-check"></i> ${obsData.lastDate}</span>` : ''}
+                      ${lo.effectTracking === 'y' ? `<span style="color:#10b981"><i class="fas fa-chart-line"></i> ET</span>` : ''}
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleOutcomeDrillDown('${escapeHtml(lo.serialNo)}','${escapeHtml(lo.subject || activeSubject || '')}', this)" title="View linked observations" style="color:#6366f1"><i class="fas fa-eye"></i> <span style="font-size:10px">${obsData.count}</span></button>
+                    <button class="btn btn-ghost btn-sm" onclick="editLO('${lo.id}')" title="Edit Outcome"><i class="fas fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteLO('${lo.id}')" title="Delete Outcome"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+                <div id="lo-drilldown-${escapeHtml(lo.serialNo)}" style="display:none"></div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function switchLoTab(tab) {
+  const tabs = [
+    { key: 'outcomes', btn: 'loTabOutcomes', panel: 'loOutcomesTab' },
+    { key: 'analytics', btn: 'loTabAnalytics', panel: 'loAnalyticsTab' },
+    { key: 'mapping', btn: 'loTabMapping', panel: 'loMappingTab' },
+    { key: 'ai', btn: 'loTabAI', panel: 'loAITab' }
+  ];
+  tabs.forEach(t => {
+    const panel = document.getElementById(t.panel);
+    const btn = document.getElementById(t.btn);
+    if (!panel || !btn) return;
+    if (t.key === tab) {
+      panel.style.display = 'block';
+      btn.style.color = 'var(--accent)';
+      btn.style.borderBottom = '2px solid var(--accent)';
+    } else {
+      panel.style.display = 'none';
+      btn.style.color = 'var(--text-muted)';
+      btn.style.borderBottom = '2px solid transparent';
+    }
+  });
+  if (tab === 'analytics') renderLoAnalytics();
+  if (tab === 'mapping') renderLoTeacherMapping();
+  if (tab === 'ai') renderLoAIRecommendations();
+}
+
+function toggleOutcomeDrillDown(serial, subject, btn) {
+  const panel = document.getElementById('lo-drilldown-' + serial);
+  if (!panel) return;
+  if (panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+    if (btn) { btn.style.color = '#6366f1'; btn.title = 'View linked observations'; }
+    return;
+  }
+  const _loSerialSet = new Set((DB.get('learningOutcomes') || []).map(l => l.serialNo).filter(Boolean));
+  const observations = (DB.get('observations') || []).filter(o => {
+    const serialMatch = getObsLOSerial(o, _loSerialSet).toLowerCase() === serial.trim().toLowerCase();
+    const subjectMatch = !subject || (o.subject || '').trim().toLowerCase() === subject.trim().toLowerCase();
+    return serialMatch && subjectMatch;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (observations.length === 0) {
+    panel.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:var(--text-muted)"><i class="fas fa-info-circle"></i> No observations linked to this outcome. When recording observations, enter this outcome serial in the "Outcome Serial" field.</div>';
+    panel.style.display = 'block';
+    if (btn) { btn.style.color = '#f59e0b'; btn.title = 'Collapse observations'; }
+    return;
+  }
+
+  const rows = observations.map(o => {
+    const statusColor = (o.observationStatus || '').toLowerCase() === 'yes' ? '#10b981' : ((o.observationStatus || '').toLowerCase() === 'no' ? '#f59e0b' : '#94a3b8');
+    const statusLabel = (o.observationStatus || '').toLowerCase() === 'yes' ? ' Yes' : ((o.observationStatus || '').toLowerCase() === 'no' ? ' No' : '');
+    const dateStr = o.date ? new Date(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:6px 10px;font-size:11px;white-space:nowrap">${dateStr}</td>
+      <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.teacher || '')}</td>
+      <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.school || '')}</td>
+      <td style="padding:6px 10px;font-size:11px;font-weight:600;color:${statusColor}">${statusLabel}</td>
+      <td style="padding:6px 10px;font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(o.notes || '')}">${escapeHtml((o.notes || '').substring(0, 60))}${(o.notes || '').length > 60 ? '...' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div style="background:var(--bg-secondary);border-top:2px solid #6366f1;padding:12px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:#6366f1"><i class="fas fa-list"></i> ${observations.length} Linked Observation${observations.length > 1 ? 's' : ''}</span>
+      </div>
+      <div style="overflow-x:auto;border-radius:6px;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--card-bg)">
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600">Date</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600">Teacher</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600">School</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600">Status</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600">Notes</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  panel.style.display = 'block';
+  if (btn) { btn.style.color = '#f59e0b'; btn.title = 'Collapse observations'; }
+}
+window.toggleOutcomeDrillDown = toggleOutcomeDrillDown;
+
+function renderLoAnalytics() {
+  const container = document.getElementById('loAnalyticsContainer');
+  if (!container) return;
+  const now = new Date();
+  const activeSubject = document.getElementById('loSubjectFilter')?.value || '';
+  const los = (DB.get('learningOutcomes') || []).filter(l => !activeSubject || l.subject === activeSubject);
+
+  if (!activeSubject) {
+    const allSubjects = [...new Set((DB.get('learningOutcomes') || []).map(l => l.subject))].filter(Boolean).sort();
+    if (allSubjects.length === 0) {
+      container.innerHTML = `<div class="empty-state"><i class="fas fa-chart-bar"></i><h3>No Outcomes</h3><p>Import learning outcomes to view analytics.</p></div>`;
+      return;
+    }
+    const allLos = DB.get('learningOutcomes') || [];
+    const allObs = DB.get('observations') || [];
+    const subjectStats = allSubjects.map(sub => {
+      const subLos = allLos.filter(l => l.subject === sub);
+      const subObs = allObs.filter(o => (o.subject || '').toLowerCase().includes(sub.toLowerCase()));
+      const subLoSerialSet = new Set(subLos.map(l => l.serialNo).filter(Boolean));
+      const observedSerials = new Set(subObs.map(o => getObsLOSerial(o, subLoSerialSet)).filter(Boolean));
+      const yesCount = subObs.filter(o => o.observationStatus === 'Yes').length;
+      return { subject: sub, totalLos: subLos.length, observedLos: observedSerials.size, totalObs: subObs.length, yesCount };
+    });
+    container.innerHTML = `
+      <div class="card" style="padding:24px;margin-bottom:20px;border-top:4px solid #6366f1">
+        <h3 style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:8px"><i class="fas fa-balance-scale" style="color:#8b5cf6"></i> Multi-Subject Comparison</h3>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:24px">Select a specific subject from the dropdown above for detailed single-subject analytics.</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          ${subjectStats.map(s => {
+            const coveragePct = s.totalLos > 0 ? Math.round((s.observedLos / s.totalLos) * 100) : 0;
+            const adoptPct = s.totalObs > 0 ? Math.round((s.yesCount / s.totalObs) * 100) : 0;
+            return `<div style="flex:1;min-width:280px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <h4 style="font-size:15px;font-weight:700;color:var(--text-primary);margin:0">${escapeHtml(s.subject)}</h4>
+                <div style="background:rgba(99,102,241,0.1);color:#6366f1;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">${s.totalObs} Obs</div>
+              </div>
+              <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
+                  <span>Outcome Coverage (${s.observedLos}/${s.totalLos})</span>
+                  <span style="font-weight:700;color:var(--text-primary)">${coveragePct}%</span>
+                </div>
+                <div style="width:100%;background:var(--border);height:6px;border-radius:3px;overflow:hidden">
+                  <div style="width:${coveragePct}%;height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:3px"></div>
+                </div>
+              </div>
+              <div style="margin-bottom:16px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
+                  <span>Adoption Rate ('Yes' marks)</span>
+                  <span style="font-weight:700;color:#10b981">${adoptPct}%</span>
+                </div>
+                <div style="width:100%;background:var(--border);height:6px;border-radius:3px;overflow:hidden">
+                  <div style="width:${adoptPct}%;height:100%;background:#10b981;border-radius:3px"></div>
+                </div>
+              </div>
+              <div style="border-top:1px solid var(--border);padding-top:12px;text-align:center">
+                <span style="font-size:10px;color:var(--text-muted)">${s.totalLos} outcomes · ${s.totalObs} observations</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (los.length === 0) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Outcomes for ${escapeHtml(activeSubject)}</h3><p>Import learning outcomes for this subject first.</p></div>`;
+    return;
+  }
+
+  const allObs = DB.get('observations') || [];
+  const subjectLower = activeSubject.toLowerCase();
+  const obsForSubject = allObs.filter(o => (o.subject || '').toLowerCase().includes(subjectLower));
+
+  // Build per-LO stats
+  const loSerialSetAnalytics = new Set(los.map(l => l.serialNo).filter(Boolean));
+  const loStats = {};
+  los.forEach(lo => { loStats[lo.serialNo] = { lo, count: 0, teachers: new Set(), schools: new Set(), yesCount: 0, noCount: 0 }; });
+  obsForSubject.forEach(o => {
+    const serial = getObsLOSerial(o, loSerialSetAnalytics);
+    if (serial && loStats[serial]) {
+      const s = loStats[serial];
+      s.count++;
+      if (o.teacher) s.teachers.add(o.teacher);
+      if (o.school) s.schools.add(o.school);
+      if (o.observationStatus === 'Yes') s.yesCount++;
+      else if (o.observationStatus === 'No') s.noCount++;
+    }
+  });
+
+  const totalObs = obsForSubject.length;
+  const observedLOs = Object.values(loStats).filter(s => s.count > 0).length;
+  const neverObserved = los.length - observedLOs;
+  const allTeachers = new Set(obsForSubject.map(o => o.teacher).filter(Boolean));
+  const allSchools = new Set(obsForSubject.map(o => o.school).filter(Boolean));
+  const sortedStats = Object.values(loStats).sort((a, b) => b.count - a.count);
+  const maxCount = sortedStats[0]?.count || 1;
+
+  let html = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:28px">
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:800;color:#6366f1">${los.length}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-clipboard-list"></i> Total Outcomes</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:800;color:#10b981">${observedLOs}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-eye"></i> Observed</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:800;color:#f59e0b">${neverObserved}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-eye-slash"></i> Never Observed</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:800;color:#8b5cf6">${totalObs}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-binoculars"></i> Total Obs</div>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:800;color:#ec4899">${allTeachers.size}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fas fa-chalkboard-teacher"></i> Teachers</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div class="card" style="padding:20px">
+        <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:16px"><i class="fas fa-ranking-star" style="color:#6366f1"></i> Observation Frequency</h3>
+        <div style="max-height:320px;overflow-y:auto">
+          ${sortedStats.length === 0 || maxCount === 0 ? `<p style="color:var(--text-muted);font-size:13px">No observations linked to outcomes yet. Record observations with outcome serial numbers.</p>` :
+            sortedStats.slice(0, 15).map(s => {
+              const pct = Math.round((s.count / maxCount) * 100);
+              return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                <div style="min-width:72px;font-size:11px;font-weight:600;text-align:right;color:var(--text-muted);font-family:monospace">${escapeHtml(s.lo.serialNo)}</div>
+                <div style="flex:1;background:var(--bg-secondary);border-radius:6px;height:22px;position:relative;overflow:hidden">
+                  <div style="width:${pct}%;background:${s.count > 0 ? 'linear-gradient(90deg,#6366f1,#8b5cf6)' : 'var(--border)'};height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px">
+                    ${s.count > 0 ? `<span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap">${s.count}x</span>` : ''}
+                  </div>
+                </div>
+                <div style="min-width:100px;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(s.lo.outcome || '')}">${escapeHtml((s.lo.outcome || '').substring(0, 40))}${(s.lo.outcome || '').length > 40 ? '...' : ''}</div>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>
+      <div class="card" style="padding:20px">
+        <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:14px"><i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> Never Observed (Gaps)</h3>
+        ${neverObserved === 0 ?
+          `<div style="text-align:center;padding:20px"><i class="fas fa-trophy" style="font-size:30px;color:#10b981"></i><p style="color:#10b981;font-weight:600;margin-top:8px">All outcomes observed!</p></div>` :
+          `<div style="max-height:280px;overflow-y:auto">` +
+          Object.values(loStats).filter(s => s.count === 0).slice(0, 20).map(s => `
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding:8px;background:rgba(245,158,11,0.06);border-left:3px solid #f59e0b;border-radius:0 6px 6px 0">
+              <span style="font-size:10px;font-family:monospace;font-weight:700;color:#d97706;background:#fef3c7;padding:2px 6px;border-radius:4px;flex-shrink:0">${escapeHtml(s.lo.serialNo)}</span>
+              <span style="font-size:12px;color:var(--text-secondary);line-height:1.4">${escapeHtml((s.lo.outcome || '').substring(0, 80))}${(s.lo.outcome || '').length > 80 ? '...' : ''}</span>
+            </div>`).join('') + `</div>`
+        }
+      </div>
+    </div>`;
+
+  // School coverage table
+  if (allSchools.size > 0) {
+    html += `
+      <div class="card" style="padding:20px;margin-bottom:20px">
+        <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:14px"><i class="fas fa-school" style="color:#14b8a6"></i> School Coverage</h3>
+        <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr>
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-secondary);font-weight:600;color:var(--text-muted)">School</th>
+              <th style="text-align:center;padding:8px 10px;background:var(--bg-secondary);font-weight:600;color:var(--text-muted)">Observations</th>
+              <th style="text-align:center;padding:8px 10px;background:var(--bg-secondary);font-weight:600;color:var(--text-muted)">Outcomes Covered</th>
+              <th style="text-align:left;padding:8px 10px;background:var(--bg-secondary);font-weight:600;color:var(--text-muted)">Outcome IDs</th>
+            </tr></thead>
+            <tbody>
+              ${[...allSchools].sort().map(school => {
+                const schoolObs = obsForSubject.filter(o => o.school === school);
+                const schoolSerials = [...new Set(schoolObs.map(o => getObsLOSerial(o, loSerialSetAnalytics)).filter(Boolean))];
+                return `<tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:10px;font-weight:600;color:var(--text-primary)">${escapeHtml(school)}</td>
+                  <td style="padding:10px;text-align:center;color:#6366f1;font-weight:700">${schoolObs.length}</td>
+                  <td style="padding:10px;text-align:center;font-weight:700;color:#10b981">${schoolSerials.length}</td>
+                  <td style="padding:10px;font-size:11px;color:var(--text-muted)">
+                    ${schoolSerials.slice(0, 8).map(s => `<span style="background:var(--bg-secondary);padding:1px 5px;border-radius:4px;margin:1px;display:inline-block">${escapeHtml(s)}</span>`).join('')}${schoolSerials.length > 8 ? `<span style="color:var(--accent);font-size:10px;margin-left:4px">+${schoolSerials.length - 8} more</span>` : ''}
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderLoTeacherMapping() {
+  const container = document.getElementById('loMappingContainer');
+  if (!container) return;
+  const activeSubject = document.getElementById('loSubjectFilter')?.value || '';
+  if (!activeSubject) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-user-check"></i><h3>Select a Subject</h3><p>Choose a subject above to see and manage teacher-outcome assignments.</p></div>`;
+    return;
+  }
+  const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === activeSubject);
+  const assignments = (DB.get('loAssignments') || []).filter(a => a.subject === activeSubject);
+  const observations = DB.get('observations') || [];
+  const subjectLower = activeSubject.toLowerCase();
+
+  if (los.length === 0) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-bullseye"></i><h3>No Outcomes Found</h3><p>Import or add outcomes for this subject first.</p></div>`;
+    return;
+  }
+
+  const loMap = {};
+  los.forEach(l => loMap[l.id] = l);
+
+  const obsMap = {};
+  const groupYesCounts = {};
+  const loSerialGroupMap = {};
+  const loSerialNameMap = {};
+  los.forEach(l => {
+    loSerialGroupMap[l.serialNo] = l.group || 'General Outcomes';
+    loSerialNameMap[l.serialNo] = l.outcome || 'Unknown Outcome';
+  });
+
+  const loSerialSetMapping = new Set(los.map(l => l.serialNo).filter(Boolean));
+  observations.filter(o => (o.subject || '').toLowerCase().includes(subjectLower)).forEach(o => {
+    const key = (o.teacher || '').toLowerCase();
+    if (!key) return;
+    if (!obsMap[key]) obsMap[key] = {};
+    const serial = getObsLOSerial(o, loSerialSetMapping);
+    const status = (o.observationStatus || '').trim();
+    if (serial && status !== 'Not_Observed') {
+      if (!obsMap[key][serial]) obsMap[key][serial] = { count: 0, lastDate: '', hasYes: false, hasNo: false };
+      obsMap[key][serial].count++;
+      if (o.date > (obsMap[key][serial].lastDate || '')) obsMap[key][serial].lastDate = o.date;
+      if (status === 'Yes') {
+        obsMap[key][serial].hasYes = true;
+        const group = loSerialGroupMap[serial];
+        if (group) {
+          if (!groupYesCounts[group]) groupYesCounts[group] = {};
+          if (!groupYesCounts[group][key]) groupYesCounts[group][key] = { name: o.teacher, school: o.school || '', count: 0, group, outcomes: [] };
+          groupYesCounts[group][key].count++;
+          const outcomeName = loSerialNameMap[serial] || serial;
+          if (!groupYesCounts[group][key].outcomes.includes(outcomeName)) groupYesCounts[group][key].outcomes.push(outcomeName);
+        }
+      }
+      if (status === 'No') obsMap[key][serial].hasNo = true;
+    }
+  });
+
+  const exemplars = [];
+  Object.keys(groupYesCounts).forEach(group => {
+    const teachers = Object.values(groupYesCounts[group]).sort((a, b) => b.count - a.count);
+    if (teachers.length > 0 && teachers[0].count > 0) exemplars.push(teachers[0]);
+  });
+  exemplars.sort((a, b) => b.count - a.count);
+
+  const uniqueTeachers = [...new Set(assignments.map(a => a.teacher))].length;
+  const totalOutcomesAssigned = new Set(assignments.flatMap(a => a.outcomeIds || [])).size;
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:10px 16px">
+          <span style="font-size:20px;font-weight:700;color:#6366f1">${uniqueTeachers}</span>
+          <span style="font-size:12px;color:var(--text-muted)">Teachers</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:10px 16px">
+          <span style="font-size:20px;font-weight:700;color:#10b981">${totalOutcomesAssigned}</span>
+          <span style="font-size:12px;color:var(--text-muted)">Outcomes Assigned</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:10px 16px">
+          <span style="font-size:20px;font-weight:700;color:#f59e0b">${assignments.length}</span>
+          <span style="font-size:12px;color:var(--text-muted)">Assignments</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openLoAssignModal()"><i class="fas fa-user-plus"></i> Assign Teacher</button>
+    </div>`;
+
+  if (exemplars.length > 0) {
+    html += `
+      <div class="card" style="margin-bottom:20px;padding:20px;border-left:4px solid #10b981">
+        <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:8px"><i class="fas fa-crown" style="color:#f59e0b"></i> Peer Learning Exemplars</h3>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px">Top teachers who have successfully adopted specific outcomes.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:12px">
+          ${exemplars.slice(0, 6).map(ex => `
+            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                <div>
+                  <div style="font-weight:600;font-size:13px;color:var(--text-primary)">${escapeHtml(ex.name)}</div>
+                  <div style="font-size:11px;color:var(--text-muted)"><i class="fas fa-school"></i> ${escapeHtml(ex.school)}</div>
+                </div>
+                <div style="background:rgba(16,185,129,0.1);color:#10b981;font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px"><i class="fas fa-check-circle"></i> ${ex.count} Adopted</div>
+              </div>
+              <div style="background:rgba(217,119,6,0.05);border:1px solid rgba(217,119,6,0.1);padding:8px;border-radius:8px;font-size:11px">
+                <strong style="color:#d97706">Group:</strong> <span style="color:var(--text-primary)">${escapeHtml(ex.group)}</span>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  if (assignments.length === 0) {
+    html += `<div class="empty-state" style="margin-top:20px">
+      <i class="fas fa-user-plus"></i>
+      <h3>No Assignments Yet</h3>
+      <p>Click "Assign Teacher" to start mapping outcomes to teachers.</p>
+    </div>`;
+  } else {
+    assignments.forEach(a => {
+      const outcomes = (a.outcomeIds || []).map(id => loMap[id]).filter(Boolean);
+      const teacherKey = (a.teacher || '').toLowerCase();
+      const teacherObs = obsMap[teacherKey] || {};
+
+      html += `
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden">
+          <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px">${(a.teacher || '?')[0].toUpperCase()}</div>
+              <div>
+                <div style="font-weight:600;color:var(--text-primary);font-size:14px">${escapeHtml(a.teacher || 'Unknown')}</div>
+                <div style="font-size:12px;color:var(--text-muted)">${a.school ? '<i class="fas fa-school"></i> ' + escapeHtml(a.school) : ''} ${a.notes ? ' · ' + escapeHtml(a.notes) : ''}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:11px;color:var(--text-muted)">${outcomes.length} outcomes</span>
+              <button class="btn btn-ghost btn-sm" onclick="openLoAssignModal('${a.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+              <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteLoAssignment('${a.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div style="padding:8px 12px">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr style="color:var(--text-muted);font-size:11px">
+                <th style="padding:6px 8px;text-align:left;font-weight:600">Outcome</th>
+                <th style="padding:6px 8px;text-align:center;font-weight:600;width:80px">Status</th>
+                <th style="padding:6px 8px;text-align:center;font-weight:600;width:60px">Obs</th>
+                <th style="padding:6px 8px;text-align:right;font-weight:600;width:80px">Last Seen</th>
+              </tr></thead>
+              <tbody>
+                ${outcomes.map(lo => {
+                  const serial = lo.serialNo || '';
+                  const obsData = teacherObs[serial] || { count: 0, lastDate: '', hasYes: false, hasNo: false };
+                  let st, stLabel;
+                  if (obsData.count === 0) { st = 'not_introduced'; stLabel = 'Not Introduced'; }
+                  else if (obsData.hasYes) { st = 'adopted'; stLabel = 'Adopted'; }
+                  else { st = 'ongoing'; stLabel = 'Ongoing'; }
+                  return `<tr style="border-top:1px solid var(--border)">
+                    <td style="padding:8px"><span style="font-family:monospace;color:#d97706;font-weight:600;margin-right:6px">${escapeHtml(serial)}</span>${escapeHtml((lo.outcome || '').substring(0, 60))}${(lo.outcome || '').length > 60 ? '...' : ''}</td>
+                    <td style="padding:8px;text-align:center"><span class="tp-status-badge ${st}" style="font-size:9px">${stLabel}</span></td>
+                    <td style="padding:8px;text-align:center;font-weight:700;color:${obsData.count > 0 ? '#10b981' : '#94a3b8'}">${obsData.count}</td>
+                    <td style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted)">${obsData.lastDate || ''}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function renderLoAIRecommendations() {
+  const container = document.getElementById('loAIContainer');
+  if (!container) return;
+  const subject = document.getElementById('loSubjectFilter')?.value;
+  if (!subject) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-robot"></i><h3>Select a Subject</h3><p>Choose a subject above to get AI-powered outcome recommendations.</p></div>';
+    return;
+  }
+  const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === subject);
+  if (los.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-robot"></i><h3>No Outcomes Found</h3><p>Add outcomes for this subject first.</p></div>';
+    return;
+  }
+  const observations = (DB.get('observations') || []).filter(o => (o.subject || '').toLowerCase() === subject.toLowerCase());
+  const now = new Date();
+  const obsMap = {};
+  const loSerialSetAI = new Set(los.map(l => l.serialNo).filter(Boolean));
+  observations.forEach(o => {
+    const serial = getObsLOSerial(o, loSerialSetAI).toLowerCase();
+    if (!serial) return;
+    if (!obsMap[serial]) obsMap[serial] = { count: 0, lastDate: '', teachers: new Set(), yesTeachers: new Set() };
+    obsMap[serial].count++;
+    if (o.date > (obsMap[serial].lastDate || '')) obsMap[serial].lastDate = o.date;
+    if (o.teacher) {
+      obsMap[serial].teachers.add(o.teacher.toLowerCase());
+      if ((o.observationStatus || '').toLowerCase() === 'yes') obsMap[serial].yesTeachers.add(o.teacher.toLowerCase());
+    }
+  });
+
+  const maxObs = Math.max(1, ...Object.values(obsMap).map(o => o.count));
+  const scored = los.map(lo => {
+    const serial = (lo.serialNo || '').trim().toLowerCase();
+    const obs = obsMap[serial] || { count: 0, lastDate: '', teachers: new Set(), yesTeachers: new Set() };
+    const obsGapScore = 1 - (obs.count / maxObs);
+    const adoptionRate = obs.teachers.size > 0 ? obs.yesTeachers.size / obs.teachers.size : 0;
+    const adoptionScore = 1 - adoptionRate;
+    let recencyScore = 1;
+    if (obs.lastDate) {
+      const daysSince = Math.max(0, (now - new Date(obs.lastDate)) / (1000 * 60 * 60 * 24));
+      recencyScore = Math.min(1, daysSince / 90);
+    }
+    const etScore = lo.effectTracking === 'y' ? 0.8 : 0.5;
+    const totalScore = (obsGapScore * 0.45) + (adoptionScore * 0.30) + (recencyScore * 0.15) + (etScore * 0.10);
+    const reasons = [];
+    if (obs.count === 0) reasons.push({ label: 'Never observed', cls: 'danger' });
+    else if (obs.count <= 2) reasons.push({ label: 'Few observations', cls: 'warning' });
+    if (adoptionRate === 0 && obs.teachers.size > 0) reasons.push({ label: 'No adoption', cls: 'danger' });
+    else if (adoptionRate < 0.5 && obs.teachers.size > 0) reasons.push({ label: 'Low adoption', cls: 'warning' });
+    if (obs.lastDate && recencyScore > 0.5) reasons.push({ label: 'Not recent', cls: 'info' });
+    if (lo.effectTracking === 'y') reasons.push({ label: 'Effect tracked', cls: 'success' });
+    return { ...lo, score: totalScore, obs, adoptionRate, reasons, serial };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, 10);
+  const neverObserved = scored.filter(l => l.obs.count === 0).length;
+  const lowAdoption = scored.filter(l => l.adoptionRate < 0.3 && l.obs.teachers.size > 0).length;
+
+  let html = `
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <h3 style="margin:0;font-size:16px;color:var(--text-primary)">AI Outcome Recommendations</h3>
+          <p style="margin:0;font-size:12px;color:var(--text-muted)">Top ${top.length} outcomes to focus on for <strong>${escapeHtml(subject)}</strong> based on observation gaps, adoption rates &amp; recency</p>
+        </div>
+        ${SarvamAI.isConfigured() ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAILoDeepAnalysis('${escapeHtml(subject)}')" title="AI-powered deep analysis of all outcomes">
+            <i class="fas fa-brain"></i> AI Deep Analysis
+          </button>
+          <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAILoGapReport('${escapeHtml(subject)}')" title="Generate AI gap report">
+            <i class="fas fa-file-medical-alt"></i> AI Gap Report
+          </button>
+        </div>` : `<div style="font-size:11px;color:var(--text-muted);background:var(--bg-secondary);padding:6px 12px;border-radius:8px;border:1px solid var(--border)"><i class="fas fa-info-circle" style="color:#f59e0b"></i> Configure Sarvam AI in Settings for AI-powered analysis</div>`}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;padding:4px 10px;border-radius:20px;font-weight:600"><i class="fas fa-circle" style="font-size:6px;vertical-align:middle;margin-right:4px"></i> Critical</span>
+        <span style="font-size:11px;background:rgba(245,158,11,0.1);color:#f59e0b;padding:4px 10px;border-radius:20px;font-weight:600"><i class="fas fa-circle" style="font-size:6px;vertical-align:middle;margin-right:4px"></i> Needs Attention</span>
+        <span style="font-size:11px;background:rgba(99,102,241,0.1);color:#6366f1;padding:4px 10px;border-radius:20px;font-weight:600"><i class="fas fa-circle" style="font-size:6px;vertical-align:middle;margin-right:4px"></i> Improvement</span>
+        <span style="font-size:11px;background:rgba(16,185,129,0.1);color:#10b981;padding:4px 10px;border-radius:20px;font-weight:600"><i class="fas fa-circle" style="font-size:6px;vertical-align:middle;margin-right:4px"></i> Quick Win</span>
+      </div>
+    </div>`;
+
+  top.forEach((lo, i) => {
+    const scorePercent = Math.round(lo.score * 100);
+    const scoreColor = scorePercent >= 70 ? '#ef4444' : scorePercent >= 50 ? '#f59e0b' : scorePercent >= 30 ? '#6366f1' : '#10b981';
+    const lastObsStr = lo.obs.lastDate ? new Date(lo.obs.lastDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : 'Never';
+    const adoptPct = lo.obs.teachers.size > 0 ? Math.round(lo.adoptionRate * 100) : 0;
+    html += `
+      <div class="card" style="margin-bottom:12px;overflow:hidden;border-left:4px solid ${scoreColor}">
+        <div style="padding:16px 20px;display:flex;gap:16px;align-items:flex-start">
+          <div style="min-width:36px;text-align:center">
+            <div style="width:36px;height:36px;border-radius:10px;background:${scoreColor}15;color:${scoreColor};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800">#${i + 1}</div>
+            <div style="font-size:9px;color:var(--text-muted);margin-top:4px">${scorePercent}%</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+              <span style="background:#fef3c7;color:#d97706;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;font-family:monospace;border:1px solid #fde68a">${escapeHtml(lo.serialNo || '')}</span>
+              ${lo.reasons.map(r => `<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${r.cls === 'danger' ? 'rgba(239,68,68,0.1);color:#ef4444' : r.cls === 'warning' ? 'rgba(245,158,11,0.1);color:#f59e0b' : r.cls === 'success' ? 'rgba(16,185,129,0.1);color:#10b981' : 'rgba(99,102,241,0.1);color:#6366f1'}">${r.label}</span>`).join('')}
+            </div>
+            <p style="margin:0 0 8px;font-size:13px;color:var(--text-primary);line-height:1.5">${escapeHtml(lo.outcome || '')}</p>
+            <div style="display:flex;gap:16px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+              <span><i class="fas fa-eye" style="color:#94a3b8"></i> ${lo.obs.count} obs</span>
+              <span><i class="fas fa-users" style="color:#94a3b8"></i> ${lo.obs.teachers.size} teachers</span>
+              <span style="color:${adoptPct > 50 ? '#10b981' : adoptPct > 0 ? '#f59e0b' : '#ef4444'}"><i class="fas fa-check-circle"></i> ${adoptPct}% adopted</span>
+              <span><i class="fas fa-calendar" style="color:#94a3b8"></i> Last: ${lastObsStr}</span>
+              ${lo.effectTracking === 'y' ? `<span style="color:#10b981"><i class="fas fa-chart-line"></i> ET</span>` : ''}
+            </div>
+          </div>
+          ${SarvamAI.isConfigured() ? `<button class="btn btn-ghost btn-sm ai-action-btn" onclick="generateAILoTips('${lo.id}')" style="color:#8b5cf6;white-space:nowrap;font-size:11px" title="AI-powered teaching tips for this outcome"><i class="fas fa-lightbulb"></i> AI Tips</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('observations'); setTimeout(()=>{const s=document.getElementById('observationSearchInput'); if(s){s.value='${escapeHtml(lo.serialNo)}'; renderObservations();}},150)" style="color:#6366f1;white-space:nowrap;font-size:11px" title="View observations for this outcome"><i class="fas fa-search"></i> View Obs</button>
+        </div>
+      </div>`;
+  });
+
+  html += `
+    <div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:12px;border:1px solid var(--border)">
+      <h4 style="margin:0 0 10px;font-size:13px;color:var(--text-primary)"><i class="fas fa-chart-pie" style="color:#6366f1"></i> Summary Insights</h4>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)">
+        <span><strong style="color:var(--text-primary)">${los.length}</strong> total outcomes</span>
+        <span><strong style="color:#ef4444">${neverObserved}</strong> never observed</span>
+        <span><strong style="color:#f59e0b">${lowAdoption}</strong> low adoption (&lt;30%)</span>
+        <span><strong style="color:#10b981">${los.length - neverObserved}</strong> have observation data</span>
+        <span><strong style="color:#6366f1">${observations.length}</strong> total observations</span>
+      </div>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+// ===== AI LO Deep Analysis =====
+async function generateAILoDeepAnalysis(subject) {
+  if (!SarvamAI.isConfigured()) { showToast('Configure Sarvam AI API key in Settings first', 'warning'); return; }
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...'; }
+
+  const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === subject);
+  const observations = (DB.get('observations') || []).filter(o => (o.subject || '').toLowerCase() === subject.toLowerCase());
+  const loSerialSet = new Set(los.map(l => l.serialNo).filter(Boolean));
+
+  const MAX_LOS = 40;
+  const allLoStats = los.map(l => {
+    const serial = (l.serialNo || '').toLowerCase();
+    const relObs = observations.filter(o => getObsLOSerial(o, loSerialSet).toLowerCase() === serial);
+    const teachers = new Set(relObs.map(o => o.teacher).filter(Boolean));
+    const yesTeachers = new Set(relObs.filter(o => (o.observationStatus || '') === 'Yes').map(o => o.teacher).filter(Boolean));
+    const lastDate = relObs.reduce((latest, o) => o.date > latest ? o.date : latest, '');
+    return `${l.serialNo}: "${(l.outcome || '').substring(0, 60)}" | G:${l.group || '-'} | Obs:${relObs.length} | T:${teachers.size} | Ad:${yesTeachers.size} | ET:${l.effectTracking === 'y' ? 'Yes' : 'No'} | Last:${lastDate || 'Never'}`;
+  });
+  const loStats = allLoStats.slice(0, MAX_LOS).join('\n');
+  const truncNote = allLoStats.length > MAX_LOS ? `\n(... and ${allLoStats.length - MAX_LOS} more outcomes)` : '';
+
+  const totalTeachers = new Set(observations.map(o => o.teacher).filter(Boolean)).size;
+  const totalSchools = new Set(observations.map(o => o.school).filter(Boolean)).size;
+  const neverObserved = los.filter(l => !observations.some(o => getObsLOSerial(o, loSerialSet).toLowerCase() === (l.serialNo || '').toLowerCase())).length;
+
+  const prompt = `Analyze learning outcomes for "${subject}" (APF Azim Premji Foundation).
+
+OVERVIEW: ${los.length} outcomes, ${observations.length} observations, ${neverObserved} never observed, ${totalTeachers} teachers, ${totalSchools} schools.
+
+DATA:
+${loStats}${truncNote}
+
+Provide: 1) Executive Summary 2) Pattern Analysis 3) Critical Gaps 4) Teacher Support Plan 5) Observation Schedule 6) Quick Wins 7) 3-month Strategy. Be specific, reference serial numbers.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are a senior education analyst at Azim Premji Foundation. Provide data-driven analysis with actionable recommendations. Reference LO serial numbers. Always respond in English only.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.5, max_tokens: 2048 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate analysis.';
+    showAIOutputModal('AI Deep Analysis ' + subject, reply);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-brain"></i> AI Deep Analysis'; }
+}
+
+// ===== AI LO Gap Report =====
+async function generateAILoGapReport(subject) {
+  if (!SarvamAI.isConfigured()) { showToast('Configure Sarvam AI API key in Settings first', 'warning'); return; }
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Report...'; }
+
+  const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === subject);
+  const observations = (DB.get('observations') || []).filter(o => (o.subject || '').toLowerCase() === subject.toLowerCase());
+  const loSerialSet = new Set(los.map(l => l.serialNo).filter(Boolean));
+  const profile = DB.get('userProfile') || {};
+
+  const groups = [...new Set(los.map(l => l.group || 'Ungrouped'))].sort();
+  let groupSummary = '';
+  groups.forEach(g => {
+    const gLos = los.filter(l => (l.group || 'Ungrouped') === g);
+    const observed = gLos.filter(l => observations.some(o => getObsLOSerial(o, loSerialSet).toLowerCase() === (l.serialNo || '').toLowerCase())).length;
+    groupSummary += `\n- ${g}: ${gLos.length} outcomes, ${observed} observed, ${gLos.length - observed} gaps`;
+  });
+
+  const allNeverObs = los.filter(l => !observations.some(o => getObsLOSerial(o, loSerialSet).toLowerCase() === (l.serialNo || '').toLowerCase()));
+  const neverObsList = allNeverObs.slice(0, 25).map(l => `${l.serialNo}: ${(l.outcome || '').substring(0, 50)}`).join('\n');
+  const truncNote = allNeverObs.length > 25 ? `\n(... and ${allNeverObs.length - 25} more)` : '';
+
+  const prompt = `Generate a concise Learning Outcome Gap Report for "${subject}".
+
+RP: ${profile.name || 'N/A'}, Block: ${profile.block || 'N/A'}, Date: ${new Date().toLocaleDateString('en-IN')}
+
+DATA: ${los.length} outcomes, ${observations.length} observations, ${allNeverObs.length} never observed.
+
+GROUPS:${groupSummary}
+
+NEVER OBSERVED:
+${neverObsList || 'None'}${truncNote}
+
+Provide: 1) Executive Summary 2) Gap Analysis by group 3) Top 5 Critical Gaps 4) Action Plan with timelines 5) Resource Needs 6) Next Steps. Professional tone, be concise.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are a report writer for Azim Premji Foundation. Generate concise, well-structured gap reports for Block Coordinators. Use clear headings and actionable recommendations. Always respond in English only.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.4, max_tokens: 3000 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate report.';
+    showAIOutputModal('AI Gap Report ' + subject, reply);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-medical-alt"></i> AI Gap Report'; }
+}
+
+// ===== AI LO Tips (per-outcome) =====
+async function generateAILoTips(loId) {
+  if (!SarvamAI.isConfigured()) { showToast('Configure Sarvam AI API key in Settings first', 'warning'); return; }
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+  const los = DB.get('learningOutcomes') || [];
+  const lo = los.find(l => l.id === loId);
+  if (!lo) { showToast('Outcome not found', 'error'); return; }
+
+  const loSerialSet = new Set(los.map(l => l.serialNo).filter(Boolean));
+  const observations = (DB.get('observations') || []).filter(o =>
+    getObsLOSerial(o, loSerialSet).toLowerCase() === (lo.serialNo || '').toLowerCase() &&
+    (o.subject || '').toLowerCase() === (lo.subject || '').toLowerCase()
+  );
+  const teacherCount = new Set(observations.map(o => o.teacher).filter(Boolean)).size;
+  const yesCount = observations.filter(o => (o.observationStatus || '') === 'Yes').length;
+  const engagementLevels = observations.map(o => o.engagementLevel).filter(Boolean);
+
+  const prompt = `Generate practical classroom strategies to help teachers achieve this learning outcome:
+
+SUBJECT: ${lo.subject}
+OUTCOME: ${lo.serialNo} — ${lo.outcome}
+GROUP: ${lo.group || 'N/A'}
+APPLICABLE CLASSES: ${lo.classes || 'All'}
+EFFECT TRACKING: ${lo.effectTracking === 'y' ? 'Yes' : 'No'}
+
+OBSERVATION DATA:
+- Total observations: ${observations.length}
+- Teachers observed: ${teacherCount}
+- Adoption (Yes count): ${yesCount}
+- Engagement levels seen: ${engagementLevels.join(', ') || 'N/A'}
+- Recent notes: ${observations.slice(0, 3).map(o => o.notes || o.strengths || '').filter(Boolean).join(' | ') || 'None'}
+
+Provide:
+1. **Why This Outcome Matters** — 2-3 lines on its importance
+2. **Step-by-Step Teaching Approach** — 5-6 steps a teacher can follow
+3. **TLM / Activity Suggestions** — Specific materials and activities
+4. **Common Misconceptions** — What students typically struggle with
+5. **Peer Learning Ideas** — How teachers can support each other
+6. **Quick Classroom Activities** — 3 ready-to-use activities
+7. **How to Assess Progress** — Signs that the outcome is being achieved
+
+Keep language simple and practical for government school teachers in India.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are an experienced pedagogical coach at Azim Premji Foundation. Provide practical, easy-to-implement teaching strategies for government school teachers in India. Use simple language, concrete examples, and actionable advice. Be warm and encouraging.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.6, max_tokens: 2000 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate tips.';
+    showAIOutputModal('AI Tips ' + lo.serialNo + ': ' + (lo.outcome || '').substring(0, 50), reply, loId);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-lightbulb"></i> AI Tips'; }
+}
+
+function exportLoFrameworkPDF() {
+  const subj = document.getElementById('loSubjectFilter').value;
+  if (!subj) { showToast('Select a subject first', 'warning'); return; }
+  const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === subj);
+  if (!los.length) { showToast('No outcomes to export', 'warning'); return; }
+  const groups = {};
+  los.forEach(l => { const g = l.group || 'General'; if (!groups[g]) groups[g] = []; groups[g].push(l); });
+  const profile = typeof getProfile === 'function' ? getProfile() : {};
+  // Build obs data for impact
+  const observations = DB.get('observations') || [];
+  const subjectLower = subj.toLowerCase();
+  const loSerialSetPDF = new Set(los.map(l => l.serialNo).filter(Boolean));
+  const obsPerLO = {};
+  observations.filter(o => (o.subject || '').toLowerCase().includes(subjectLower)).forEach(o => {
+    const serial = getObsLOSerial(o, loSerialSetPDF);
+    const status = (o.observationStatus || '').trim();
+    if (serial && status !== 'Not_Observed') {
+      if (!obsPerLO[serial]) obsPerLO[serial] = { yesTeachers: new Set(), allTeachers: new Set() };
+      if (o.teacher) {
+        obsPerLO[serial].allTeachers.add(o.teacher.toLowerCase());
+        if (status === 'Yes') obsPerLO[serial].yesTeachers.add(o.teacher.toLowerCase());
+      }
+    }
+  });
+  const getImpact = (serial) => {
+    const obs = obsPerLO[serial];
+    if (!obs || obs.allTeachers.size === 0) return { label: 'No Data', color: '#94a3b8' };
+    const pct = Math.round((obs.yesTeachers.size / obs.allTeachers.size) * 100);
+    if (pct >= 75) return { label: 'High Impact', color: '#10b981' };
+    if (pct >= 25) return { label: 'Moderate', color: '#f59e0b' };
+    return { label: 'Low Impact', color: '#ef4444' };
+  };
+  let html = `<div style="font-family:Inter,sans-serif;max-width:700px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:24px">
+      <h1 style="margin:0;font-size:22px;color:#1e293b">Learning Outcomes Framework</h1>
+      <h2 style="margin:4px 0 0;font-size:16px;color:#6366f1;font-weight:600">${escapeHtml(subj)}</h2>
+      <p style="color:#94a3b8;font-size:12px;margin:8px 0 0">${profile.name ? 'Resource Person: ' + escapeHtml(profile.name) : ''} ${profile.block ? '| Block: ' + escapeHtml(profile.block) : ''} | Total: ${los.length} outcomes | ${Object.keys(groups).length} groups</p>
+    </div>`;
+  Object.keys(groups).sort().forEach(g => {
+    const outcomes = groups[g].sort((a, b) => (a.serialNo || '').localeCompare(b.serialNo || ''));
+    html += `<h3 style="margin:20px 0 8px;font-size:14px;color:#6366f1;border-bottom:2px solid #6366f1;padding-bottom:4px">${escapeHtml(g)} (${outcomes.length})</h3>`;
+    html += `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
+      <thead><tr style="background:#f1f5f9">
+        <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;width:60px">ID</th>
+        <th style="padding:8px;text-align:left;border:1px solid #e2e8f0">Learning Outcome</th>
+        <th style="padding:8px;text-align:center;border:1px solid #e2e8f0;width:80px">Impact</th>
+        <th style="padding:8px;text-align:center;border:1px solid #e2e8f0;width:60px">Classes</th>
+        <th style="padding:8px;text-align:center;border:1px solid #e2e8f0;width:40px">ET</th>
+      </tr></thead><tbody>`;
+    outcomes.forEach(lo => {
+      const imp = getImpact(lo.serialNo);
+      const ratio = obsPerLO[lo.serialNo] ? `${obsPerLO[lo.serialNo].yesTeachers.size}/${obsPerLO[lo.serialNo].allTeachers.size}` : '';
+      html += `<tr>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;font-weight:600;font-family:monospace">${escapeHtml(lo.serialNo || '')}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0">${escapeHtml(lo.outcome || '')}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-size:10px;font-weight:600;color:${imp.color}">${imp.label}${ratio ? '<br><span style="font-weight:400;color:#64748b">' + ratio + '</span>' : ''}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center">${escapeHtml(lo.classes || '-')}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;color:${lo.effectTracking === 'y' ? '#10b981' : '#94a3b8'}">${lo.effectTracking === 'y' ? '✓' : '-'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  });
+  html += '</div>';
+  if (typeof openPdfEditor === 'function') {
+    openPdfEditor(html, `Learning Outcomes - ${subj}`);
+  } else {
+    showToast('PDF editor not available', 'error');
+  }
+}
+
+function saveLO(loData) {
+  const los = DB.get('learningOutcomes') || [];
+  if (!loData.id) {
+    loData.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+    los.push(loData);
+  } else {
+    const idx = los.findIndex(l => l.id === loData.id);
+    if (idx !== -1) los[idx] = loData;
+    else los.push(loData);
+  }
+  DB.set('learningOutcomes', los);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+}
+
+function deleteLO(id) {
+  if (!confirm('Are you sure you want to delete this learning outcome?')) return;
+  const los = DB.get('learningOutcomes') || [];
+  DB.set('learningOutcomes', los.filter(l => l.id !== id));
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderLearningOutcomes();
+  showToast('Outcome deleted', 'success');
+}
+
+function deleteSubjectLOs() {
+  const subj = document.getElementById('loSubjectFilter').value;
+  if (!subj) return;
+  if (!confirm(`Are you sure you want to delete ALL learning outcomes for "${subj}"? This cannot be undone.`)) return;
+  const los = DB.get('learningOutcomes') || [];
+  DB.set('learningOutcomes', los.filter(l => l.subject !== subj));
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  document.getElementById('loSubjectFilter').value = '';
+  renderLearningOutcomes();
+  showToast(`All "${subj}" outcomes deleted`, 'success');
+}
+
+function openLoEditModal(id = null) {
+  const modal = document.getElementById('loEditModal');
+  const title = document.getElementById('loEditModalTitle');
+  document.getElementById('loEditId').value = '';
+  document.getElementById('loEditSubject').value = document.getElementById('loSubjectFilter').value || '';
+  document.getElementById('loEditSerial').value = '';
+  document.getElementById('loEditGroup').value = '';
+  document.getElementById('loEditOutcome').value = '';
+  document.getElementById('loEditClasses').value = '';
+  document.getElementById('loEditEffect').checked = false;
+  if (id) {
+    const los = DB.get('learningOutcomes') || [];
+    const lo = los.find(l => l.id === id);
+    if (lo) {
+      title.innerHTML = '<i class="fas fa-pen"></i> Edit Outcome';
+      document.getElementById('loEditId').value = lo.id;
+      document.getElementById('loEditSubject').value = lo.subject || '';
+      document.getElementById('loEditSerial').value = lo.serialNo || '';
+      document.getElementById('loEditGroup').value = lo.group || '';
+      document.getElementById('loEditOutcome').value = lo.outcome || '';
+      document.getElementById('loEditClasses').value = lo.classes || '';
+      document.getElementById('loEditEffect').checked = lo.effectTracking === 'y';
+    }
+  } else {
+    title.innerHTML = '<i class="fas fa-plus"></i> Add Outcome';
+  }
+  modal.classList.add('active');
+}
+
+function saveLoEdit() {
+  const subj = document.getElementById('loEditSubject').value.trim();
+  const serial = document.getElementById('loEditSerial').value.trim();
+  const group = document.getElementById('loEditGroup').value.trim();
+  const outcome = document.getElementById('loEditOutcome').value.trim();
+  if (!subj || !serial || !group || !outcome) {
+    showToast('Subject, ID, Group, and Outcome Description are required.', 'warning');
+    return;
+  }
+  const loData = {
+    id: document.getElementById('loEditId').value || null,
+    subject: subj, serialNo: serial, group, outcome,
+    classes: document.getElementById('loEditClasses').value.trim(),
+    effectTracking: document.getElementById('loEditEffect').checked ? 'y' : 'n'
+  };
+  saveLO(loData);
+  closeModal('loEditModal');
+  const filter = document.getElementById('loSubjectFilter');
+  if (!filter.querySelector(`option[value="${subj}"]`)) filter.insertAdjacentHTML('beforeend', `<option value="${subj}">${escapeHtml(subj)}</option>`);
+  filter.value = subj;
+  renderLearningOutcomes();
+  showToast('Outcome saved successfully', 'success');
+}
+
+function openLoImportModal() {
+  document.getElementById('loImportSubject').value = document.getElementById('loSubjectFilter').value || '';
+  document.getElementById('loImportFileInput').value = '';
+  document.getElementById('loImportFileName').innerText = 'Click to browse file';
+  document.getElementById('loImportModal').classList.add('active');
+}
+
+function processLoImport() {
+  const subj = document.getElementById('loImportSubject').value.trim();
+  const fileInput = document.getElementById('loImportFileInput');
+  if (!subj) { showToast('Please enter a subject name', 'warning'); return; }
+  if (!fileInput.files.length) { showToast('Please select an Excel file', 'warning'); return; }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+      if (rows.length < 2) throw new Error('File appears to be empty or missing data rows.');
+      const headerRow = rows[0].map(h => (h || '').toString().toLowerCase().trim());
+      const idxGroup = headerRow.findIndex(h =>
+        h.includes('group') || h.includes('theme') || h.includes('category') ||
+        h.includes('domain') || h.includes('strand') || h.includes('area'));
+      const idxSerial = headerRow.findIndex(h =>
+        h === 'id' || h === 'no' || h === 'no.' || h === '#' || h === 'sr' || h === 'sr.' ||
+        h.includes('serial') || h.includes('number') || h.includes('code') ||
+        (h.startsWith('id') && h.length <= 6) || (h.startsWith('lo') && h.length <= 6));
+      const idxOutcome = headerRow.findIndex((h, i) =>
+        i !== idxSerial && i !== idxGroup && (
+          h.includes('learning outcome') || h.includes('outcome') ||
+          h.includes('practice') || h.includes('description') || h.includes('statement') ||
+          h.includes('competency') || h.includes('indicator') || h.includes('objective') ||
+          h.includes('skill') || h.includes('standard')
+        ));
+      const idxClasses = headerRow.findIndex(h => h.includes('class') || h.includes('grade') || h.includes('level'));
+      const idxEffect = headerRow.findIndex(h => h === 'et' || h.includes('effect') || h.includes('tracking'));
+      if (idxSerial === -1 || idxOutcome === -1) {
+        const found = headerRow.map((h, i) => `col ${i + 1}: "${h}"`).join(', ');
+        throw new Error(`Could not find required columns. Detected headers: [${found}]. Please ensure your file has columns for "ID" and "Learning Outcome" (Group is optional).`);
+      }
+      let importCount = 0;
+      const newLos = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[idxOutcome]) continue;
+        const serialVal = (row[idxSerial] || '').toString().trim();
+        const groupVal = (row[idxGroup] || '').toString().trim() || 'General / Ungrouped';
+        const outcomeVal = (row[idxOutcome] || '').toString().trim();
+        if (!outcomeVal) continue;
+        newLos.push({
+          id: Date.now().toString() + importCount + Math.random().toString(36).substr(2, 5),
+          subject: subj, group: groupVal,
+          serialNo: serialVal || `LO-NEW-${importCount + 1}`,
+          outcome: outcomeVal,
+          classes: idxClasses !== -1 ? (row[idxClasses] || '').toString().trim() : '',
+          effectTracking: idxEffect !== -1 && (row[idxEffect] || '').toString().toLowerCase().startsWith('y') ? 'y' : 'n'
+        });
+        importCount++;
+      }
+      if (importCount > 0) {
+        const los = DB.get('learningOutcomes') || [];
+        DB.set('learningOutcomes', los.concat(newLos));
+        if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+        closeModal('loImportModal');
+        document.getElementById('loSubjectFilter').value = subj;
+        renderLearningOutcomes();
+        showToast(`Successfully imported ${importCount} outcomes for ${subj}!`, 'success');
+      } else {
+        showToast('No valid learning outcomes found in the file.', 'warning');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Import Failed: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function openLoAssignModal(editId = null) {
+  const activeSubject = document.getElementById('loSubjectFilter')?.value || '';
+  if (!activeSubject) { showToast('Select a subject first', 'warning'); return; }
+  const los = (DB.get('learningOutcomes') || []).filter(l => l.subject === activeSubject);
+  const obs = DB.get('observations') || [];
+  const title = document.getElementById('loAssignModalTitle');
+  document.getElementById('loAssignEditId').value = '';
+  document.getElementById('loAssignTeacher').value = '';
+  document.getElementById('loAssignSchool').value = '';
+  document.getElementById('loAssignNotes').value = '';
+  const teachers = [...new Set(obs.map(o => o.teacher).filter(Boolean))].sort();
+  const schools = [...new Set(obs.map(o => o.school).filter(Boolean))].sort();
+  document.getElementById('loAssignTeacherList').innerHTML = teachers.map(t => `<option value="${escapeHtml(t)}">`).join('');
+  document.getElementById('loAssignSchoolList').innerHTML = schools.map(s => `<option value="${escapeHtml(s)}">`).join('');
+  let selectedIds = [];
+  if (editId) {
+    const assignments = DB.get('loAssignments') || [];
+    const a = assignments.find(x => x.id === editId);
+    if (a) {
+      title.innerHTML = '<i class="fas fa-pen"></i> Edit Assignment';
+      document.getElementById('loAssignEditId').value = a.id;
+      document.getElementById('loAssignTeacher').value = a.teacher || '';
+      document.getElementById('loAssignSchool').value = a.school || '';
+      document.getElementById('loAssignNotes').value = a.notes || '';
+      selectedIds = a.outcomeIds || [];
+    }
+  } else {
+    title.innerHTML = '<i class="fas fa-user-plus"></i> Assign to Teacher';
+  }
+  const grouped = {};
+  los.forEach(l => { const g = l.group || 'General'; if (!grouped[g]) grouped[g] = []; grouped[g].push(l); });
+  let checkHtml = '';
+  Object.keys(grouped).sort().forEach(g => {
+    checkHtml += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 2px;padding-left:4px">${escapeHtml(g)}</div>`;
+    grouped[g].forEach(lo => {
+      const checked = selectedIds.includes(lo.id) ? 'checked' : '';
+      checkHtml += `<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--text-primary)">
+        <input type="checkbox" value="${lo.id}" ${checked} class="loAssignCb" style="margin-top:2px">
+        <span style="font-family:monospace;color:#d97706;font-weight:600;font-size:11px;white-space:nowrap">${escapeHtml(lo.serialNo)}</span>
+        <span style="font-size:12px">${escapeHtml(lo.outcome || '')}</span>
+      </label>`;
+    });
+  });
+  document.getElementById('loAssignOutcomeList').innerHTML = checkHtml;
+  document.getElementById('loAssignModal').classList.add('active');
+}
+
+function saveLoAssignment() {
+  const teacher = document.getElementById('loAssignTeacher').value.trim();
+  const school = document.getElementById('loAssignSchool').value.trim();
+  const notes = document.getElementById('loAssignNotes').value.trim();
+  const editId = document.getElementById('loAssignEditId').value;
+  const activeSubject = document.getElementById('loSubjectFilter')?.value || '';
+  if (!teacher) { showToast('Teacher name is required', 'warning'); return; }
+  const outcomeIds = [];
+  document.querySelectorAll('.loAssignCb:checked').forEach(cb => outcomeIds.push(cb.value));
+  if (outcomeIds.length === 0) { showToast('Select at least one outcome', 'warning'); return; }
+  const assignments = DB.get('loAssignments') || [];
+  const data = {
+    id: editId || (Date.now().toString() + Math.random().toString(36).substr(2, 6)),
+    subject: activeSubject, teacher, school, outcomeIds, notes,
+    assignedDate: new Date().toISOString().split('T')[0]
+  };
+  if (editId) {
+    const idx = assignments.findIndex(a => a.id === editId);
+    if (idx >= 0) assignments[idx] = data; else assignments.push(data);
+  } else {
+    assignments.push(data);
+  }
+  DB.set('loAssignments', assignments);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  closeModal('loAssignModal');
+  renderLoTeacherMapping();
+  showToast(`Outcomes assigned to ${teacher}`, 'success');
+}
+
+function deleteLoAssignment(id) {
+  if (!confirm('Delete this assignment?')) return;
+  const assignments = DB.get('loAssignments') || [];
+  DB.set('loAssignments', assignments.filter(a => a.id !== id));
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderLoTeacherMapping();
+  showToast('Assignment deleted', 'success');
+}
+
+// Global scope bindings for LO inline HTML handlers
+window.editLO = openLoEditModal;
+window.deleteLO = deleteLO;
+window.deleteLoAssignment = deleteLoAssignment;
+
 // ===== Export Practice Framework as PDF =====
 function exportTpFrameworkPDF() {
  const subj = document.getElementById('tpSubjectFilter').value;
@@ -26609,6 +27890,7 @@ const CMD_SECTIONS = [
  { section: 'scheduler', label: 'Smart Visit Scheduler', icon: 'fa-calendar-check', group: 'Field Work' },
  { section: 'observations', label: 'Observations', icon: 'fa-clipboard-check', group: 'Field Work' },
  { section: 'teachingpractices', label: 'Teaching Practices', icon: 'fa-layer-group', group: 'Field Work' },
+ { section: 'learningoutcomes', label: 'Learning Outcomes', icon: 'fa-bullseye', group: 'Field Work' },
  { section: 'schoolwork', label: 'School Work', icon: 'fa-chalkboard', group: 'Field Work' },
  { section: 'training', label: 'Teacher Training', icon: 'fa-chalkboard-teacher', group: 'Teacher Dev' },
  { section: 'teachers', label: 'Teacher Growth', icon: 'fa-user-graduate', group: 'Teacher Dev' },
