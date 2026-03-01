@@ -2186,7 +2186,7 @@
  Practice Serial No, Teaching Practice</p>
  </div>
  <input type="file" id="tpImportFileInput" accept=".xlsx,.xls,.csv" style="display:none"
- onchange="document.getElementById('tpImportFileName').innerText=this.files[0]this.files[0].name:'Click to browse file'">
+ onchange="document.getElementById('tpImportFileName').innerText=this.files[0]?this.files[0].name:'Click to browse file'">
  </div>
  <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px">
  <button class="btn btn-outline" onclick="closeModal('tpImportModal')">Cancel</button>
