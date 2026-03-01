@@ -12278,43 +12278,116 @@ body.modal-open {
     font-style: italic;
 }
 
-/* === CUSTOM CALENDAR PICKER === */
-.fu-cal-selected-display {
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    font-size: 13px;
-    color: var(--text-muted);
-    font-style: italic;
-    text-align: center;
-    margin-bottom: 4px;
-}
+/* === CUSTOM CALENDAR PICKER (MODAL) === */
 
-.fu-cal-selected-display.fu-cal-selected-display-set {
+/* Trigger button inside SLA modal */
+.fu-cal-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition);
+    text-align: left;
+}
+.fu-cal-trigger:hover,
+.fu-cal-trigger.open {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: var(--bg-card);
+}
+.fu-cal-trigger.fu-cal-trigger-set {
     color: var(--accent);
-    font-style: normal;
     font-weight: 600;
     border-color: var(--accent);
     background: var(--accent-light);
 }
-
-.fu-cal-widget {
-    border: 1px solid var(--border);
-    border-radius: 12px;
+.fu-cal-trigger-arrow {
+    margin-left: auto;
+    font-size: 11px;
+    transition: transform 0.2s ease;
+    opacity: 0.6;
+}
+.fu-cal-trigger.open .fu-cal-trigger-arrow {
+    transform: rotate(180deg);
+    opacity: 1;
+    color: var(--accent);
+}
+#fuCalSelectedDisplay {
+    flex: 1;
+    white-space: nowrap;
     overflow: hidden;
-    background: var(--bg-card);
+    text-overflow: ellipsis;
 }
 
+/* Standalone calendar modal overlay */
+.fu-cal-modal-overlay {
+    z-index: 1100 !important;
+    align-items: center;
+    justify-content: center;
+}
+.fu-cal-modal {
+    background: var(--bg-card);
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    width: 340px;
+    max-width: 95vw;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    animation: slideUp 0.18s ease;
+}
+.fu-cal-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+.fu-cal-modal-header i { color: var(--accent); margin-right: 6px; }
+.fu-cal-modal-banner {
+    text-align: center;
+    padding: 10px 18px 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+.fu-cal-modal-banner.fu-cal-modal-banner-set {
+    color: var(--accent);
+    font-weight: 700;
+    font-style: normal;
+    background: var(--accent-light);
+}
+.fu-cal-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 14px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+/* Calendar internal layout */
 .fu-cal-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px;
-    background: var(--bg-secondary);
+    background: var(--bg-card);
     border-bottom: 1px solid var(--border);
 }
-
 .fu-cal-nav-btn {
     background: none;
     border: 1px solid var(--border);
@@ -12329,26 +12402,23 @@ body.modal-open {
     font-size: 12px;
     transition: var(--transition);
 }
-
 .fu-cal-nav-btn:hover {
     background: var(--accent-light);
     border-color: var(--accent);
     color: var(--accent);
 }
-
 .fu-cal-month-label {
     font-weight: 700;
     font-size: 14px;
     color: var(--text-primary);
 }
-
 .fu-cal-daynames {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    padding: 8px 8px 4px;
+    padding: 8px 10px 4px;
     gap: 2px;
+    background: var(--bg-card);
 }
-
 .fu-cal-daynames span {
     text-align: center;
     font-size: 11px;
@@ -12357,18 +12427,14 @@ body.modal-open {
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
-
 .fu-cal-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    padding: 4px 8px 10px;
+    padding: 4px 10px 10px;
     gap: 3px;
+    background: var(--bg-card);
 }
-
-.fu-cal-empty {
-    min-height: 32px;
-}
-
+.fu-cal-empty { min-height: 36px; }
 .fu-cal-day {
     background: none;
     border: 1px solid transparent;
@@ -12385,20 +12451,17 @@ body.modal-open {
     font-weight: 500;
     padding: 0;
 }
-
 .fu-cal-day:hover {
     background: var(--accent-light);
     color: var(--accent);
     border-color: var(--accent);
 }
-
 .fu-cal-today {
     font-weight: 800;
     color: var(--accent);
     border-color: var(--accent);
     background: var(--accent-light);
 }
-
 .fu-cal-sel {
     background: var(--accent) !important;
     color: #fff !important;
@@ -12406,6 +12469,7 @@ body.modal-open {
     font-weight: 700;
     box-shadow: 0 2px 8px var(--accent-light);
 }
+
 
 /* Evidence modal styles (existing) */
 .followup-evidence-meta {
@@ -28177,6 +28241,67 @@ body.light-mode .wi-meta {
 #nav-backup i {
     --ni1: #64748b;
     --ni2: #334155;
+}
+
+/* Missing nav items */
+#nav-scheduler i {
+    --ni1: #06b6d4;
+    --ni2: #0284c7;
+}
+
+#nav-teachingpractices i {
+    --ni1: #ec4899;
+    --ni2: #be185d;
+}
+
+#nav-learningoutcomes i {
+    --ni1: #10b981;
+    --ni2: #059669;
+}
+
+#nav-schoolwork i {
+    --ni1: #f59e0b;
+    --ni2: #d97706;
+}
+
+#nav-marai i {
+    --ni1: #ef4444;
+    --ni2: #dc2626;
+}
+
+#nav-dataquality i {
+    --ni1: #f59e0b;
+    --ni2: #ea580c;
+}
+
+#nav-excel i {
+    --ni1: #22c55e;
+    --ni2: #15803d;
+}
+
+#nav-notes i {
+    --ni1: #eab308;
+    --ni2: #ca8a04;
+}
+
+#nav-reflections i {
+    --ni1: #f472b6;
+    --ni2: #db2777;
+}
+
+#nav-growth i {
+    --ni1: #34d399;
+    --ni2: #059669;
+}
+
+#nav-capacitybuilding i {
+    --ni1: #818cf8;
+    --ni2: #4f46e5;
+}
+
+#nav-meetings i {
+    --ni1: #fbbf24;
+    --ni2: #f59e0b;
 }
 
 :is(.metric-icon,
