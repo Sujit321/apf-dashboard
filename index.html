@@ -4049,51 +4049,46 @@ function getOrCreateFolder() {
  </div>
 
  <!-- Sarvam AI Integration -->
- <div class="settings-card" style="grid-column: 1 / -1;">
- <div class="settings-card-header">
+ <div class="settings-card">
+ <div class="settings-card-header" style="padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:4px;">
  <div class="settings-card-icon" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);">
  <i class="fas fa-robot"></i>
  </div>
- <div>
- <h3>Sarvam AI</h3>
- <p>AI-powered translation, chat &amp; insights for Indian languages</p>
+ <div style="flex:1;min-width:0;">
+ <h3 style="margin:0;">Sarvam AI</h3>
+ <p style="margin:0;">AI-powered translation, chat &amp; insights for Indian languages</p>
  </div>
+ <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto;">
+ <span id="sarvamStatusBadge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);letter-spacing:0.4px;">NOT CONFIGURED</span>
  <span class="sarvam-status-dot" id="sarvamStatusDot" title="Not configured"
- style="width:10px;height:10px;border-radius:50%;background:#64748b;margin-left:auto;flex-shrink:0;"></span>
+ style="width:10px;height:10px;border-radius:50%;background:#64748b;flex-shrink:0;"></span>
  </div>
- <div class="settings-card-body">
- <div class="settings-row">
+ </div>
+ <div class="settings-card-body" style="padding-top:8px;">
+ <div class="settings-row" style="align-items:center;">
  <div class="settings-label">
  <i class="fas fa-key"></i>
- <div><strong>API Key</strong><span>Your Sarvam AI subscription key from <a
- href="https://dashboard.sarvam.ai" target="_blank" rel="noopener"
- style="color:var(--accent);">dashboard.sarvam.ai</a></span></div>
+ <div><strong>API Key</strong><span>From <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener" style="color:var(--accent);">dashboard.sarvam.ai</a></span></div>
  </div>
- <div class="settings-control settings-control-wide">
- <div style="display:flex;gap:8px;align-items:center;width:100%;">
+ <div class="settings-control settings-control-wide" style="display:flex;gap:8px;align-items:center;">
  <div style="position:relative;flex:1;">
  <input type="password" id="settingSarvamApiKey" class="settings-input"
  placeholder="Enter your API key" onchange="saveAppSettings()"
- autocomplete="off" spellcheck="false" style="padding-right:36px;">
- <button type="button"
- onclick="togglePasswordVisibility('settingSarvamApiKey', this)"
- style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px;"
- tabindex="-1">
+ autocomplete="off" spellcheck="false" style="padding-right:40px;">
+ <button type="button" onclick="togglePasswordVisibility('settingSarvamApiKey', this)"
+ style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px;" tabindex="-1">
  <i class="fas fa-eye"></i>
  </button>
  </div>
- <button class="btn btn-outline" onclick="testSarvamConnection()"
- style="white-space:nowrap;padding:8px 14px;font-size:12px;">
+ <button class="btn btn-outline" onclick="testSarvamConnection()" style="white-space:nowrap;padding:8px 14px;font-size:12px;">
  <i class="fas fa-plug"></i> Test
  </button>
- </div>
  </div>
  </div>
  <div class="settings-row">
  <div class="settings-label">
  <i class="fas fa-language"></i>
- <div><strong>Default Language</strong><span>Target language for AI translations</span>
- </div>
+ <div><strong>Default Language</strong><span>Target language for AI translations</span></div>
  </div>
  <div class="settings-control">
  <select id="settingSarvamLang" class="settings-select" onchange="saveAppSettings()">
@@ -4115,8 +4110,7 @@ function getOrCreateFolder() {
  <div class="settings-row">
  <div class="settings-label">
  <i class="fas fa-power-off"></i>
- <div><strong>AI Features</strong><span>Turn AI-powered suggestions & analysis on or off
- globally</span></div>
+ <div><strong>AI Features</strong><span>Turn AI suggestions &amp; analysis on or off globally</span></div>
  </div>
  <div class="settings-control">
  <label class="toggle-switch">
@@ -4128,8 +4122,7 @@ function getOrCreateFolder() {
  <div class="settings-row">
  <div class="settings-label">
  <i class="fas fa-microchip"></i>
- <div><strong>Chat Model</strong><span>Select the Sarvam AI model for chat &
- analysis</span></div>
+ <div><strong>Chat Model</strong><span>Sarvam AI model for chat &amp; analysis</span></div>
  </div>
  <div class="settings-control">
  <select id="settingSarvamModel" class="settings-select" onchange="saveAppSettings()">
@@ -4142,21 +4135,17 @@ function getOrCreateFolder() {
  <div class="settings-row">
  <div class="settings-label">
  <i class="fas fa-brain"></i>
- <div><strong>Reasoning Effort</strong><span>Higher effort gives better results but takes
- longer</span></div>
+ <div><strong>Reasoning Effort</strong><span>Higher effort = better results but slower</span></div>
  </div>
  <div class="settings-control">
- <select id="settingSarvamReasoning" class="settings-select"
- onchange="saveAppSettings()">
+ <select id="settingSarvamReasoning" class="settings-select" onchange="saveAppSettings()">
  <option value="low">Low (Fast)</option>
  <option value="medium">Medium (Balanced)</option>
  <option value="high">High (Thorough)</option>
  </select>
  </div>
  </div>
- <div id="sarvamTestResult"
- style="display:none;margin-top:8px;padding:10px 14px;border-radius:8px;font-size:13px;">
- </div>
+ <div id="sarvamTestResult" style="display:none;margin-top:8px;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
  </div>
  </div>
 

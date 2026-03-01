@@ -19801,16 +19801,20 @@ function renderSettings() {
  const sarvamLang = document.getElementById('settingSarvamLang');
  if (sarvamLang) sarvamLang.value = s.sarvamDefaultLang || 'hi-IN';
  const sarvamDot = document.getElementById('sarvamStatusDot');
+ const sarvamBadge = document.getElementById('sarvamStatusBadge');
  if (sarvamDot) {
  if (s.sarvamApiKey && s.sarvamEnabled !== false) {
  sarvamDot.style.background = '#10b981';
  sarvamDot.title = 'API key configured AI enabled';
+ if (sarvamBadge) { sarvamBadge.textContent = 'ACTIVE'; sarvamBadge.style.cssText += ';background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.3)'; }
  } else if (s.sarvamApiKey && s.sarvamEnabled === false) {
  sarvamDot.style.background = '#f59e0b';
  sarvamDot.title = 'API key configured AI disabled';
+ if (sarvamBadge) { sarvamBadge.textContent = 'DISABLED'; sarvamBadge.style.cssText += ';background:rgba(245,158,11,0.12);color:#f59e0b;border-color:rgba(245,158,11,0.3)'; }
  } else {
  sarvamDot.style.background = '#64748b';
  sarvamDot.title = 'Not configured';
+ if (sarvamBadge) { sarvamBadge.textContent = 'NOT CONFIGURED'; sarvamBadge.style.cssText += ';background:rgba(100,116,139,0.12);color:#94a3b8;border-color:rgba(100,116,139,0.25)'; }
  }
  }
  const sarvamEnabled = document.getElementById('settingSarvamEnabled');
@@ -19838,18 +19842,19 @@ function toggleGlobalAI() {
  btn.style.display = isEnabled ? '' : 'none';
  });
 
- // Update status dot
+ // Update status dot + badge
  const dot = document.getElementById('sarvamStatusDot');
+ const badge = document.getElementById('sarvamStatusBadge');
  if (dot) {
  if (s.sarvamApiKey && s.sarvamEnabled !== false) {
- dot.style.background = '#10b981';
- dot.title = 'AI enabled';
+ dot.style.background = '#10b981'; dot.title = 'AI enabled';
+ if (badge) { badge.textContent = 'ACTIVE'; badge.style.cssText += ';background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.3)'; }
  } else if (s.sarvamApiKey) {
- dot.style.background = '#f59e0b';
- dot.title = 'AI disabled';
+ dot.style.background = '#f59e0b'; dot.title = 'AI disabled';
+ if (badge) { badge.textContent = 'DISABLED'; badge.style.cssText += ';background:rgba(245,158,11,0.12);color:#f59e0b;border-color:rgba(245,158,11,0.3)'; }
  } else {
- dot.style.background = '#64748b';
- dot.title = 'Not configured';
+ dot.style.background = '#64748b'; dot.title = 'Not configured';
+ if (badge) { badge.textContent = 'NOT CONFIGURED'; badge.style.cssText += ';background:rgba(100,116,139,0.12);color:#94a3b8;border-color:rgba(100,116,139,0.25)'; }
  }
  }
 
