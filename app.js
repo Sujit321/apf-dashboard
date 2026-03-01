@@ -23981,28 +23981,40 @@ function renderImportGuide() {
 
 function _buildImportGuideHTML() {
 
- const section = (icon, title, desc, rows, notes) => {
+ const badge = (label, color, bg) =>
+ `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;color:${color};background:${bg};border:1px solid ${color}40;letter-spacing:0.3px">${label}</span>`;
+ const reqBadge = (r) => r ? badge('Required', '#22c55e', 'rgba(34,197,94,0.08)') : badge('Optional', '#94a3b8', 'rgba(148,163,184,0.08)');
+
+ const section = (icon, color, title, desc, rows, notes) => {
  const tableRows = rows.map((r, i) =>
- `<tr style="background:${i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)'}">` +
- `<td style="padding:5px 8px;border:1px solid rgba(255,255,255,0.12);color:var(--text-secondary);text-align:center;width:30px;font-size:11px">${i + 1}</td>` +
- `<td style="padding:5px 10px;border:1px solid rgba(255,255,255,0.12);font-family:'Consolas','Courier New',monospace;font-size:12px;color:#facc15;white-space:nowrap">${escapeHtml(r[0])}</td>` +
- `<td style="padding:5px 10px;border:1px solid rgba(255,255,255,0.12);font-size:12px;color:var(--text-primary)">${escapeHtml(r[1])}</td>` +
- `<td style="padding:5px 8px;border:1px solid rgba(255,255,255,0.12);text-align:center;width:70px">${r[2] ? '<span style="color:#22c55e;font-weight:700"></span>' : '<span style="color:rgba(255,255,255,0.15)"></span>'}</td></tr>`
+ `<tr style="background:${i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)'}">` +
+ `<td style="padding:5px 8px;border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);text-align:center;width:24px;font-size:11px;font-weight:600">${i + 1}</td>` +
+ `<td style="padding:6px 10px;border:1px solid rgba(255,255,255,0.1);font-family:'Consolas','Courier New',monospace;font-size:12px;color:#facc15;white-space:nowrap">${escapeHtml(r[0])}</td>` +
+ `<td style="padding:6px 10px;border:1px solid rgba(255,255,255,0.1);font-size:12px;color:var(--text-primary)">${escapeHtml(r[1])}</td>` +
+ `<td style="padding:6px 10px;border:1px solid rgba(255,255,255,0.1);font-size:11px">${reqBadge(r[2])}</td>` +
+ (r[3] ? `<td style="padding:6px 10px;border:1px solid rgba(255,255,255,0.1);font-size:11px;color:var(--text-muted);font-style:italic">${escapeHtml(r[3])}</td>` : `<td style="padding:6px 10px;border:1px solid rgba(255,255,255,0.1)"></td>`)
+ + '</tr>'
  ).join('');
- const noteHtml = notes ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(250,204,21,0.08);border-left:3px solid #facc15;border-radius:0 6px 6px 0;font-size:12px;color:var(--text-secondary)"><i class="fas fa-info-circle" style="color:#facc15;margin-right:6px"></i>${notes}</div>` : '';
+ const noteHtml = notes ? `<div style="margin-top:8px;padding:9px 13px;background:rgba(250,204,21,0.07);border-left:3px solid #facc21;border-radius:0 8px 8px 0;font-size:12px;color:var(--text-secondary);line-height:1.6"><i class="fas fa-info-circle" style="color:#facc15;margin-right:6px"></i>${notes}</div>` : '';
  return `
- <div style="margin-bottom:28px">
- <h3 style="font-size:15px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;margin-bottom:4px">
- <i class="fas ${icon}" style="color:var(--accent);width:18px;text-align:center"></i>${title}
- </h3>
- <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${desc}</p>
- <div style="border:2px solid rgba(255,255,255,0.15);border-radius:6px;overflow:hidden">
+ <div style="margin-bottom:30px">
+ <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+ <div style="width:32px;height:32px;border-radius:10px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+ <i class="fas ${icon}" style="color:${color};font-size:15px"></i>
+ </div>
+ <div>
+ <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);margin:0">${escapeHtml(title)}</h3>
+ <p style="font-size:12px;color:var(--text-muted);margin:0">${desc}</p>
+ </div>
+ </div>
+ <div style="border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;margin-top:8px">
  <table style="width:100%;border-collapse:collapse;font-size:12px">
- <thead><tr style="background:#1a6b3c;text-align:left">
- <th style="padding:7px 8px;border:1px solid rgba(255,255,255,0.18);font-weight:700;color:#fff;text-align:center;width:30px">#</th>
- <th style="padding:7px 10px;border:1px solid rgba(255,255,255,0.18);font-weight:700;color:#fff"><i class="fas fa-file-excel" style="margin-right:5px;opacity:0.8"></i>Excel Column Name</th>
- <th style="padding:7px 10px;border:1px solid rgba(255,255,255,0.18);font-weight:700;color:#fff"><i class="fas fa-arrow-right" style="margin-right:5px;opacity:0.8"></i>Maps To</th>
- <th style="padding:7px 8px;border:1px solid rgba(255,255,255,0.18);font-weight:700;color:#fff;text-align:center;width:70px">Req</th>
+ <thead><tr style="background:linear-gradient(90deg,rgba(30,50,70,0.9),rgba(20,30,50,0.9))">
+ <th style="padding:7px 8px;border:1px solid rgba(255,255,255,0.12);font-weight:700;color:#94a3b8;text-align:center;width:24px">#</th>
+ <th style="padding:7px 10px;border:1px solid rgba(255,255,255,0.12);font-weight:700;color:#facc15"><i class="fas fa-file-excel" style="margin-right:5px;opacity:0.7"></i>Column Name</th>
+ <th style="padding:7px 10px;border:1px solid rgba(255,255,255,0.12);font-weight:700;color:#94a3b8">Maps To</th>
+ <th style="padding:7px 10px;border:1px solid rgba(255,255,255,0.12);font-weight:700;color:#94a3b8">Required</th>
+ <th style="padding:7px 10px;border:1px solid rgba(255,255,255,0.12);font-weight:700;color:#94a3b8">Notes</th>
  </tr></thead>
  <tbody>${tableRows}</tbody>
  </table>
@@ -24012,149 +24024,154 @@ function _buildImportGuideHTML() {
  };
 
  return `
- <div style="padding:12px 0 8px;color:var(--text-secondary);font-size:13px;line-height:1.5">
- <p style="margin-bottom:12px">This guide shows the <strong>expected Excel column names</strong> for each import type. Columns are auto-detected by header name. Accepted file types: <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code></p>
+ <div style="padding:4px 0 12px">
+ <div style="padding:12px 16px;background:rgba(99,102,241,0.08);border:1.5px solid rgba(99,102,241,0.2);border-radius:10px;margin-bottom:20px;font-size:12.5px;color:var(--text-secondary);line-height:1.7">
+ <i class="fas fa-info-circle" style="color:var(--accent);margin-right:7px"></i>
+ This guide lists the <strong style="color:var(--text-primary)">expected Excel column names</strong> for each import. Headers are auto-detected - matching is <strong>case-insensitive</strong>. Accepted file types: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">.xlsx</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">.xls</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">.csv</code>
+ </div>
  </div>
 
- ${section('fa-microscope', '1. DMT Observations (Field Notes)',
- 'Source: DMT Field Notes Excel. Dedup: NID + Date + Practice Serial. Detection: file must contain "Teacher: Teacher Name" or "Practice Type" columns.',
+ ${section('fa-microscope', '#6366f1', '1. DMT Observations (Field Notes)',
+ 'Source: DMT Field Notes Excel. Deduplication: NID + Date + Practice Serial.',
  [
- ['NID', 'Teacher unique ID', true],
- ['Response Date', 'Observation date', true],
- ['School Name', 'School', true],
- ['Teacher: Teacher Name', 'Teacher name', true],
- ['Teacher Phone No.', 'Phone', false],
- ['Teacher Stage', 'Stage (e.g. Modelling)', false],
- ['Cluster', 'Cluster name', false],
- ['Block Name', 'Block name', false],
- ['Observation', 'Yes/No observation status', false],
- ['Observed While Teaching', 'Was teaching observed', false],
- ['Teacher Engagement Level', 'Engagement level', true],
- ['Practice Type', 'Practice type', true],
- ['Practice Master: Practice Serial No', 'Practice serial', true],
- ['Practice', 'Practice description', false],
- ['Group', 'Group name', false],
- ['Subject', 'Subject taught', false],
- ['Notes', 'Observer notes', false],
- ['Actual Observer: Full Name', 'Observer name', false],
- ['Primary Observer: Full Name', 'Observer (fallback)', false],
- ['State', 'State', false],
- ['District Name', 'District', false],
- ['Stakeholder Status', 'Stakeholder status', false],
- ['History', 'Visit history count', false]
+ ['NID', 'Teacher unique ID', true, ''],
+ ['Response Date', 'Observation date', true, 'Auto-parsed to YYYY-MM-DD'],
+ ['School Name', 'School', true, ''],
+ ['Teacher: Teacher Name', 'Teacher name', true, ''],
+ ['Teacher Phone No.', 'Phone number', false, ''],
+ ['Teacher Stage', 'Stage (e.g. Modelling)', false, ''],
+ ['Cluster', 'Cluster name', false, ''],
+ ['Block Name', 'Block name', false, ''],
+ ['Observation', 'Observation status', false, 'Yes / No / Not_Observed'],
+ ['Observed While Teaching', 'Observed while teaching', false, 'True / False'],
+ ['Teacher Engagement Level', 'Engagement level', true, 'More Engaged / Engaged / Less Engaged'],
+ ['Practice Type', 'Practice type', true, ''],
+ ['Practice Master: Practice Serial No', 'Practice serial no.', true, ''],
+ ['Practice', 'Practice description', false, ''],
+ ['Group', 'Group name', false, ''],
+ ['Subject', 'Subject', false, ''],
+ ['Class', 'Class observed', false, ''],
+ ['Notes', 'Observer notes', false, ''],
+ ['Actual Observer: Full Name', 'Observer name', false, 'Fallback: Primary Observer: Full Name'],
+ ['State', 'State', false, ''],
+ ['District Name', 'District', false, ''],
+ ['Stakeholder Status', 'Stakeholder status', false, ''],
+ ['History', 'Visit history count', false, '']
  ],
- 'Import modes: <strong>Add</strong> (append to existing), <strong>Replace</strong> (clear old DMT data), <strong>Filtered</strong> (with State/Block/Cluster/Observer filters)'
+ 'Import modes: <strong>Add</strong> (append new records only) &middot; <strong>Replace</strong> (delete all existing DMT data first) &middot; <strong>Filtered</strong> (filter by State / Block / Cluster / Observer before importing).'
  )}
 
- ${section('fa-school', '2. School Visits',
- 'Import school visit records. No dedup all rows are appended. Column names are case-insensitive.',
+ ${section('fa-school', '#f59e0b', '2. School Visits',
+ 'Import school visit records. No deduplication - all rows are appended. Column names are case-insensitive.',
  [
- ['School', 'School name', true],
- ['Date', 'Visit date (YYYY-MM-DD)', false],
- ['Block', 'Block', false],
- ['Cluster', 'Cluster', false],
- ['District', 'District', false],
- ['Status', 'completed / planned / cancelled', false],
- ['Purpose', 'Visit purpose', false],
- ['Duration', 'Duration (hours)', false],
- ['Rating', 'Rating (1-5)', false],
- ['People Met', 'People met', false],
- ['Teachers Met', 'Teachers met count', false],
- ['Classes Visited', 'Classes visited count', false],
- ['Students Observed', 'Student count', false],
- ['HM Present', 'Was HM present', false],
- ['HM Discussion', 'HM discussion notes', false],
- ['Activities', 'Comma-separated activities', false],
- ['Notes', 'Visit notes', false],
- ['Best Practices', 'Best practices observed', false],
- ['Challenges', 'Challenges noted', false],
- ['Follow-up', 'Follow-up actions', false],
- ['Next Visit Date', 'Next visit date', false]
+ ['School', 'School name', true, ''],
+ ['Date', 'Visit date', false, 'YYYY-MM-DD preferred; auto-normalised'],
+ ['Block', 'Block', false, ''],
+ ['Cluster', 'Cluster', false, ''],
+ ['District', 'District', false, ''],
+ ['Status', 'Visit status', false, 'completed / planned / cancelled'],
+ ['Purpose', 'Purpose of visit', false, ''],
+ ['Duration', 'Duration', false, 'Hours (number)'],
+ ['Rating', 'Rating', false, '1 to 5'],
+ ['People Met', 'Key people met', false, ''],
+ ['Teachers Met', 'No. of teachers met', false, 'Number'],
+ ['Classes Visited', 'No. of classes visited', false, 'Number'],
+ ['Students Observed', 'No. of students observed', false, 'Number'],
+ ['HM Present', 'HM present?', false, 'Yes / No'],
+ ['HM Discussion', 'HM discussion notes', false, ''],
+ ['Activities', 'Activities done', false, 'Comma-separated list'],
+ ['Notes', 'Visit notes / observations', false, ''],
+ ['Best Practices', 'Best practices noted', false, ''],
+ ['Challenges', 'Challenges noted', false, ''],
+ ['Follow-up', 'Follow-up actions', false, ''],
+ ['Next Visit Date', 'Tentative next visit date', false, '']
  ],
- 'Both "School" and "school" work. Date is auto-normalized to YYYY-MM-DD.'
+ 'Column names like <code>school</code>, <code>School</code>, <code>SCHOOL</code> all match. Date is auto-normalised to YYYY-MM-DD.'
  )}
 
- ${section('fa-id-card-alt', '3. Teacher Records',
- 'Import teacher database. Dedup: name + school. Auto-detects columns using regex supports English and Hindi (à¤¹à¤¿à¤‚à¤¦à¥€) headers.',
+ ${section('fa-id-card-alt', '#10b981', '3. Teacher Records',
+ 'Import teacher database. Dedup: Name + School. Supports English and Hindi headers.',
  [
- ['Name / Teacher Name / à¤¶à¤¿à¤•à¥à¤·à¤• à¤•à¤¾ à¤¨à¤¾à¤®', 'Teacher name', true],
- ['School / à¤µà¤¿à¤¦à¥à¤¯à¤¾à¤²à¤¯ / Institution', 'School', false],
- ['Gender / à¤²à¤¿à¤‚à¤—', 'Gender', false],
- ['Designation / à¤ªà¤¦à¤¨à¤¾à¤® / Post', 'Designation', false],
- ['Subject / à¤µà¤¿à¤·à¤¯', 'Subject', false],
- ['Class / à¤•à¤•à¥à¤·à¤¾ / Grade', 'Classes taught', false],
- ['Phone / Mobile / à¤®à¥‹à¤¬à¤¾à¤‡à¤²', 'Phone number', false],
- ['Email / à¤ˆ-à¤®à¥‡à¤²', 'Email', false],
- ['Block / à¤¬à¥à¤²à¥‰à¤•', 'Block', false],
- ['Cluster / à¤¸à¤‚à¤•à¥à¤² / Zone', 'Cluster', false],
- ['Qualification / à¤¯à¥‹à¤—à¥à¤¯à¤¤à¤¾', 'Qualification', false],
- ['Experience / à¤…à¤¨à¥à¤­à¤µ', 'Years of experience', false],
- ['Join Date / DOJ / à¤¨à¤¿à¤¯à¥à¤•à¥à¤¤à¤¿', 'Date of joining', false],
- ['NID / Employee ID / Emp ID', 'Employee ID', false],
- ['Notes / Remarks / à¤Ÿà¤¿à¤ªà¥à¤ªà¤£à¥€', 'Notes', false]
+ ['Name / Teacher Name / shikshak ka naam', 'Teacher name', true, 'If no Name column found, first column is used'],
+ ['School / vidyalay / Institution', 'School', false, ''],
+ ['Gender / ling / Sex', 'Gender', false, ''],
+ ['Designation / padnaam / Post / Position', 'Designation', false, ''],
+ ['Subject / vishay / Teaching Subject', 'Subject', false, ''],
+ ['Class / kaksha / Classes Taught / Grade', 'Classes taught', false, ''],
+ ['Phone / Mobile / mobile / Contact No', 'Phone number', false, ''],
+ ['Email / e-mail / E-Mail', 'Email', false, ''],
+ ['Block / block', 'Block', false, ''],
+ ['Cluster / sankul / Zone', 'Cluster', false, ''],
+ ['Qualification / yogyata / Education / Degree', 'Qualification', false, ''],
+ ['Experience / anubhav / Years of Exp', 'Years of experience', false, ''],
+ ['Join Date / DOJ / Joining / niyukti', 'Date of joining', false, 'Auto-parsed to YYYY-MM-DD'],
+ ['NID / Employee ID / Emp ID', 'Employee / NID', false, ''],
+ ['Notes / Remarks / tippani', 'Notes', false, '']
  ],
- 'If no "Name" column is detected, the <strong>first column</strong> in the file is used as the name.'
+ 'Header matching uses regex - partial matches work. E.g. <code>Teacher Name</code> matches the <code>name</code> pattern. Duplicate check: same Name + School is skipped.'
  )}
 
- ${section('fa-clipboard-list', '4. Training Attendance',
- 'Import attendance list for a specific training. Dedup: name + school per training. Added teachers are also auto-saved to Teacher Records.',
+ ${section('fa-clipboard-list', '#8b5cf6', '4. Training Attendance',
+ 'Import attendance list for a specific training session. Dedup: Name + School per training.',
  [
- ['Name / TeacherName / Teacher / à¤¶à¤¿à¤•à¥à¤·à¤•', 'Teacher name', true],
- ['School / SchoolName / à¤µà¤¿à¤¦à¥à¤¯à¤¾à¤²à¤¯', 'School', false],
- ['Phone / Mobile / Contact / à¤«à¥‹à¤¨', 'Phone', false],
- ['Designation / Post / Stage / à¤ªà¤¦', 'Designation', false],
- ['Cluster / à¤¸à¤‚à¤•à¥à¤²', 'Cluster', false],
- ['Block / à¤¬à¥à¤²à¥‰à¤•', 'Block', false]
+ ['Name / TeacherName / Teacher / shikshak', 'Teacher name', true, 'Must be present; used as primary key'],
+ ['School / SchoolName / vidyalay', 'School', false, ''],
+ ['Phone / Mobile / Contact / phone', 'Phone', false, ''],
+ ['Designation / Post / Stage / pad', 'Designation', false, ''],
+ ['Cluster / sankul', 'Cluster', false, ''],
+ ['Block / block', 'Block', false, '']
  ],
- 'Column matching is case-insensitive. Teachers are automatically added to Teacher Records if not already present.'
+ 'Column matching is fully case-insensitive. Imported attendees are also <strong>auto-saved to Teacher Records</strong> (if not already present). Must select a training session before importing.'
  )}
 
- ${section('fa-school', '5. School Profiles (from DMT)',
- 'Uses the same DMT Field Notes Excel. Extracts unique schools and creates school profile entries. Filter by State/Block/Cluster/Observer.',
+ ${section('fa-calendar-check', '#ef4444', '5. Visit Plan (Plan vs Execution)',
+ 'Column-position based (A-P order, not header names). Two-sheet Excel file.',
  [
- ['School Name', 'School name', true],
- ['Block Name', 'Block', false],
- ['Cluster', 'Cluster', false],
- ['State', 'State', false],
- ['District Name', 'District', false]
+ ['Column A', 'Date', true, 'Excel serial number or date string; blank rows inherit previous date'],
+ ['Column B', 'Day name', false, 'Auto-computed from date if blank'],
+ ['Column C', 'Time / Half', false, 'First Half / Second Half'],
+ ['Column D', 'Plan Domain', false, 'E.g. School Visits, Training, Meeting'],
+ ['Column E', 'Stakeholder Type', false, 'E.g. PS Teachers, BRCC, Parents'],
+ ['Column F', 'Cluster', false, ''],
+ ['Column G', 'Venue / School', false, ''],
+ ['Column H', 'Stakeholder Name', false, ''],
+ ['Column I', 'Designation', false, ''],
+ ['Column J', 'Broader Plan / Objective', false, ''],
+ ['Column K', 'Review (non-empty = Executed)', false, 'If filled, row is marked as Executed'],
+ ['Column L', 'No. of TPs (Teaching Practices)', false, 'Number'],
+ ['Column M', 'No. of Stakeholders', false, 'Number'],
+ ['Column N', 'Qualitative Comments - Teachers', false, ''],
+ ['Column O', 'Qualitative Comments - Students', false, ''],
+ ['Column P', 'Report Sharing', false, '']
  ],
- 'This is the same file as DMT Observations import. It auto-detects schools from the data.'
+ '<strong>Sheet structure:</strong><br>' +
+ '&bull; <strong>Main sheet</strong> (any name except Sheet4/Dropdown) &mdash; visit plan data, headers in row 1, data from row 2 onwards.<br>' +
+ '&bull; <strong>Sheet4 / Dropdown sheet</strong> &mdash; reference/dropdown options. Data starts at <strong>row 4, column B</strong>. Columns B&ndash;I map to: <code>Plan Domains &middot; Days &middot; Time &middot; Stakeholder Types &middot; Clusters &middot; Stakeholder Names &middot; Venues &middot; Designations</code>.<br>' +
+ 'Rows where columns D, G, H, J, K are all blank are treated as <em>empty</em> placeholder rows and excluded from filters.'
  )}
 
- ${section('fa-calendar-check', '6. Visit Plan (Plan vs Execution)',
- 'Reads two sheets. Main sheet uses column position (A-P), not header names. Dropdown sheet provides reference options.',
- [
- ['Column A', 'Date (Excel serial or string)', true],
- ['Column B', 'Day name', false],
- ['Column C', 'Time', false],
- ['Column D', 'Plan Domain', false],
- ['Column E', 'Stakeholder Type', false],
- ['Column F', 'Cluster', false],
- ['Column G', 'Venue / School', false],
- ['Column H', 'Stakeholder Name', false],
- ['Column I', 'Designation', false],
- ['Column J', 'Objective', false],
- ['Column K', 'Review (if filled Executed)', false],
- ['Column L', 'TPS', false],
- ['Column M', 'Stakeholder Count', false],
- ['Column N', 'Teacher Comments', false],
- ['Column O', 'Student Comments', false],
- ['Column P', 'Report Sharing', false]
- ],
- 'Sheet named "Sheet4" or "Dropdown" provides dropdown options (domains, days, times, clusters, venues, etc). Data starts from row 4, column B.'
- )}
-
- <div style="padding:12px 16px;background:var(--bg-primary);border-radius:10px;margin-top:8px">
- <h4 style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px"><i class="fas fa-sitemap" style="color:var(--accent);margin-right:6px"></i>Data Flow</h4>
- <div style="font-size:12px;color:var(--text-secondary);font-family:monospace;line-height:1.8">
- DMT Excel observations, school profiles, contacts, teacher records<br>
- Teacher Excel teacher records<br>
- Attendance Excel training attendance + teacher records<br>
- Visit Plan Excel visit plan entries + dropdown options<br>
- School Visits Excel visit records
+ <div style="margin-top:16px;padding:14px 18px;background:var(--bg-secondary);border:1.5px solid var(--border);border-radius:10px">
+ <h4 style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 10px"><i class="fas fa-sitemap" style="color:var(--accent);margin-right:7px"></i>Data Flow Overview</h4>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--text-secondary)">
+ <div style="padding:8px 12px;background:rgba(99,102,241,0.06);border-radius:7px;border-left:3px solid #6366f1">
+ <strong style="color:#818cf8">DMT Excel</strong><br>Observations &middot; School Profiles &middot; Teacher Records &middot; Contacts
+ </div>
+ <div style="padding:8px 12px;background:rgba(245,158,11,0.06);border-radius:7px;border-left:3px solid #f59e0b">
+ <strong style="color:#fbbf24">Visits Excel</strong><br>School Visit Records
+ </div>
+ <div style="padding:8px 12px;background:rgba(16,185,129,0.06);border-radius:7px;border-left:3px solid #10b981">
+ <strong style="color:#34d399">Teacher Excel</strong><br>Teacher Records database
+ </div>
+ <div style="padding:8px 12px;background:rgba(139,92,246,0.06);border-radius:7px;border-left:3px solid #8b5cf6">
+ <strong style="color:#a78bfa">Attendance Excel</strong><br>Training Attendance + Teacher Records
+ </div>
+ <div style="padding:8px 12px;background:rgba(239,68,68,0.06);border-radius:7px;border-left:3px solid #ef4444;grid-column:1/-1">
+ <strong style="color:#f87171">Visit Plan Excel</strong><br>Visit Plan Entries + Dropdown Options (Sheet4)
+ </div>
  </div>
  </div>`;
 }
+
 
 function loadSampleData() {
  // Load sample data into in-memory store (no localStorage)
