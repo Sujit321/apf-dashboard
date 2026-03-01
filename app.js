@@ -12817,26 +12817,39 @@ function setFollowupOwner(id) {
  });
 }
 
+let _fuCalTargetId = null;
+
 function setFollowupDueDate(id) {
  const statusList = DB.get('followupStatus') || [];
  let entry = statusList.find(f => f.id === id);
  if (!entry) {
  const item = collectFollowupItems().find(f => f.id === id);
- if (!item) return;
+ if (!item) { showToast('Follow-up not found', 'error'); return; }
  entry = upsertFollowupLifecycle(statusList, item).entry;
  DB.set('followupStatus', statusList);
  }
- const currentDue = normalizeDateOnly(entry.dueDate) || normalizeDateOnly(new Date());
- const slaSource = ACTION_CLOSURE_SLA_DAYS[entry.source] || 14;
- _openFuQuickModal({
- type: 'sla',
- id,
- title: 'Set SLA Due Date',
- icon: 'fa-calendar-day',
- label: 'SLA Due Date',
- value: currentDue,
- slaHint: `Default SLA: ${slaSource} days from source date`
- });
+ _fuCalTargetId = id;
+ const currentDue = normalizeDateOnly(entry.dueDate) || '';
+ const seed = currentDue ? new Date(currentDue + 'T00:00:00') : new Date();
+ _fuCalYear = seed.getFullYear();
+ _fuCalMonth = seed.getMonth();
+ const di = document.getElementById('fuQmDateInput');
+ if (di) di.value = currentDue || '';
+ const banner = document.getElementById('fuCalSelectedBanner');
+ if (banner) {
+ if (currentDue) {
+ banner.textContent = seed.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+ banner.classList.add('fu-cal-modal-banner-set');
+ } else {
+ banner.textContent = 'No date selected';
+ banner.classList.remove('fu-cal-modal-banner-set');
+ }
+ }
+ const slaSource = (typeof ACTION_CLOSURE_SLA_DAYS !== 'undefined' && ACTION_CLOSURE_SLA_DAYS[entry.source]) || 14;
+ const hintEl = document.getElementById('fuCalHint');
+ if (hintEl) hintEl.textContent = 'Default SLA: ' + slaSource + ' days from source date';
+ fuCalRender();
+ document.getElementById('fuCalModal').style.display = 'flex';
 }
 
 let _fuCalYear = new Date().getFullYear(), _fuCalMonth = new Date().getMonth();
@@ -12848,14 +12861,43 @@ function fuCalMove(dir) {
  fuCalRender();
 }
 
-function fuCalSelect(dateStr) {
- document.getElementById('fuQmDateInput').value = dateStr;
- const d = new Date(dateStr + 'T00:00:00');
- const disp = document.getElementById('fuCalSelectedDisplay');
- if (disp) {
- disp.textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
- disp.className = 'fu-cal-selected-display fu-cal-selected-display-set';
+function fuCalOpen() {
+    fuCalRender();
+    const modal = document.getElementById('fuCalModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function fuCalClose() {
+ const modal = document.getElementById('fuCalModal');
+ if (modal) modal.style.display = 'none';
+ _fuCalTargetId = null;
+}
+
+function fuCalConfirm() {
+ const val = (document.getElementById('fuQmDateInput') || {}).value;
+ if (!val) { showToast('Please select a date.', 'info'); return; }
+ if (_fuCalTargetId) {
+ const statusList = DB.get('followupStatus') || [];
+ const entry = statusList.find(f => f.id === _fuCalTargetId);
+ if (entry) {
+ entry.dueDate = val;
+ entry.updatedAt = new Date().toISOString();
+ addFollowupHistory(entry, 'sla-updated', 'SLA updated to ' + val);
+ DB.set('followupStatus', statusList);
+ showToast('SLA date updated', 'success');
+ renderFollowups();
  }
+ }
+ fuCalClose();
+}
+
+function fuCalSelect(dateStr) {
+ const di = document.getElementById('fuQmDateInput');
+ if (di) di.value = dateStr;
+ const d = new Date(dateStr + 'T00:00:00');
+ const formatted = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+ const banner = document.getElementById('fuCalSelectedBanner');
+ if (banner) { banner.textContent = formatted; banner.classList.add('fu-cal-modal-banner-set'); }
  fuCalRender();
 }
 
@@ -12867,8 +12909,20 @@ function fuCalRender() {
  if (!grid) return;
  const today = normalizeDateOnly(new Date());
  const selected = (document.getElementById('fuQmDateInput') || {}).value || '';
- const firstDay = new Date(_fuCalYear, _fuCalMonth, 1).getDay();
+ // Sync banner inside calendar modal
+ const banner = document.getElementById('fuCalSelectedBanner');
+ if (banner) {
+ if (selected) {
+ const sd = new Date(selected + 'T00:00:00');
+ banner.textContent = sd.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+ banner.classList.add('fu-cal-modal-banner-set');
+ } else {
+ banner.textContent = 'No date selected';
+ banner.classList.remove('fu-cal-modal-banner-set');
+ }
+ }
  const daysInMonth = new Date(_fuCalYear, _fuCalMonth + 1, 0).getDate();
+ const firstDay = new Date(_fuCalYear, _fuCalMonth, 1).getDay();
  let html = '';
  for (let i = 0; i < firstDay; i++) html += '<div class="fu-cal-empty"></div>';
  for (let d = 1; d <= daysInMonth; d++) {
@@ -12896,17 +12950,21 @@ function _openFuQuickModal(opts) {
  const seed = opts.value ? new Date(opts.value + 'T00:00:00') : new Date();
  _fuCalYear = seed.getFullYear();
  _fuCalMonth = seed.getMonth();
- // Update selected display
+ // Update trigger button display
  const disp = document.getElementById('fuCalSelectedDisplay');
+ const trig2 = document.getElementById('fuCalTrigger');
  if (disp) {
  if (opts.value) {
  disp.textContent = seed.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
- disp.className = 'fu-cal-selected-display fu-cal-selected-display-set';
+ if (trig2) { trig2.classList.add('fu-cal-trigger-set'); trig2.classList.remove('open'); }
  } else {
- disp.textContent = 'Click a date to select';
- disp.className = 'fu-cal-selected-display';
+ disp.textContent = 'Click to select a date';
+ if (trig2) trig2.classList.remove('fu-cal-trigger-set', 'open');
  }
  }
+ // Ensure calendar modal is closed when SLA modal opens
+ const fuCM = document.getElementById('fuCalModal');
+ if (fuCM) fuCM.style.display = 'none';
  hint.textContent = opts.slaHint || '';
  hint.style.display = opts.slaHint ? 'block' : 'none';
  fuCalRender();
@@ -13025,26 +13083,51 @@ function toggleFollowupPin(id) {
 }
 
 function hideFollowup(id) {
- if (!confirm('Hide this follow-up? You can show it again by selecting "All" filter.')) return;
+ if (!confirm('Hide this follow-up? Use the \'Hidden\' filter to restore it.')) return;
  const r = _getOrCreateFollowupEntry(id);
  if (!r) return;
  r.entry.hidden = true;
  r.entry.updatedAt = new Date().toISOString();
  DB.set('followupStatus', r.statusList);
  renderFollowups();
- showToast('Follow-up hidden. Select "All" filter to see hidden items.', 'info');
+ showToast('Follow-up hidden. Use the Hidden filter to restore.', 'info');
+}
+
+function unhideFollowup(id) {
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ r.entry.hidden = false;
+ r.entry.updatedAt = new Date().toISOString();
+ DB.set('followupStatus', r.statusList);
+ renderFollowups();
+ showToast('Follow-up restored.', 'success');
 }
 
 function addFollowupNotePrompt(id) {
- const text = prompt('Add a note to this follow-up:');
- if (!text || !text.trim()) return;
+ const r = _getOrCreateFollowupEntry(id);
+ if (!r) return;
+ document.getElementById('fuNoteTargetId').value = id;
+ document.getElementById('fuNoteText').value = '';
+ document.getElementById('fuNoteModal').style.display = 'flex';
+ setTimeout(() => document.getElementById('fuNoteText').focus(), 80);
+}
+
+function closeFuNoteModal() {
+ document.getElementById('fuNoteModal').style.display = 'none';
+}
+
+function saveFuNote() {
+ const id = document.getElementById('fuNoteTargetId').value;
+ const text = document.getElementById('fuNoteText').value.trim();
+ if (!text) { showToast('Note cannot be empty.', 'error'); return; }
  const r = _getOrCreateFollowupEntry(id);
  if (!r) return;
  if (!Array.isArray(r.entry.notes)) r.entry.notes = [];
- r.entry.notes.push({ id: DB.generateId(), ts: new Date().toISOString(), text: text.trim() });
+ r.entry.notes.push({ id: DB.generateId(), ts: new Date().toISOString(), text });
  r.entry.updatedAt = new Date().toISOString();
  addFollowupHistory(r.entry, 'note-added', 'Note added');
  DB.set('followupStatus', r.statusList);
+ closeFuNoteModal();
  renderFollowups();
  showToast('Note added', 'success');
 }
@@ -13296,7 +13379,7 @@ function renderFollowups() {
  }
 
  // Apply filters
- let filtered = followups.filter(f => statusFilter === 'all' ? true : !f.hidden);
+ let filtered = followups.filter(f => statusFilter === 'hidden' ? f.hidden : !f.hidden);
  if (statusFilter === 'pending') filtered = filtered.filter(f => f.richStatus === 'pending');
  else if (statusFilter === 'active') filtered = filtered.filter(f => f.richStatus === 'pending' || f.richStatus === 'in-progress');
  else if (statusFilter === 'blocked') filtered = filtered.filter(f => f.richStatus === 'blocked');
@@ -13447,7 +13530,7 @@ function _renderFollowupCard(f) {
  <button class="btn btn-ghost btn-sm" onclick="addFollowupNotePrompt('${f.id}')"><i class="fas fa-sticky-note"></i> Note</button>
  <button class="btn btn-ghost btn-sm" onclick="linkFollowupEvidence('${f.id}')"><i class="fas fa-link"></i> Link</button>
  <button class="btn btn-ghost btn-sm" onclick="toggleFollowupPin('${f.id}')" title="${f.pinned ? 'Unpin' : 'Pin to top'}"><i class="fas fa-thumbtack" ${f.pinned ? 'style="color:var(--warning)"' : ''}></i></button>
- ${isManual ? `<button class="btn btn-ghost btn-sm" onclick="editManualFollowup('${f.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-ghost btn-sm" onclick="deleteManualFollowup('${f.id}')" style="color:var(--danger)"><i class="fas fa-trash"></i></button>` : `<button class="btn btn-ghost btn-sm" onclick="hideFollowup('${f.id}')" title="Hide" style="color:var(--text-muted)"><i class="fas fa-eye-slash"></i></button>`}
+ ${isManual ? `<button class="btn btn-ghost btn-sm" onclick="editManualFollowup('${f.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-ghost btn-sm" onclick="deleteManualFollowup('${f.id}')" style="color:var(--danger)"><i class="fas fa-trash"></i></button>` : f.hidden ? `<button class="btn btn-sm" style="background:var(--warning-light,#fef3c7);color:var(--warning,#d97706);border:1px solid var(--warning,#d97706)" onclick="unhideFollowup('${f.id}')" title="Restore this follow-up"><i class="fas fa-eye"></i> Unhide</button>` : `<button class="btn btn-ghost btn-sm" onclick="hideFollowup('${f.id}')" title="Hide" style="color:var(--text-muted)"><i class="fas fa-eye-slash"></i></button>`}
  </div>
  <details class="fu-timeline-details">
  <summary class="followup-history-title"><i class="fas fa-clock-rotate-left"></i> Closure Timeline</summary>

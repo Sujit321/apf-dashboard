@@ -1676,6 +1676,7 @@
  <option value="blocked">Blocked</option>
  <option value="done">Completed</option>
  <option value="all">All Status</option>
+ <option value="hidden">Hidden</option>
  </select>
  <select id="followupSourceFilter" class="filter-select-sm" onchange="_pageState.followups=1;renderFollowups()">
  <option value="all">All Sources</option>
@@ -1737,10 +1738,32 @@
  <input type="hidden" id="fuQmDateInput">
  <label class="form-label" id="fuQmLabel">Value</label>
  <input id="fuQmInput" class="form-control" type="text" style="display:block" placeholder="Enter value..." onkeydown="if(event.key==='Enter')saveFuQuickModal()">
- <!-- Custom calendar picker -->
+ <!-- Custom calendar picker trigger -->
  <div id="fuCalPicker" style="display:none">
- <div id="fuCalSelectedDisplay" class="fu-cal-selected-display">Click a date to select</div>
- <div class="fu-cal-widget">
+ <button type="button" id="fuCalTrigger" class="fu-cal-trigger" onclick="fuCalOpen()">
+ <i class="fas fa-calendar-alt"></i>
+ <span id="fuCalSelectedDisplay">Click to select a date</span>
+ <i class="fas fa-chevron-down fu-cal-trigger-arrow"></i>
+ </button>
+ </div>
+ <div id="fuQmHint" style="display:none;font-size:12px;color:var(--text-muted);padding:6px 10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)"></div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-ghost" onclick="closeFuQuickModal()">Cancel</button>
+ <button class="btn btn-primary" onclick="saveFuQuickModal()"><i class="fas fa-save"></i> Save</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Calendar Picker Modal -->
+ <div id="fuCalModal" class="modal-overlay fu-cal-modal-overlay" style="display:none" onclick="if(event.target===this)fuCalClose()">
+ <div class="fu-cal-modal">
+ <div class="fu-cal-modal-header">
+ <span><i class="fas fa-calendar-alt"></i> Select Date</span>
+ <button type="button" class="modal-close" onclick="fuCalClose()"><i class="fas fa-times"></i></button>
+ </div>
+ <div id="fuCalSelectedBanner" class="fu-cal-modal-banner">No date selected</div>
+ <div id="fuCalHint" style="font-size:12px;color:var(--text-muted);text-align:center;padding:4px 12px 0;"></div>
  <div class="fu-cal-nav">
  <button type="button" class="fu-cal-nav-btn" onclick="fuCalMove(-1)"><i class="fas fa-chevron-left"></i></button>
  <span id="fuCalMonthYear" class="fu-cal-month-label"></span>
@@ -1750,13 +1773,29 @@
  <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
  </div>
  <div class="fu-cal-days" id="fuCalDays"></div>
+ <div class="fu-cal-modal-footer">
+ <button class="btn btn-ghost btn-sm" onclick="fuCalClose()"><i class="fas fa-times"></i> Cancel</button>
+ <button class="btn btn-primary btn-sm" onclick="fuCalConfirm()"><i class="fas fa-check"></i> Confirm</button>
  </div>
  </div>
- <div id="fuQmHint" style="display:none;font-size:12px;color:var(--text-muted);padding:6px 10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)"></div>
+ </div>
+
+ <!-- Follow-up Note Modal -->
+ <div id="fuNoteModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeFuNoteModal()">
+ <div class="modal modal-sm">
+ <div class="modal-header">
+ <h2><i class="fas fa-sticky-note"></i> Add Note</h2>
+ <button class="modal-close" onclick="closeFuNoteModal()"><i class="fas fa-times"></i></button>
+ </div>
+ <div class="modal-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+ <input type="hidden" id="fuNoteTargetId">
+ <label class="form-label">Note <span style="color:var(--danger)">*</span></label>
+ <textarea id="fuNoteText" class="form-control" rows="4" placeholder="Write your note about this follow-up..." onkeydown="if(event.ctrlKey&&event.key==='Enter')saveFuNote()"></textarea>
+ <span style="font-size:11px;color:var(--text-muted)"><i class="fas fa-keyboard"></i> Ctrl+Enter to save</span>
  </div>
  <div class="modal-footer">
- <button class="btn btn-ghost" onclick="closeFuQuickModal()">Cancel</button>
- <button class="btn btn-primary" onclick="saveFuQuickModal()"><i class="fas fa-save"></i> Save</button>
+ <button class="btn btn-ghost" onclick="closeFuNoteModal()">Cancel</button>
+ <button class="btn btn-primary" onclick="saveFuNote()"><i class="fas fa-save"></i> Save Note</button>
  </div>
  </div>
  </div>
