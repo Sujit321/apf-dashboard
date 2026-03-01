@@ -19592,6 +19592,15 @@ function exportAllDataToExcel() {
 
 // ===== APP SETTINGS =====
 const APP_SETTINGS_KEY = 'apf_app_settings';
+const FONT_FAMILIES = [
+ { key: 'system',  name: 'System',   preview: 'Ss', css: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', google: null },
+ { key: 'inter',   name: 'Inter',    preview: 'Ii', css: '"Inter",sans-serif',    google: 'Inter:wght@300;400;500;600;700' },
+ { key: 'nunito',  name: 'Nunito',   preview: 'Nn', css: '"Nunito",sans-serif',   google: 'Nunito:wght@300;400;500;600;700' },
+ { key: 'poppins', name: 'Poppins',  preview: 'Pp', css: '"Poppins",sans-serif',  google: 'Poppins:wght@300;400;500;600;700' },
+ { key: 'roboto',  name: 'Roboto',   preview: 'Rr', css: '"Roboto",sans-serif',   google: 'Roboto:wght@300;400;500;700' },
+ { key: 'mono',    name: 'Mono',     preview: 'Mm', css: '"JetBrains Mono","Fira Code","Courier New",monospace', google: 'JetBrains+Mono:wght@400;500;700' }
+];
+
 const ACCENT_COLORS = [
  { name: 'Amber', value: '#f59e0b', css: '245, 158, 11' },
  { name: 'Blue', value: '#3b82f6', css: '59, 130, 246' },
@@ -19631,7 +19640,10 @@ function getDefaultSettings() {
  sarvamDefaultLang: 'hi-IN',
  sarvamEnabled: true,
  sarvamModel: 'sarvam-m',
- sarvamReasoning: 'medium'
+ sarvamReasoning: 'medium',
+ fontFamily: 'system',
+ lineHeight: 'default',
+ letterSpacing: 'normal'
  };
 }
 
@@ -19674,7 +19686,10 @@ function saveAppSettings() {
  sarvamDefaultLang: document.getElementById('settingSarvamLang')?.value || 'hi-IN',
  sarvamEnabled: document.getElementById('settingSarvamEnabled')?.checked ?? true,
  sarvamModel: document.getElementById('settingSarvamModel')?.value || 'sarvam-m',
- sarvamReasoning: document.getElementById('settingSarvamReasoning')?.value || 'medium'
+ sarvamReasoning: document.getElementById('settingSarvamReasoning')?.value || 'medium',
+ fontFamily: getAppSettings().fontFamily || 'system',
+ lineHeight: getAppSettings().lineHeight || 'default',
+ letterSpacing: getAppSettings().letterSpacing || 'normal'
  };
 
  try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { }
@@ -19758,6 +19773,27 @@ function renderSettings() {
 
  // SSR class toggles
  renderSSRClassToggles();
+
+ // Font family grid
+ const ffGrid = document.getElementById('settingFontFamilyGrid');
+ if (ffGrid) {
+ ffGrid.innerHTML = FONT_FAMILIES.map(f =>
+ `<div class="font-family-option ${s.fontFamily === f.key ? 'active' : ''}" style="font-family:${f.css}" onclick="setAppFontFamily('${f.key}')">
+ <span class="ff-preview">${f.preview}</span>
+ <span class="ff-name">${f.name}</span>
+ </div>`
+ ).join('');
+ }
+
+ // Line height buttons
+ document.querySelectorAll('#settingLineHeightBtns .settings-size-btn').forEach(btn => {
+ btn.classList.toggle('active', btn.textContent.toLowerCase() === (s.lineHeight || 'default'));
+ });
+
+ // Letter spacing buttons
+ document.querySelectorAll('#settingLetterSpacingBtns .settings-size-btn').forEach(btn => {
+ btn.classList.toggle('active', btn.textContent.toLowerCase() === (s.letterSpacing || 'normal'));
+ });
 
  // Data stats
  renderSettingsDataStats();
@@ -20017,8 +20053,70 @@ function applyAppSettings() {
  // Apply reduce motion
  document.body.classList.toggle('reduce-motion', s.reduceMotion === true);
 
+ // Apply font settings
+ applyFontFamily(s.fontFamily || 'system');
+ applyLineHeight(s.lineHeight || 'default');
+ applyLetterSpacing(s.letterSpacing || 'normal');
+
  // Apply hidden sidebar sections
  applySidebarVisibility();
+}
+
+function loadGoogleFont(font) {
+ if (!font.google) return;
+ const id = 'gfont-' + font.key;
+ if (document.getElementById(id)) return;
+ const link = document.createElement('link');
+ link.id = id;
+ link.rel = 'stylesheet';
+ link.href = `https://fonts.googleapis.com/css2?family=${font.google}&display=swap`;
+ document.head.appendChild(link);
+}
+
+function applyFontFamily(key) {
+ const font = FONT_FAMILIES.find(f => f.key === key) || FONT_FAMILIES[0];
+ if (font.google) loadGoogleFont(font);
+ document.documentElement.style.setProperty('--app-font-family', font.css);
+ document.body.style.fontFamily = font.css;
+}
+
+function setAppFontFamily(key) {
+ const s = getAppSettings();
+ s.fontFamily = key;
+ try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(s)); } catch (e) { }
+ applyFontFamily(key);
+ renderSettings();
+ showToast('Font updated', 'success', 1200);
+}
+
+function applyLineHeight(mode) {
+ document.body.classList.remove('lh-compact', 'lh-relaxed');
+ if (mode === 'compact') document.body.classList.add('lh-compact');
+ if (mode === 'relaxed') document.body.classList.add('lh-relaxed');
+}
+
+function setAppLineHeight(mode) {
+ const s = getAppSettings();
+ s.lineHeight = mode;
+ try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(s)); } catch (e) { }
+ applyLineHeight(mode);
+ renderSettings();
+ showToast('Line height updated', 'success', 1200);
+}
+
+function applyLetterSpacing(mode) {
+ document.body.classList.remove('ls-tight', 'ls-wide');
+ if (mode === 'tight') document.body.classList.add('ls-tight');
+ if (mode === 'wide') document.body.classList.add('ls-wide');
+}
+
+function setAppLetterSpacing(mode) {
+ const s = getAppSettings();
+ s.letterSpacing = mode;
+ try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(s)); } catch (e) { }
+ applyLetterSpacing(mode);
+ renderSettings();
+ showToast('Letter spacing updated', 'success', 1200);
 }
 
 // ===== SIDEBAR SECTION VISIBILITY =====

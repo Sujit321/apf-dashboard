@@ -3774,6 +3774,55 @@ function getOrCreateFolder() {
  </div>
  </div>
 
+
+                <!-- Font Settings -->
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <div class="settings-card-icon" style="background:linear-gradient(135deg,#ec4899,#be185d)"><i class="fas fa-font"></i></div>
+                        <div>
+                            <h3>Font Settings</h3>
+                            <p>Typeface, line spacing &amp; letter spacing</p>
+                        </div>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="settings-row">
+                            <div class="settings-label">
+                                <i class="fas fa-font"></i>
+                                <div><strong>Font Family</strong><span>Choose the typeface used across the app</span></div>
+                            </div>
+                            <div class="settings-control settings-control-wide">
+                                <div class="font-family-grid" id="settingFontFamilyGrid"></div>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-label">
+                                <i class="fas fa-align-left"></i>
+                                <div><strong>Line Height</strong><span>Adjust vertical spacing between lines of text</span></div>
+                            </div>
+                            <div class="settings-control">
+                                <div class="settings-btn-group" id="settingLineHeightBtns">
+                                    <button class="settings-size-btn" onclick="setAppLineHeight('compact')">Compact</button>
+                                    <button class="settings-size-btn active" onclick="setAppLineHeight('default')">Default</button>
+                                    <button class="settings-size-btn" onclick="setAppLineHeight('relaxed')">Relaxed</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-label">
+                                <i class="fas fa-text-width"></i>
+                                <div><strong>Letter Spacing</strong><span>Adjust spacing between characters</span></div>
+                            </div>
+                            <div class="settings-control">
+                                <div class="settings-btn-group" id="settingLetterSpacingBtns">
+                                    <button class="settings-size-btn" onclick="setAppLetterSpacing('tight')">Tight</button>
+                                    <button class="settings-size-btn active" onclick="setAppLetterSpacing('normal')">Normal</button>
+                                    <button class="settings-size-btn" onclick="setAppLetterSpacing('wide')">Wide</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
  <!-- Default Values -->
  <div class="settings-card">
  <div class="settings-card-header">
@@ -7183,6 +7232,5 @@ function getOrCreateFolder() {
 </body>
 
 </html>
-
 
 
