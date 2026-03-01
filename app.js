@@ -4547,7 +4547,7 @@ function renderVisitCalendar() {
  const isToday = dk === todayStr;
 
  cells.push(`<div class="vc-day ${isToday ? 'today' : ''} ${dayVisits.length ? 'has-visits' : ''}">
- <div class="vc-day-num">${d}</div>
+ <div class="vc-day-num"><span>${d}</span></div>
  <div class="vc-day-visits">
  ${dayVisits.map(v => {
  const statusCls = v.status === 'completed' ? 'completed' : v.status === 'cancelled' ? 'cancelled' : 'planned';
@@ -4562,9 +4562,15 @@ function renderVisitCalendar() {
 
  calEl.innerHTML = `
  <div class="vc-header">
- <button class="vc-nav" onclick="navVisitCalendar(-1)"><i class="fas fa-chevron-left"></i></button>
+ <div style="display:flex;gap:6px">
+ <button class="vc-nav" onclick="_visitCalMonthOffset-=12;renderVisitCalendar()" title="Prev year"><i class="fas fa-angle-double-left"></i></button>
+ <button class="vc-nav" onclick="navVisitCalendar(-1)" title="Prev month"><i class="fas fa-chevron-left"></i></button>
+ </div>
  <span class="vc-month">${monthStr}</span>
- <button class="vc-nav" onclick="navVisitCalendar(1)"><i class="fas fa-chevron-right"></i></button>
+ <div style="display:flex;gap:6px">
+ <button class="vc-nav" onclick="navVisitCalendar(1)" title="Next month"><i class="fas fa-chevron-right"></i></button>
+ <button class="vc-nav" onclick="_visitCalMonthOffset+=12;renderVisitCalendar()" title="Next year"><i class="fas fa-angle-double-right"></i></button>
+ </div>
  </div>
  <div class="vc-grid">
  <div class="vc-dow">Mon</div><div class="vc-dow">Tue</div><div class="vc-dow">Wed</div>
@@ -4573,6 +4579,255 @@ function renderVisitCalendar() {
  </div>
  `;
 }
+
+// ===== Custom Date Range Picker =====
+(function() {
+  const S = {
+    fromVal: '', toVal: '',
+    viewYear: 0, viewMonth: 0,
+    calView: 'days', // 'days' | 'months' | 'years'
+    picking: 'from',
+    open: false,
+    anchor: null,
+    onChangeCb: null
+  };
+
+  const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmt(dateStr) {
+    if (!dateStr) return '';
+    const [y,m,d] = dateStr.split('-');
+    return `${d}-${m}-${y}`;
+  }
+  function todayStr() {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  }
+  function getPopup() { return document.getElementById('vdrPopup'); }
+  function removePopup() {
+    const p = getPopup();
+    if (p) p.remove();
+    S.open = false;
+    document.querySelectorAll('.vdr-trigger-wrap').forEach(w => w.classList.remove('open'));
+  }
+  function position(popup, anchor) {
+    const r = anchor.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let top = r.bottom + 6, left = r.left;
+    const pw = 296, ph = 360;
+    if (left + pw > vw - 8) left = vw - pw - 8;
+    if (top + ph > vh - 8) top = r.top - ph - 6;
+    if (top < 8) top = 8;
+    popup.style.top = top + 'px';
+    popup.style.left = left + 'px';
+  }
+
+  function renderDaysView(y, m) {
+    const firstDay = new Date(y, m, 1);
+    const lastDay  = new Date(y, m+1, 0);
+    const startDow = firstDay.getDay();
+    const today    = todayStr();
+    let cells = '';
+    for (let i = 0; i < startDow; i++) cells += `<div class="vdr-cell empty"></div>`;
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const dk = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = dk === today;
+      const dow = new Date(y, m, d).getDay();
+      const cls = [];
+      if (isToday) cls.push('today');
+      if (dow === 0 || dow === 6) cls.push('weekend');
+      const from = S.fromVal, to = S.toVal;
+      if (dk === from) { cls.push('selected-start'); if (to) cls.push('in-range range-start'); }
+      else if (dk === to) { cls.push('selected-end'); if (from) cls.push('in-range range-end'); }
+      else if (from && to && dk > from && dk < to) cls.push('in-range');
+      cells += `<div class="vdr-cell ${cls.join(' ')}" onclick="VDR._pick('${dk}')">${d}</div>`;
+    }
+    const picking = S.picking === 'from' ? '▶ Select start date' : '▶ Select end date';
+    const hasRange = S.fromVal && S.toVal;
+    const fromDisp = S.fromVal ? fmt(S.fromVal) : '—';
+    const toDisp   = S.toVal   ? fmt(S.toVal)   : '—';
+    const rangeInfo = hasRange ? `${fromDisp} → ${toDisp}` : S.fromVal ? `From: ${fromDisp}` : 'Select a date range';
+    return `
+      <div class="vdr-popup-header">
+        <div class="vdr-nav-group">
+          <button class="vdr-nav" onclick="VDR._nav(-12)" title="Prev Year"><i class="fas fa-angle-double-left"></i></button>
+          <button class="vdr-nav" onclick="VDR._nav(-1)"  title="Prev Month"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="vdr-month-label" onclick="VDR._switchView('months')" title="Pick month / year">
+          ${MONTHS[m]} ${y} <i class="fas fa-caret-down"></i>
+        </div>
+        <div class="vdr-nav-group">
+          <button class="vdr-nav" onclick="VDR._nav(1)"   title="Next Month"><i class="fas fa-chevron-right"></i></button>
+          <button class="vdr-nav" onclick="VDR._nav(12)"  title="Next Year"><i class="fas fa-angle-double-right"></i></button>
+        </div>
+      </div>
+      <div class="vdr-selecting-label">${picking}</div>
+      <div class="vdr-dow-row">${DAYS.map(d=>`<div class="vdr-dow">${d}</div>`).join('')}</div>
+      <div class="vdr-day-grid">${cells}</div>
+      <div class="vdr-popup-footer">
+        <div class="vdr-footer-info">${rangeInfo}</div>
+        <div class="vdr-footer-actions">
+          <button class="vdr-footer-btn" onclick="VDR._clear()">Clear</button>
+          <button class="vdr-footer-btn" onclick="VDR._today()">Today</button>
+          ${hasRange ? `<button class="vdr-footer-btn primary" onclick="VDR._apply()"><i class="fas fa-check"></i> Apply</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderMonthsView(y) {
+    const nowMonth = new Date().getMonth();
+    const nowYear  = new Date().getFullYear();
+    const cells = MONTHS_SHORT.map((mn, i) => {
+      const isCurrent = i === S.viewMonth && y === S.viewYear ? '' : '';
+      const isNow = i === nowMonth && y === nowYear;
+      return `<div class="vdr-mv-cell ${isNow ? 'vdr-mv-now' : ''} ${i === S.viewMonth ? 'vdr-mv-active' : ''}"
+                   onclick="VDR._pickMonth(${i})">${mn}</div>`;
+    }).join('');
+    return `
+      <div class="vdr-popup-header">
+        <div class="vdr-nav-group">
+          <button class="vdr-nav" onclick="VDR._navYear(-1)" title="Prev Year"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="vdr-month-label" onclick="VDR._switchView('years')" title="Pick year">
+          ${y} <i class="fas fa-caret-down"></i>
+        </div>
+        <div class="vdr-nav-group">
+          <button class="vdr-nav" onclick="VDR._navYear(1)" title="Next Year"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="vdr-mv-grid">${cells}</div>
+      <div class="vdr-popup-footer">
+        <div class="vdr-footer-info">Select a month</div>
+        <div class="vdr-footer-actions">
+          <button class="vdr-footer-btn" onclick="VDR._switchView('days')"><i class="fas fa-arrow-left"></i> Back</button>
+        </div>
+      </div>`;
+  }
+
+  function renderYearsView(y) {
+    const base  = Math.floor(y / 12) * 12;
+    const nowY  = new Date().getFullYear();
+    let cells = '';
+    for (let yi = base; yi < base + 12; yi++) {
+      cells += `<div class="vdr-mv-cell ${yi === nowY ? 'vdr-mv-now' : ''} ${yi === S.viewYear ? 'vdr-mv-active' : ''}"
+                     onclick="VDR._pickYear(${yi})">${yi}</div>`;
+    }
+    return `
+      <div class="vdr-popup-header">
+        <div class="vdr-nav-group">
+          <button class="vdr-nav" onclick="VDR._navYearPage(-12)" title="Prev"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="vdr-month-label" style="cursor:default">${base} – ${base+11}</div>
+        <div class="vdr-nav-group">
+          <button class="vdr-nav" onclick="VDR._navYearPage(12)"  title="Next"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="vdr-mv-grid">${cells}</div>
+      <div class="vdr-popup-footer">
+        <div class="vdr-footer-info">Select a year</div>
+        <div class="vdr-footer-actions">
+          <button class="vdr-footer-btn" onclick="VDR._switchView('months')"><i class="fas fa-arrow-left"></i> Back</button>
+        </div>
+      </div>`;
+  }
+
+  function render() {
+    let popup = getPopup();
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.id = 'vdrPopup';
+      popup.className = 'vdr-popup';
+      document.body.appendChild(popup);
+      document.addEventListener('mousedown', outsideClick, true);
+    }
+    if (S.anchor) position(popup, S.anchor);
+    const y = S.viewYear, m = S.viewMonth;
+    if (S.calView === 'months') popup.innerHTML = renderMonthsView(y);
+    else if (S.calView === 'years') popup.innerHTML = renderYearsView(y);
+    else popup.innerHTML = renderDaysView(y, m);
+  }
+
+  function outsideClick(e) {
+    const popup = getPopup();
+    if (!popup) return;
+    if (popup.contains(e.target)) return;
+    if (e.target.closest('.vdr-trigger-wrap')) return;
+    removePopup();
+  }
+
+  function updateTriggerBtns() {
+    const fromBtn = document.getElementById('vdrFromBtn');
+    const toBtn   = document.getElementById('vdrToBtn');
+    if (fromBtn) {
+      fromBtn.textContent = S.fromVal ? fmt(S.fromVal) : 'From';
+      fromBtn.className = 'vdr-trigger-btn' + (S.fromVal ? ' has-value' : '');
+    }
+    if (toBtn) {
+      toBtn.textContent = S.toVal ? fmt(S.toVal) : 'To';
+      toBtn.className = 'vdr-trigger-btn' + (S.toVal ? ' has-value' : '');
+    }
+  }
+
+  window.VDR = {
+    open(picking, anchor, onChangeCb) {
+      if (S.open && S.anchor === anchor) { removePopup(); return; }
+      S.open = true; S.calView = 'days';
+      S.picking = picking; S.anchor = anchor; S.onChangeCb = onChangeCb;
+      const seed = (picking === 'from' ? S.fromVal : S.toVal) || S.fromVal || S.toVal || todayStr();
+      const [sy, sm] = seed.split('-');
+      S.viewYear = parseInt(sy); S.viewMonth = parseInt(sm) - 1;
+      document.querySelectorAll('.vdr-trigger-wrap').forEach(w => w.classList.remove('open'));
+      anchor.closest('.vdr-trigger-wrap')?.classList.add('open');
+      render();
+    },
+    _switchView(v) { S.calView = v; render(); },
+    _nav(delta) {
+      S.viewMonth += delta;
+      while (S.viewMonth > 11) { S.viewMonth -= 12; S.viewYear++; }
+      while (S.viewMonth < 0)  { S.viewMonth += 12; S.viewYear--; }
+      render();
+    },
+    _navYear(delta)     { S.viewYear += delta; render(); },
+    _navYearPage(delta) { S.viewYear += delta; render(); },
+    _pickMonth(m) { S.viewMonth = m; S.calView = 'days'; render(); },
+    _pickYear(y)  { S.viewYear  = y; S.calView = 'months'; render(); },
+    _pick(dk) {
+      if (S.picking === 'from') {
+        S.fromVal = dk;
+        if (S.toVal && S.toVal < dk) S.toVal = '';
+        S.picking = 'to';
+      } else {
+        if (S.fromVal && dk < S.fromVal) { S.toVal = S.fromVal; S.fromVal = dk; }
+        else S.toVal = dk;
+        S.picking = 'from';
+      }
+      updateTriggerBtns(); render();
+      if (S.fromVal && S.toVal) this._apply();
+    },
+    _clear() {
+      S.fromVal = ''; S.toVal = '';
+      updateTriggerBtns();
+      if (S.onChangeCb) S.onChangeCb('', '');
+      removePopup();
+    },
+    _today() {
+      const t = todayStr();
+      if (S.picking === 'from') S.fromVal = t; else S.toVal = t;
+      updateTriggerBtns(); render();
+    },
+    _apply() {
+      updateTriggerBtns();
+      if (S.onChangeCb) S.onChangeCb(S.fromVal, S.toVal);
+      removePopup();
+    },
+    syncFrom(fromVal, toVal) {
+      S.fromVal = fromVal || ''; S.toVal = toVal || '';
+      updateTriggerBtns();
+    }
+  };
+})();
 
 // ===== Visit Detail Panel (Inline Expand) =====
 function toggleVisitDetailPanel(id) {
@@ -6128,20 +6383,24 @@ function renderObservations() {
 
  updateObsStats(filtered);
 
- // Store filtered list for load-more
+ // Store filtered list for pagination
  window._obsFiltered = filtered;
- window._obsPageSize = 50;
- window._obsShowing = Math.min(50, filtered.length);
+ window._obsPageSize = 25;
+ if (window._obsCurrentPage === undefined) window._obsCurrentPage = 1;
+ // Clamp page if filter changed
+ const _totalPages = Math.max(1, Math.ceil(filtered.length / window._obsPageSize));
+ if (window._obsCurrentPage > _totalPages) window._obsCurrentPage = _totalPages;
 
  if (filtered.length === 0) {
  container.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><h3>No observations found</h3><p>${observations.length === 0 ? 'Start documenting classroom observations or import a DMT Excel' : 'Try adjusting your filters'}</p></div>`;
  return;
  }
 
- // Pagination: show max 50 at a time
- const PAGE_SIZE = 50;
- const showing = filtered.slice(0, PAGE_SIZE);
- const hasMore = filtered.length > PAGE_SIZE;
+ // Pagination: show one page at a time
+ const PAGE_SIZE = window._obsPageSize;
+ const currentPage = window._obsCurrentPage;
+ const startIdx = (currentPage - 1) * PAGE_SIZE;
+ const showing = filtered.slice(startIdx, startIdx + PAGE_SIZE);
 
  container.innerHTML = showing.map(o => {
  const d = new Date(o.date);
@@ -6197,81 +6456,53 @@ function renderObservations() {
  <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteObservation('${o.id}')"><i class="fas fa-trash"></i> Delete</button>
  </div>
  </div>`;
- }).join('') + (hasMore ? `<div class="obs-load-more"><button class="btn btn-outline" onclick="loadMoreObservations()"><i class="fas fa-chevron-down"></i> Showing ${PAGE_SIZE} of ${filtered.length.toLocaleString()} Load More</button></div>` : `<div class="obs-load-more-info">${filtered.length.toLocaleString()} observations</div>`);
+ }).join('') + buildObsPaginationBar(currentPage, filtered.length, PAGE_SIZE);
 }
 
-function loadMoreObservations() {
- if (!window._obsFiltered) return;
- const container = document.getElementById('observationsContainer');
- const nextBatch = 50;
- const start = window._obsShowing;
- const end = Math.min(start + nextBatch, window._obsFiltered.length);
- const newItems = window._obsFiltered.slice(start, end);
- window._obsShowing = end;
- const hasMore = end < window._obsFiltered.length;
+function buildObsPaginationBar(currentPage, total, pageSize) {
+ const totalPages = Math.max(1, Math.ceil(total / pageSize));
+ if (totalPages <= 1) {
+ return `<div class="pagination-info">${total.toLocaleString()} observation${total !== 1 ? 's' : ''}</div>`;
+ }
+ const start = (currentPage - 1) * pageSize + 1;
+ const end = Math.min(currentPage * pageSize, total);
 
- // Remove the load-more button
- const loadMoreEl = container.querySelector('.obs-load-more');
- if (loadMoreEl) loadMoreEl.remove();
- const infoEl = container.querySelector('.obs-load-more-info');
- if (infoEl) infoEl.remove();
+ const pageBtn = (p, label, isActive, isDisabled) =>
+ `<button class="pg-btn${isActive ? ' active' : ''}" ${isDisabled ? 'disabled' : ''} onclick="goToObsPage(${p})">${label}</button>`;
 
- const renderCard = (o) => {
- const d = new Date(o.date);
- const engClass = o.engagementLevel === 'More Engaged' ? 'engagement-high' :
- o.engagementLevel === 'Engaged' ? 'engagement-mid' : 'engagement-low';
- const obsStatusClass = o.observationStatus === 'Yes' ? 'obs-yes' :
- o.observationStatus === 'Not_Observed' ? 'obs-notobs' : 'obs-no';
- const obsStatusLabel = o.observationStatus === 'Yes' ? 'Observed' :
- o.observationStatus === 'Not_Observed' ? 'Not Observed' : 'Not Done';
- const starsHtml = (val) => {
- if (!val) return '';
- let s = '';
- for (let i = 1; i <= 5; i++) s += `<i class="fas fa-star" style="color:${i <= val ? 'var(--accent)' : 'var(--text-muted)'}; font-size:10px;"></i>`;
- return s;
- };
- const preview = o.notes || o.strengths || o.areas || o.suggestions || '';
- const practicePreview = o.practice ? (o.practice.length > 80 ? o.practice.substring(0, 80) + '...' : o.practice) : '';
+ // Build page number list with ellipsis
+ let pages = [];
+ if (totalPages <= 7) {
+ for (let i = 1; i <= totalPages; i++) pages.push(i);
+ } else {
+ pages.push(1);
+ if (currentPage > 3) pages.push('...');
+ for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+ if (currentPage < totalPages - 2) pages.push('...');
+ pages.push(totalPages);
+ }
 
- return `<div class="observation-item" onclick="openObservationModal('${o.id}')">
- <div class="observation-header">
- <h4>${escapeHtml(o.school)}</h4>
- <div class="obs-header-right">
- <span class="obs-status-badge ${obsStatusClass}">${obsStatusLabel}</span>
- <span class="observation-date">${d.toLocaleDateString('en-IN')}</span>
- </div>
- </div>
- <div class="observation-meta-row">
- ${o.teacher ? `<span><i class="fas fa-user"></i> ${escapeHtml(o.teacher)}</span>` : ''}
- ${o.subject ? `<span><i class="fas fa-book"></i> ${escapeHtml(o.subject)}</span>` : ''}
- ${o.class ? `<span><i class="fas fa-graduation-cap"></i> ${escapeHtml(o.class)}</span>` : ''}
- ${o.block ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(o.block)}</span>` : ''}
- ${o.cluster ? `<span><i class="fas fa-layer-group"></i> ${escapeHtml(o.cluster)}</span>` : ''}
- </div>
- <div class="observation-meta-row obs-meta-row-2">
- ${o.engagementLevel ? `<span class="obs-engagement-badge ${engClass}"><i class="fas fa-fire"></i> ${escapeHtml(o.engagementLevel)}</span>` : ''}
- ${o.practiceType ? `<span class="obs-practice-type-badge">${escapeHtml(o.practiceType)}</span>` : ''}
- ${o.practiceSerial ? `<span class="obs-serial-badge" style="cursor:pointer" onclick="event.stopPropagation(); navigateToTP('${escapeHtml(o.subject || '')}','${escapeHtml(o.practiceSerial)}')" title="View in Teaching Practices"><i class="fas fa-link" style="font-size:9px;margin-right:3px"></i>${escapeHtml(o.practiceSerial)}</span>` : ''}
- ${o.observedWhileTeaching === 'True' ? `<span class="obs-teaching-badge"><i class="fas fa-chalkboard"></i> While Teaching</span>` : ''}
- ${o.observer ? `<span><i class="fas fa-user-tie"></i> ${escapeHtml(o.observer)}</span>` : ''}
- </div>
- ${practicePreview ? `<div class="obs-practice-preview"><i class="fas fa-tasks"></i> ${escapeHtml(practicePreview)}</div>` : ''}
- ${(o.engagementRating || o.methodology || o.tlm) ? `<div class="observation-ratings">
- ${o.engagementRating ? `<span class="mini-rating">Engagement: <span class="stars">${starsHtml(o.engagementRating)}</span></span>` : ''}
- ${o.methodology ? `<span class="mini-rating">Methodology: <span class="stars">${starsHtml(o.methodology)}</span></span>` : ''}
- ${o.tlm ? `<span class="mini-rating">TLM Use: <span class="stars">${starsHtml(o.tlm)}</span></span>` : ''}
- </div>` : ''}
- ${preview ? `<div class="observation-notes-preview">${escapeHtml(preview.substring(0, 150))}${preview.length > 150 ? '...' : ''}</div>` : ''}
- <div class="observation-item-actions">
- <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); openObservationModal('${o.id}')"><i class="fas fa-edit"></i> Edit</button>
- <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); printObsFeedback('${o.id}')"><i class="fas fa-print"></i> Feedback</button>
- <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteObservation('${o.id}')"><i class="fas fa-trash"></i> Delete</button>
+ const pageButtons = pages.map(p =>
+ p === '...' ? `<span class="pg-dots">…</span>` : pageBtn(p, p, p === currentPage, false)
+ ).join('');
+
+ return `<div class="pagination-bar">
+ <span class="pg-info">Showing ${start.toLocaleString()}–${end.toLocaleString()} of ${total.toLocaleString()}</span>
+ <div class="pg-buttons">
+ ${pageBtn(currentPage - 1, '<i class="fas fa-chevron-left"></i>', false, currentPage === 1)}
+ ${pageButtons}
+ ${pageBtn(currentPage + 1, '<i class="fas fa-chevron-right"></i>', false, currentPage === totalPages)}
  </div>
  </div>`;
- };
+}
 
- container.innerHTML += newItems.map(renderCard).join('') +
- (hasMore ? `<div class="obs-load-more"><button class="btn btn-outline" onclick="loadMoreObservations()"><i class="fas fa-chevron-down"></i> Showing ${end.toLocaleString()} of ${window._obsFiltered.length.toLocaleString()} Load More</button></div>` : `<div class="obs-load-more-info">${window._obsFiltered.length.toLocaleString()} observations</div>`);
+function goToObsPage(page) {
+ if (!window._obsFiltered) return;
+ const totalPages = Math.max(1, Math.ceil(window._obsFiltered.length / window._obsPageSize));
+ window._obsCurrentPage = Math.max(1, Math.min(page, totalPages));
+ renderObservations();
+ const container = document.getElementById('observationsContainer');
+ if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ===== DMT Excel Import =====
@@ -18053,23 +18284,7 @@ const VP_DOMAIN_TEMPLATES = [
 function _vpRenderQuickBar() {
  const bar = document.getElementById('vpQuickBar');
  if (!bar) return;
- const dd = DB.get('visitPlanDropdowns') || {};
- const importedDomains = dd.domains || [];
-
- // Merge: use templates + any imported domains not already in templates
- const templateDomains = VP_DOMAIN_TEMPLATES.map(t => t.domain.toLowerCase());
- const extras = importedDomains.filter(d => !templateDomains.includes(d.toLowerCase()));
-
- let html = '<div class="vp-quick-label"><i class="fas fa-bolt"></i> Quick Add</div><div class="vp-quick-chips">';
- VP_DOMAIN_TEMPLATES.forEach(t => {
- html += `<button class="vp-quick-chip" style="--qc-color:${t.color}" onclick="vpQuickAdd('${t.domain.replace(/'/g, "\\'")}')"><i class="fas ${t.icon}"></i> ${t.domain}</button>`;
- });
- extras.forEach(d => {
- html += `<button class="vp-quick-chip" style="--qc-color:#6b7280" onclick="vpQuickAdd('${d.replace(/'/g, "\\'")}')"><i class="fas fa-folder"></i> ${d}</button>`;
- });
- html += '</div>';
- // Bulk Add Half buttons
- html += '<div class="vp-bulk-half-actions">';
+ let html = '<div class="vp-bulk-half-actions">';
  html += `<button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" title="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half \u2192 Visits</button>`;
  html += `<button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" title="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half \u2192 Visits</button>`;
  html += '</div>';

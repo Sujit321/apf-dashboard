@@ -525,15 +525,20 @@
  <input type="text" id="visitSearchInput" placeholder="Search schools, clusters..."
  oninput="_pageState.visits=1;renderVisits()">
  </div>
- <div class="visit-date-range">
- <input type="date" id="visitDateFrom" onchange="_pageState.visits=1;renderVisits()"
- title="From date">
- <span class="visit-date-sep"></span>
- <input type="date" id="visitDateTo" onchange="_pageState.visits=1;renderVisits()" title="To date">
- <button class="btn btn-sm btn-ghost"
- onclick="document.getElementById('visitDateFrom').value='';document.getElementById('visitDateTo').value='';_pageState.visits=1;renderVisits();"
- title="Clear date range"><i class="fas fa-times"></i></button>
+ <div class="vdr-trigger-wrap" onclick="event.stopPropagation()">
+ <i class="fas fa-calendar-alt" style="font-size:12px;color:var(--accent);opacity:0.8;margin-left:4px;"></i>
+ <button id="vdrFromBtn" class="vdr-trigger-btn"
+ onclick="VDR.open('from',this,function(f,t){document.getElementById('visitDateFrom').value=f;document.getElementById('visitDateTo').value=t;_pageState.visits=1;renderVisits();})">From</button>
+ <div class="vdr-sep"></div>
+ <button id="vdrToBtn" class="vdr-trigger-btn"
+ onclick="VDR.open('to',this,function(f,t){document.getElementById('visitDateFrom').value=f;document.getElementById('visitDateTo').value=t;_pageState.visits=1;renderVisits();})">To</button>
+ <button class="vdr-clear-btn" title="Clear dates"
+ onclick="VDR._clear(); document.getElementById('visitDateFrom').value=''; document.getElementById('visitDateTo').value=''; _pageState.visits=1; renderVisits();">
+ <i class="fas fa-times"></i></button>
  </div>
+ <!-- Hidden native inputs kept for filter logic -->
+ <input type="date" id="visitDateFrom" style="display:none" onchange="_pageState.visits=1;renderVisits()">
+ <input type="date" id="visitDateTo" style="display:none" onchange="_pageState.visits=1;renderVisits()">
  <div class="view-toggles">
  <button class="view-btn active" data-view="list" onclick="setVisitView('list')"><i
  class="fas fa-list"></i></button>
@@ -727,7 +732,7 @@
  <!-- Filter Bar -->
  <div class="filter-bar obs-filter-bar">
  <div class="filter-group">
- <select id="observationSubjectFilter" onchange="renderObservations()">
+ <select id="observationSubjectFilter" onchange="window._obsCurrentPage=1; renderObservations()">
  <option value="all">All Subjects</option>
  <option value="Math">Math</option>
  <option value="Hindi">Hindi</option>
@@ -740,29 +745,29 @@
  <option value="EVS">EVS</option>
  <option value="Other">Other</option>
  </select>
- <select id="observationEngagementFilter" onchange="renderObservations()">
+ <select id="observationEngagementFilter" onchange="window._obsCurrentPage=1; renderObservations()">
  <option value="all">All Engagement</option>
  <option value="More Engaged">More Engaged</option>
  <option value="Engaged">Engaged</option>
  <option value="Not Engaged">Not Engaged</option>
  </select>
- <select id="observationTypeFilter" onchange="renderObservations()">
+ <select id="observationTypeFilter" onchange="window._obsCurrentPage=1; renderObservations()">
  <option value="all">All Practice Types</option>
  <option value="Teaching Practice">Teaching Practice</option>
  <option value="Common Practice">Common Practice</option>
  <option value="Learning Outcome">Learning Outcome</option>
  </select>
- <select id="observationBlockFilter" onchange="renderObservations()">
+ <select id="observationBlockFilter" onchange="window._obsCurrentPage=1; renderObservations()">
  <option value="all">All Blocks</option>
  </select>
- <select id="observationObsFilter" onchange="renderObservations()">
+ <select id="observationObsFilter" onchange="window._obsCurrentPage=1; renderObservations()">
  <option value="all">All Status</option>
  <option value="Yes">Observed</option>
  <option value="Not_Observed">Not Observed</option>
  <option value="No">Not Done</option>
  </select>
  <input type="text" id="observationSearchInput" placeholder="Search school, teacher, TP number..."
- oninput="renderObservations()">
+ oninput="window._obsCurrentPage=1; renderObservations()">
  </div>
  </div>
 
