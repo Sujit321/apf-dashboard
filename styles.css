@@ -30158,3 +30158,284 @@ body.light-mode .wi-meta {
     gap: 6px;
 }
 
+/* ===== Splash / Login Loading Screen ===== */
+#splashScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.splash-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    animation: splashBgShift 3s ease infinite alternate;
+}
+
+@keyframes splashBgShift {
+    from { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+    to   { background: linear-gradient(135deg, #1a1045, #4f46e5, #6366f1); }
+}
+
+.splash-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    animation: splashFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes splashFadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Logo ring */
+.splash-logo-ring {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.splash-logo-inner {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    color: #fff;
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+    animation: splashPulse 2s ease-in-out infinite;
+}
+
+@keyframes splashPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(99,102,241,0.5); transform: scale(1); }
+    50%       { box-shadow: 0 0 60px rgba(139,92,246,0.8); transform: scale(1.06); }
+}
+
+.splash-ring-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.splash-ring-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 4;
+}
+
+.splash-ring-fill {
+    fill: none;
+    stroke: url(#splashGrad);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 339.3;
+    stroke-dashoffset: 339.3;
+    animation: splashRingFill 2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+}
+
+@keyframes splashRingFill {
+    to { stroke-dashoffset: 0; }
+}
+
+/* App name */
+.splash-app-name {
+    font-size: clamp(20px, 5vw, 28px);
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    text-shadow: 0 2px 20px rgba(99,102,241,0.4);
+    max-width: 340px;
+}
+
+.splash-tagline {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.5px;
+    margin-top: -10px;
+}
+
+/* Animated dots loader */
+.splash-dots {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.splash-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(99,102,241,0.8);
+    animation: splashDot 1.2s ease-in-out infinite;
+}
+
+.splash-dots span:nth-child(2) { animation-delay: 0.2s; background: rgba(139,92,246,0.8); }
+.splash-dots span:nth-child(3) { animation-delay: 0.4s; background: rgba(167,139,250,0.8); }
+
+@keyframes splashDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40%            { transform: scale(1.2); opacity: 1; }
+}
+
+/* Credit line */
+.splash-credit {
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+}
+
+.splash-credit strong {
+    color: rgba(167,139,250,0.85);
+    font-weight: 600;
+}
+
+/* Fade-out transition */
+#splashScreen.splash-hide {
+    animation: splashFadeOut 0.5s ease forwards;
+}
+
+@keyframes splashFadeOut {
+    to { opacity: 0; pointer-events: none; }
+}
+
+/* ===== Splash Theme colour overrides ===== */
+
+/* -- indigo (default, already set above) -- */
+
+/* -- violet -- */
+.splash-theme-violet .splash-bg {
+    background: linear-gradient(135deg,#2e1065,#4c1d95,#1e1b4b);
+    animation: splashBgViolet 3s ease infinite alternate;
+}
+@keyframes splashBgViolet {
+    from { background: linear-gradient(135deg,#2e1065,#4c1d95,#1e1b4b); }
+    to   { background: linear-gradient(135deg,#3b0764,#7c3aed,#8b5cf6); }
+}
+.splash-theme-violet .splash-logo-inner { background: linear-gradient(135deg,#7c3aed,#a855f7); box-shadow: 0 0 40px rgba(124,58,237,0.5); }
+.splash-theme-violet .splash-ring-fill  { stroke: #a855f7; }
+.splash-theme-violet .splash-dots span:nth-child(1) { background: rgba(124,58,237,0.8); }
+.splash-theme-violet .splash-dots span:nth-child(2) { background: rgba(168,85,247,0.8); }
+.splash-theme-violet .splash-dots span:nth-child(3) { background: rgba(196,139,252,0.8); }
+.splash-theme-violet .splash-credit strong { color: rgba(196,139,252,0.9); }
+
+/* -- emerald -- */
+.splash-theme-emerald .splash-bg {
+    background: linear-gradient(135deg,#022c22,#064e3b,#065f46);
+    animation: splashBgEmerald 3s ease infinite alternate;
+}
+@keyframes splashBgEmerald {
+    from { background: linear-gradient(135deg,#022c22,#064e3b,#065f46); }
+    to   { background: linear-gradient(135deg,#052e16,#059669,#10b981); }
+}
+.splash-theme-emerald .splash-logo-inner { background: linear-gradient(135deg,#059669,#34d399); box-shadow: 0 0 40px rgba(5,150,105,0.5); }
+.splash-theme-emerald .splash-ring-fill  { stroke: #34d399; }
+.splash-theme-emerald .splash-dots span:nth-child(1) { background: rgba(5,150,105,0.8); }
+.splash-theme-emerald .splash-dots span:nth-child(2) { background: rgba(16,185,129,0.8); }
+.splash-theme-emerald .splash-dots span:nth-child(3) { background: rgba(52,211,153,0.8); }
+.splash-theme-emerald .splash-credit strong { color: rgba(52,211,153,0.9); }
+
+/* -- sky -- */
+.splash-theme-sky .splash-bg {
+    background: linear-gradient(135deg,#0c2340,#0c4a6e,#075985);
+    animation: splashBgSky 3s ease infinite alternate;
+}
+@keyframes splashBgSky {
+    from { background: linear-gradient(135deg,#0c2340,#0c4a6e,#075985); }
+    to   { background: linear-gradient(135deg,#082f49,#0284c7,#38bdf8); }
+}
+.splash-theme-sky .splash-logo-inner { background: linear-gradient(135deg,#0284c7,#7dd3fc); box-shadow: 0 0 40px rgba(2,132,199,0.5); }
+.splash-theme-sky .splash-ring-fill  { stroke: #38bdf8; }
+.splash-theme-sky .splash-dots span:nth-child(1) { background: rgba(2,132,199,0.8); }
+.splash-theme-sky .splash-dots span:nth-child(2) { background: rgba(14,165,233,0.8); }
+.splash-theme-sky .splash-dots span:nth-child(3) { background: rgba(56,189,248,0.8); }
+.splash-theme-sky .splash-credit strong { color: rgba(125,211,252,0.9); }
+
+/* -- rose -- */
+.splash-theme-rose .splash-bg {
+    background: linear-gradient(135deg,#1c0509,#4c0519,#450a0a);
+    animation: splashBgRose 3s ease infinite alternate;
+}
+@keyframes splashBgRose {
+    from { background: linear-gradient(135deg,#1c0509,#4c0519,#450a0a); }
+    to   { background: linear-gradient(135deg,#3f0010,#e11d48,#f43f5e); }
+}
+.splash-theme-rose .splash-logo-inner { background: linear-gradient(135deg,#e11d48,#fb7185); box-shadow: 0 0 40px rgba(225,29,72,0.5); }
+.splash-theme-rose .splash-ring-fill  { stroke: #f43f5e; }
+.splash-theme-rose .splash-dots span:nth-child(1) { background: rgba(225,29,72,0.8); }
+.splash-theme-rose .splash-dots span:nth-child(2) { background: rgba(244,63,94,0.8); }
+.splash-theme-rose .splash-dots span:nth-child(3) { background: rgba(251,113,133,0.8); }
+.splash-theme-rose .splash-credit strong { color: rgba(253,164,175,0.9); }
+
+/* -- amber -- */
+.splash-theme-amber .splash-bg {
+    background: linear-gradient(135deg,#1c0a00,#451a03,#422006);
+    animation: splashBgAmber 3s ease infinite alternate;
+}
+@keyframes splashBgAmber {
+    from { background: linear-gradient(135deg,#1c0a00,#451a03,#422006); }
+    to   { background: linear-gradient(135deg,#3a1500,#d97706,#f59e0b); }
+}
+.splash-theme-amber .splash-logo-inner { background: linear-gradient(135deg,#d97706,#fbbf24); box-shadow: 0 0 40px rgba(217,119,6,0.5); }
+.splash-theme-amber .splash-ring-fill  { stroke: #f59e0b; }
+.splash-theme-amber .splash-dots span:nth-child(1) { background: rgba(217,119,6,0.8); }
+.splash-theme-amber .splash-dots span:nth-child(2) { background: rgba(245,158,11,0.8); }
+.splash-theme-amber .splash-dots span:nth-child(3) { background: rgba(251,191,36,0.8); }
+.splash-theme-amber .splash-credit strong { color: rgba(252,211,77,0.9); }
+
+/* -- slate -- */
+.splash-theme-slate .splash-bg {
+    background: linear-gradient(135deg,#020617,#0f172a,#1e293b);
+    animation: splashBgSlate 3s ease infinite alternate;
+}
+@keyframes splashBgSlate {
+    from { background: linear-gradient(135deg,#020617,#0f172a,#1e293b); }
+    to   { background: linear-gradient(135deg,#0f172a,#334155,#475569); }
+}
+.splash-theme-slate .splash-logo-inner { background: linear-gradient(135deg,#475569,#94a3b8); box-shadow: 0 0 40px rgba(71,85,105,0.5); }
+.splash-theme-slate .splash-ring-fill  { stroke: #94a3b8; }
+.splash-theme-slate .splash-dots span:nth-child(1) { background: rgba(71,85,105,0.8); }
+.splash-theme-slate .splash-dots span:nth-child(2) { background: rgba(100,116,139,0.8); }
+.splash-theme-slate .splash-dots span:nth-child(3) { background: rgba(148,163,184,0.8); }
+.splash-theme-slate .splash-credit strong { color: rgba(203,213,225,0.9); }
+
+/* -- pink -- */
+.splash-theme-pink .splash-bg {
+    background: linear-gradient(135deg,#1a0010,#500724,#4a044e);
+    animation: splashBgPink 3s ease infinite alternate;
+}
+@keyframes splashBgPink {
+    from { background: linear-gradient(135deg,#1a0010,#500724,#4a044e); }
+    to   { background: linear-gradient(135deg,#3b0025,#db2777,#ec4899); }
+}
+.splash-theme-pink .splash-logo-inner { background: linear-gradient(135deg,#db2777,#f472b6); box-shadow: 0 0 40px rgba(219,39,119,0.5); }
+.splash-theme-pink .splash-ring-fill  { stroke: #ec4899; }
+.splash-theme-pink .splash-dots span:nth-child(1) { background: rgba(219,39,119,0.8); }
+.splash-theme-pink .splash-dots span:nth-child(2) { background: rgba(236,72,153,0.8); }
+.splash-theme-pink .splash-dots span:nth-child(3) { background: rgba(244,114,182,0.8); }
+.splash-theme-pink .splash-credit strong { color: rgba(249,168,212,0.9); }
+
+/* swatch pill sizing for splash theme grid */
+.splash-theme-swatch {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+}

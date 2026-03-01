@@ -20261,6 +20261,9 @@ function getDefaultSettings() {
  quickCapture: true,
  confirmDeletes: true,
  reduceMotion: false,
+ splashEnabled: true,
+ splashDuration: 2600,
+ splashTheme: 'indigo',
  cardsPerPage: 'default',
  hiddenSections: [],
  ssrClasses: { '1': true, '2': true, '3': true, '4': true, '5': true, '6': true, '7': true, '8': true },
@@ -20307,6 +20310,9 @@ function saveAppSettings() {
  quickCapture: document.getElementById('settingQuickCapture')?.checked ?? true,
  confirmDeletes: document.getElementById('settingConfirmDeletes')?.checked ?? true,
  reduceMotion: document.getElementById('settingReduceMotion')?.checked ?? false,
+ splashEnabled: document.getElementById('settingSplashEnabled')?.checked ?? true,
+ splashDuration: parseInt(document.getElementById('settingSplashDuration')?.value || '2600', 10),
+ splashTheme: document.getElementById('settingSplashTheme')?.value || 'indigo',
  cardsPerPage: document.getElementById('settingCardsPerPage')?.value || 'default',
  hiddenSections: getAppSettings().hiddenSections || [],
  ssrClasses: getAppSettings().ssrClasses || getDefaultSettings().ssrClasses,
@@ -20381,8 +20387,17 @@ function renderSettings() {
  settingSaveToast: s.saveToast,
  settingQuickCapture: s.quickCapture,
  settingConfirmDeletes: s.confirmDeletes,
- settingReduceMotion: s.reduceMotion
+ settingReduceMotion: s.reduceMotion,
+ settingSplashEnabled: s.splashEnabled !== false
  };
+ // Splash duration select
+ const splashDurEl = document.getElementById('settingSplashDuration');
+ if (splashDurEl) splashDurEl.value = String(s.splashDuration || 2600);
+ // Splash theme swatches
+ const splashThemeEl = document.getElementById('settingSplashTheme');
+ if (splashThemeEl) splashThemeEl.value = s.splashTheme || 'indigo';
+ renderSplashThemeSwatches(s.splashTheme || 'indigo');
+ applySplashTheme(s.splashTheme || 'indigo');
  Object.entries(toggles).forEach(([id, val]) => {
  const el = document.getElementById(id);
  if (el) el.checked = val;
@@ -20690,6 +20705,48 @@ function applyAppSettings() {
 
  // Apply hidden sidebar sections
  applySidebarVisibility();
+}
+
+const SPLASH_THEMES = [
+ { key: 'indigo', name: 'Indigo', swatch: 'linear-gradient(135deg,#302b63,#6366f1)' },
+ { key: 'violet', name: 'Violet', swatch: 'linear-gradient(135deg,#2e1065,#8b5cf6)' },
+ { key: 'emerald', name: 'Emerald', swatch: 'linear-gradient(135deg,#064e3b,#10b981)' },
+ { key: 'sky', name: 'Sky', swatch: 'linear-gradient(135deg,#0c4a6e,#38bdf8)' },
+ { key: 'rose', name: 'Rose', swatch: 'linear-gradient(135deg,#4c0519,#f43f5e)' },
+ { key: 'amber', name: 'Amber', swatch: 'linear-gradient(135deg,#451a03,#f59e0b)' },
+ { key: 'slate', name: 'Slate', swatch: 'linear-gradient(135deg,#0f172a,#475569)' },
+ { key: 'pink', name: 'Pink', swatch: 'linear-gradient(135deg,#500724,#ec4899)' }
+];
+
+function applySplashTheme(key) {
+ const splash = document.getElementById('splashScreen');
+ if (!splash) return;
+ SPLASH_THEMES.forEach(t => splash.classList.remove('splash-theme-' + t.key));
+ splash.classList.add('splash-theme-' + (key || 'indigo'));
+}
+
+function renderSplashThemeSwatches(active) {
+ const grid = document.getElementById('splashThemeGrid');
+ if (!grid) return;
+ grid.innerHTML = SPLASH_THEMES.map(t =>
+ `<div class="settings-color-swatch splash-theme-swatch ${active === t.key ? 'active' : ''}"
+ style="background:${t.swatch};"
+ title="${t.name}"
+ onclick="setSplashTheme('${t.key}')">
+ ${active === t.key ? '<i class=\'fas fa-check\' style=\'color:#fff;font-size:12px;\'></i>' : ''}
+ </div>`
+ ).join('');
+}
+
+function setSplashTheme(key) {
+ const s = getAppSettings();
+ s.splashTheme = key;
+ try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(s)); } catch(e) {}
+ renderSplashThemeSwatches(key);
+ applySplashTheme(key);
+ const sel = document.getElementById('settingSplashTheme');
+ if (sel) sel.value = key;
+ showToast('Splash theme updated', 'success', 1200);
 }
 
 function loadGoogleFont(font) {
@@ -31494,9 +31551,46 @@ let appInitialized = false;
 
 function initApp() {
  if (appInitialized) {
+ // Re-unlocking from lock screen — show splash again
+ (function showSplashAgain() {
+ const _s = getAppSettings();
+ if (_s.splashEnabled === false) return;
+ const splash = document.getElementById('splashScreen');
+ if (!splash) return;
+ const dur = _s.splashDuration || 2600;
+ applySplashTheme(_s.splashTheme || 'indigo');
+ splash.style.display = 'flex';
+ splash.classList.remove('splash-hide');
+ const ring = splash.querySelector('.splash-ring-fill');
+ if (ring) { ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = ''; }
+ setTimeout(function () {
+ splash.classList.add('splash-hide');
+ setTimeout(function () { splash.style.display = 'none'; }, 500);
+ }, dur);
+ })();
  renderDashboard();
  return;
  }
+
+ // ===== Show splash loading screen after login =====
+ (function showSplash() {
+ const _s = getAppSettings();
+ if (_s.splashEnabled === false) return;
+ const splash = document.getElementById('splashScreen');
+ if (!splash) return;
+ const dur = _s.splashDuration || 2600;
+ applySplashTheme(_s.splashTheme || 'indigo');
+ splash.style.display = 'flex';
+ splash.classList.remove('splash-hide');
+ // Reset ring animation so it replays
+ const ring = splash.querySelector('.splash-ring-fill');
+ if (ring) { ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = ''; }
+ setTimeout(function () {
+ splash.classList.add('splash-hide');
+ setTimeout(function () { splash.style.display = 'none'; }, 500);
+ }, dur);
+ })();
+
  appInitialized = true;
 
  // Nav clicks

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -28,6 +28,35 @@
 </head>
 
 <body>
+
+ <!-- Splash / Loading Screen (shown after each login) -->
+ <div id="splashScreen" style="display:none;">
+ <div class="splash-bg"></div>
+ <div class="splash-content">
+ <div class="splash-logo-ring">
+ <div class="splash-logo-inner">
+ <i class="fas fa-seedling"></i>
+ </div>
+ <svg class="splash-ring-svg" viewBox="0 0 120 120">
+ <defs>
+ <linearGradient id="splashGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+ <stop offset="0%" stop-color="#6366f1"/>
+ <stop offset="100%" stop-color="#a78bfa"/>
+ </linearGradient>
+ </defs>
+ <circle class="splash-ring-track" cx="60" cy="60" r="54"/>
+ <circle class="splash-ring-fill" cx="60" cy="60" r="54"/>
+ </svg>
+ </div>
+ <h1 class="splash-app-name">APF Resource Person Dashboard</h1>
+ <p class="splash-tagline">Your productivity. Simplified.</p>
+ <div class="splash-dots">
+ <span></span><span></span><span></span>
+ </div>
+ <p class="splash-credit">Created by <strong>Sujit Sarkar</strong></p>
+ </div>
+ </div>
+
  <!-- License Key Gate -->
  <div id="licenseScreen" class="lock-screen" style="display:none;">
  <div class="lock-container license-container">
@@ -1158,9 +1187,9 @@
  <div class="custom-control-group">
  <label><i class="fas fa-ruler-combined"></i> Method</label>
  <select id="outlierMethod">
- <option value="iqr" selected>IQR (1.5Ã—)</option>
- <option value="zscore">Z-Score (2.5Ïƒ)</option>
- <option value="extreme">Extreme (3Ã— IQR)</option>
+ <option value="iqr" selected>IQR (1.5×)</option>
+ <option value="zscore">Z-Score (2.5σ)</option>
+ <option value="extreme">Extreme (3× IQR)</option>
  </select>
  </div>
  </div>
@@ -1703,7 +1732,7 @@
  <option value="date-asc">Oldest First</option>
  <option value="priority">Priority</option>
  <option value="sla">SLA Due Soon</option>
- <option value="school">School A–Z</option>
+ <option value="school">School A�Z</option>
  </select>
  <div class="fu-view-toggle">
  <button class="fu-view-btn active" id="fuViewList" onclick="setFollowupView('list')" title="List view"><i class="fas fa-list"></i></button>
@@ -4412,6 +4441,42 @@ function getOrCreateFolder() {
  <span class="settings-toggle-slider"></span>
  </label>
  </div>
+ </div>
+ <div class="settings-row">
+ <div class="settings-label">
+ <i class="fas fa-layer-group"></i>
+ <div><strong>Login Splash Screen</strong><span>Show the loading screen after each login</span></div>
+ </div>
+ <div class="settings-control">
+ <label class="settings-toggle">
+ <input type="checkbox" id="settingSplashEnabled" checked
+ onchange="saveAppSettings();">
+ <span class="settings-toggle-slider"></span>
+ </label>
+ </div>
+ </div>
+ <div class="settings-row">
+ <div class="settings-label">
+ <i class="fas fa-clock"></i>
+ <div><strong>Splash Duration</strong><span>How long the splash screen is shown</span></div>
+ </div>
+ <div class="settings-control">
+ <select id="settingSplashDuration" class="settings-select" onchange="saveAppSettings();">
+ <option value="1500">1.5 seconds</option>
+ <option value="2000">2 seconds</option>
+ <option value="2600" selected>2.6 seconds (default)</option>
+ <option value="3500">3.5 seconds</option>
+ <option value="5000">5 seconds</option>
+ </select>
+ </div>
+ </div>
+ <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+ <div class="settings-label" style="margin-bottom:2px;">
+ <i class="fas fa-palette"></i>
+ <div><strong>Splash Screen Colour</strong><span>Pick the colour theme for the loading screen</span></div>
+ </div>
+ <div class="settings-color-grid" id="splashThemeGrid" style="margin-top:4px;"></div>
+ <input type="hidden" id="settingSplashTheme" value="indigo">
  </div>
  <div class="settings-row">
  <div class="settings-label">
@@ -7171,7 +7236,7 @@ function getOrCreateFolder() {
  </button>
  </div>
  <div class="ai-chat-footer-note">
-                            <i class="fas fa-info-circle"></i> Powered by Sarvam AI · Responses may not always be
+                            <i class="fas fa-info-circle"></i> Powered by Sarvam AI � Responses may not always be
  accurate
  </div>
  </div>
@@ -7417,7 +7482,7 @@ function getOrCreateFolder() {
  <i class="fas fa-layer-group"></i>
  </div>
  <h4>MARAI Progress</h4>
- <p>Analyze teacher progression through Motivation → Action → Internalization stages</p>
+ <p>Analyze teacher progression through Motivation ? Action ? Internalization stages</p>
  </div>
  <div class="ai-insight-card" onclick="generateAIInsight('training-attendance')">
  <div class="ai-insight-card-icon"
@@ -7473,7 +7538,7 @@ function getOrCreateFolder() {
  <i class="fas fa-brain"></i>
  </div>
  <h4>Reflection Synthesis</h4>
- <p>Synthesize themes from your monthly reflections — moods, challenges, growth</p>
+ <p>Synthesize themes from your monthly reflections � moods, challenges, growth</p>
  </div>
  <div class="ai-insight-card" onclick="generateAIInsight('teacher-demographics')">
  <div class="ai-insight-card-icon"
@@ -7513,7 +7578,7 @@ function getOrCreateFolder() {
  <i class="fas fa-database"></i>
  </div>
  <h4>Data Completeness</h4>
- <p>AI-powered quality audit — find missing fields, gaps, and data health score</p>
+ <p>AI-powered quality audit � find missing fields, gaps, and data health score</p>
  </div>
  </div>
 
