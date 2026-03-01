@@ -19593,12 +19593,23 @@ function exportAllDataToExcel() {
 // ===== APP SETTINGS =====
 const APP_SETTINGS_KEY = 'apf_app_settings';
 const FONT_FAMILIES = [
- { key: 'system',  name: 'System',   preview: 'Ss', css: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', google: null },
- { key: 'inter',   name: 'Inter',    preview: 'Ii', css: '"Inter",sans-serif',    google: 'Inter:wght@300;400;500;600;700' },
- { key: 'nunito',  name: 'Nunito',   preview: 'Nn', css: '"Nunito",sans-serif',   google: 'Nunito:wght@300;400;500;600;700' },
- { key: 'poppins', name: 'Poppins',  preview: 'Pp', css: '"Poppins",sans-serif',  google: 'Poppins:wght@300;400;500;600;700' },
- { key: 'roboto',  name: 'Roboto',   preview: 'Rr', css: '"Roboto",sans-serif',   google: 'Roboto:wght@300;400;500;700' },
- { key: 'mono',    name: 'Mono',     preview: 'Mm', css: '"JetBrains Mono","Fira Code","Courier New",monospace', google: 'JetBrains+Mono:wght@400;500;700' }
+ { key: 'system',      name: 'System Default',  css: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', google: null },
+ { key: 'inter',       name: 'Inter',            css: '"Inter",sans-serif',           google: 'Inter:wght@300;400;500;600;700' },
+ { key: 'poppins',     name: 'Poppins',          css: '"Poppins",sans-serif',          google: 'Poppins:wght@300;400;500;600;700' },
+ { key: 'nunito',      name: 'Nunito',           css: '"Nunito",sans-serif',           google: 'Nunito:wght@300;400;500;600;700' },
+ { key: 'dmsans',      name: 'DM Sans',          css: '"DM Sans",sans-serif',          google: 'DM+Sans:wght@300;400;500;600;700' },
+ { key: 'outfit',      name: 'Outfit',           css: '"Outfit",sans-serif',           google: 'Outfit:wght@300;400;500;600;700' },
+ { key: 'lexend',      name: 'Lexend',           css: '"Lexend",sans-serif',           google: 'Lexend:wght@300;400;500;600;700' },
+ { key: 'opensans',    name: 'Open Sans',        css: '"Open Sans",sans-serif',        google: 'Open+Sans:wght@300;400;500;600;700' },
+ { key: 'lato',        name: 'Lato',             css: '"Lato",sans-serif',             google: 'Lato:wght@300;400;700' },
+ { key: 'raleway',     name: 'Raleway',          css: '"Raleway",sans-serif',          google: 'Raleway:wght@300;400;500;600;700' },
+ { key: 'quicksand',   name: 'Quicksand',        css: '"Quicksand",sans-serif',        google: 'Quicksand:wght@300;400;500;600;700' },
+ { key: 'roboto',      name: 'Roboto',           css: '"Roboto",sans-serif',           google: 'Roboto:wght@300;400;500;700' },
+ { key: 'sourcesans',  name: 'Source Sans 3',    css: '"Source Sans 3",sans-serif',    google: 'Source+Sans+3:wght@300;400;500;600;700' },
+ { key: 'firasans',    name: 'Fira Sans',        css: '"Fira Sans",sans-serif',        google: 'Fira+Sans:wght@300;400;500;600;700' },
+ { key: 'ubuntu',      name: 'Ubuntu',           css: '"Ubuntu",sans-serif',           google: 'Ubuntu:wght@300;400;500;700' },
+ { key: 'exo2',        name: 'Exo 2',            css: '"Exo 2",sans-serif',            google: 'Exo+2:wght@300;400;500;600;700' },
+ { key: 'mono',        name: 'JetBrains Mono',   css: '"JetBrains Mono","Fira Code","Courier New",monospace', google: 'JetBrains+Mono:wght@400;500;700' }
 ];
 
 const ACCENT_COLORS = [
