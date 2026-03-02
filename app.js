@@ -827,7 +827,15 @@ const GoogleDriveSync = {
  if (this._autoTimer) clearTimeout(this._autoTimer);
  this._autoTimer = setTimeout(() => {
  this.backup().then(r => {
- if (!r.ok) console.warn('Auto-backup failed:', r.error);
+ if (r.ok) {
+ if (r.changed !== 0) {
+ const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+ showToast(`☁️ Auto-backup saved to Google Drive · ${now}`, 'success');
+ }
+ } else {
+ console.warn('Auto-backup failed:', r.error);
+ showToast(`☁️ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
+ }
  });
  }, 10000); // 10 seconds debounce
  },
