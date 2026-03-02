@@ -7952,7 +7952,7 @@ function buildSmartPlannerHTML(a, obs) {
  quarterlyGoals.push({ goal: `Complete follow-up visits for ${a.needsFollowUp.length} priority teachers`, icon: 'fas fa-walking', metric: `${a.needsFollowUp.length} teachers` });
  quarterlyGoals.push({ goal: `Cover all ${totalClusters} clusters with at least 2 visits each`, icon: 'fas fa-layer-group', metric: `${totalClusters} clusters` });
  if (trainingGroups.length) quarterlyGoals.push({ goal: `Conduct ${trainingGroups.length} training sessions for identified groups`, icon: 'fas fa-chalkboard-teacher', metric: `${trainingGroups.length} trainings` });
- quarterlyGoals.push({ goal: `Ensure every school receives minimum 1 observation per month`, icon: 'fas fa-school', metric: `${totalSchools} schools Ã— 3 months` });
+ quarterlyGoals.push({ goal: `Ensure every school receives minimum 1 observation per month`, icon: 'fas fa-school', metric: `${totalSchools} schools × 3 months` });
  if (lowEngCount > 0) quarterlyGoals.push({ goal: `Move ${lowEngCount} low-engagement teachers to medium/high through mentoring`, icon: 'fas fa-hands-helping', metric: `${lowEngCount} teachers` });
 
  const quarterlyHTML = quarterlyGoals.map(g => `
@@ -8782,7 +8782,16 @@ function buildSmartVisitSchedulerModel() {
  };
  }).sort((a, b) => b.priorityScore - a.priorityScore);
 
- const recommendations = schools.slice(0, 12);
+ const PAGE_SIZE = 12;
+ const offset = (typeof window._svsOffset === 'number') ? window._svsOffset : 0;
+ const start = offset % Math.max(schools.length, 1);
+ // Wrap-around slice: take PAGE_SIZE schools starting from offset
+ let recommendations;
+ if (start + PAGE_SIZE <= schools.length) {
+ recommendations = schools.slice(start, start + PAGE_SIZE);
+ } else {
+ recommendations = [...schools.slice(start), ...schools.slice(0, PAGE_SIZE - (schools.length - start))];
+ }
  const weekSlots = _svsNextWorkDays(5).map(day => ({ ...day, items: [] }));
  if (weekSlots.length > 0) {
  recommendations.forEach((rec, idx) => {
@@ -8824,6 +8833,23 @@ function _svsBuildVisitRecord(rec, dateKey) {
  nextDate: '',
  createdAt: new Date().toISOString()
  };
+}
+
+function svsRefresh() {
+ const model = buildSmartVisitSchedulerModel();
+ const total = (model.schools || []).length;
+ const PAGE_SIZE = 12;
+ if (total <= PAGE_SIZE) {
+ showToast('Showing all ' + total + ' schools — not enough for more pages', 'info');
+ window._svsOffset = 0;
+ } else {
+ const prev = typeof window._svsOffset === 'number' ? window._svsOffset : 0;
+ window._svsOffset = (prev + PAGE_SIZE) % total;
+ const newStart = window._svsOffset + 1;
+ const newEnd = Math.min(window._svsOffset + PAGE_SIZE, total);
+ showToast('Showing schools ' + newStart + '–' + newEnd + ' of ' + total, 'info');
+ }
+ renderSmartVisitScheduler();
 }
 
 function renderSmartVisitScheduler() {
@@ -8870,6 +8896,20 @@ function renderSmartVisitScheduler() {
  </div>
  </div>
  `).join('');
+
+ // Update page indicator
+ const pageInd = document.getElementById('svsPageIndicator');
+ if (pageInd) {
+ const total = m.schools.length;
+ const offset = (typeof window._svsOffset === 'number') ? window._svsOffset : 0;
+ if (total > 12) {
+ const start = (offset % total) + 1;
+ const end = Math.min(offset % total + m.recommendations.length, total);
+ pageInd.textContent = `(${start}\u2013${end} of ${total})`;
+ } else {
+ pageInd.textContent = '';
+ }
+ }
 
  weekEl.innerHTML = `
  <div class="svs-week-grid">
@@ -18913,12 +18953,18 @@ const VP_DOMAIN_TEMPLATES = [
  { domain: 'Data Collection', icon: 'fa-database', color: '#ef4444', stakeholder: '', fields: {} },
 ];
 
+function vpToggleSvFilter(val) {
+ window._vpSvFilter = (window._vpSvFilter === val) ? null : val;
+ _pageState.visitplan = 1;
+ renderVisitPlan();
+}
+
 function _vpRenderQuickBar(opts) {
  const bar = document.getElementById('vpQuickBar');
  if (!bar) return;
 
  const entries = DB.get('visitPlanEntries') || [];
- const { dateFilter = '', dateFrom = '', dateTo = '' } = opts || {};
+ const { dateFilter = '', dateFrom = '', dateTo = '', svFilter = null } = opts || {};
 
  // Helper: check if an entry matches the active date filters
  const matchesDate = e => {
@@ -18935,13 +18981,15 @@ function _vpRenderQuickBar(opts) {
  // Per-half counts
  const firstAll = entries.filter(e => e.time === 'First Half');
  const secondAll = entries.filter(e => e.time === 'Second Half');
- const schoolVisitsAll = entries.filter(e => e.sentToVisits);
+ const schoolVisitsSent = entries.filter(e => e.sentToVisits && e.time !== 'Evening');
+ const schoolVisitsLeft = entries.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening');
 
  const firstFiltered = hasDateFilter ? firstAll.filter(matchesDate) : null;
  const secondFiltered = hasDateFilter ? secondAll.filter(matchesDate) : null;
- const schoolFiltered = hasDateFilter ? schoolVisitsAll.filter(matchesDate) : null;
+ const schoolSentFiltered = hasDateFilter ? schoolVisitsSent.filter(matchesDate) : null;
+ const schoolLeftFiltered = hasDateFilter ? schoolVisitsLeft.filter(matchesDate) : null;
 
- // First Half sent-to-visits count
+ // Per-half "already sent to visits" sub-count
  const firstSent = firstAll.filter(e => e.sentToVisits).length;
  const secondSent = secondAll.filter(e => e.sentToVisits).length;
 
@@ -18967,12 +19015,20 @@ function _vpRenderQuickBar(opts) {
  </div>`;
 
  // School Visits summary chip
- const svCount = schoolVisitsAll.length;
- const svFiltered = hasDateFilter ? schoolFiltered.length : null;
+ const svSentCount = schoolVisitsSent.length;
+ const svSentFiltered = hasDateFilter ? schoolSentFiltered.length : null;
+ const svLeftCount = hasDateFilter ? schoolLeftFiltered.length : schoolVisitsLeft.length;
+ const svActiveAdded = svFilter === 'added';
+ const svActiveLeft = svFilter === 'left';
  html += `<div class="vp-half-group vp-school-visits-summary">
- <span class="vp-school-chip"><i class="fas fa-school"></i> School Visits Added <span class="vp-half-badge vp-half-badge-sent">${svCount}</span>`;
- if (svFiltered !== null) html += ` <span class="vp-half-badge vp-half-badge-filtered">${svFiltered} filtered</span>`;
- html += `</span>
+ <span class="vp-school-chip"><i class="fas fa-school"></i> Visits Added
+ <button class="vp-half-badge vp-half-badge-sent${svActiveAdded ? ' vp-sv-active' : ''}" onclick="vpToggleSvFilter('added')" title="Click to filter: already added to School Visits">${svSentCount}${svSentFiltered !== null ? ` <span style='opacity:.7;font-size:10px'>(${svSentFiltered})</span>` : ''}</button>`;
+ if (svLeftCount > 0) {
+ html += ` <button class="vp-half-badge vp-half-badge-left${svActiveLeft ? ' vp-sv-active' : ''}" onclick="vpToggleSvFilter('left')" title="Click to filter: not yet added (planned/executed only)">${svLeftCount} left</button>`;
+ } else {
+ html += ` <span class="vp-half-badge vp-half-badge-done"><i class="fas fa-check"></i> all added</span>`;
+ }
+ html += `</span>${svActiveAdded || svActiveLeft ? ` <button class="vp-sv-clear-btn" onclick="vpToggleSvFilter(null)" title="Clear filter"><i class="fas fa-times"></i></button>` : ''}
  </div>`;
 
  html += '</div>';
@@ -19688,9 +19744,10 @@ function renderVisitPlan() {
  const dateFilter = (document.getElementById('vpDateFilter')?.value || '').trim();
  const dateFrom = (document.getElementById('vpDateFrom')?.value || '').trim();
  const dateTo = (document.getElementById('vpDateTo')?.value || '').trim();
+ const svFilter = window._vpSvFilter || null; // 'added' | 'left' | null
 
  // Render quick bar with date-filter-aware counts
- _vpRenderQuickBar({ dateFilter, dateFrom, dateTo });
+ _vpRenderQuickBar({ dateFilter, dateFrom, dateTo, svFilter });
 
  let filtered = entries.filter(e => {
  if (domainF !== 'all' && e.domain !== domainF) return false;
@@ -19703,6 +19760,9 @@ function renderVisitPlan() {
  const m = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
  if (m !== monthF) return false;
  }
+ // School visits added / left filter (First Half / Second Half only, not Evening)
+ if (svFilter === 'added' && (!e.sentToVisits || e.time === 'Evening')) return false;
+ if (svFilter === 'left' && (e.sentToVisits || e.status === 'empty' || e.time === 'Evening')) return false;
  // Single date filter
  if (dateFilter) {
  if (!e.date) return false;
@@ -19735,10 +19795,13 @@ function renderVisitPlan() {
  const hasDateFilter = !!(dateFilter || dateFrom || dateTo);
  const firstHalfAll = entries.filter(e => e.time === 'First Half').length;
  const secondHalfAll = entries.filter(e => e.time === 'Second Half').length;
- const schoolVisitsAll = entries.filter(e => e.sentToVisits).length;
+ // Sent = already added to School Visits; Left = planned/executed but not yet sent (excludes empty, excludes Evening)
+ const schoolVisitsSent = entries.filter(e => e.sentToVisits && e.time !== 'Evening').length;
+ const schoolVisitsLeft = entries.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening').length;
  const firstHalfFiltered = hasDateFilter ? filtered.filter(e => e.time === 'First Half').length : null;
  const secondHalfFiltered = hasDateFilter ? filtered.filter(e => e.time === 'Second Half').length : null;
- const schoolVisitsFiltered = hasDateFilter ? filtered.filter(e => e.sentToVisits).length : null;
+ const schoolVisitsSentFiltered = hasDateFilter ? filtered.filter(e => e.sentToVisits && e.time !== 'Evening').length : null;
+ const schoolVisitsLeftFiltered = hasDateFilter ? filtered.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening').length : null;
 
  // Helper: render stat number with optional filtered sub-count
  const statNum = (total, filt) =>
@@ -19747,7 +19810,7 @@ function renderVisitPlan() {
  : `${total}`;
 
  // --- Bulk Clear Button ---
- const isFiltered = domainF !== 'all' || stakeholderF !== 'all' || clusterF !== 'all' || monthF !== 'all' || statusF !== 'all' || search || dateFilter || dateFrom || dateTo;
+ const isFiltered = domainF !== 'all' || stakeholderF !== 'all' || clusterF !== 'all' || monthF !== 'all' || statusF !== 'all' || search || dateFilter || dateFrom || dateTo || !!svFilter;
  const bulkBtn = document.getElementById('vpBulkClearBtn');
  const bulkLabel = document.getElementById('vpBulkClearLabel');
  if (bulkBtn) {
@@ -19768,7 +19831,7 @@ function renderVisitPlan() {
  <div class="vp-stat-card vp-stat-empty"><div class="vp-stat-num">${empty}</div><div class="vp-stat-label">Unfilled</div></div>
  <div class="vp-stat-card vp-stat-first-half"><div class="vp-stat-num">${statNum(firstHalfAll, firstHalfFiltered)}</div><div class="vp-stat-label"><i class="fas fa-sun"></i> First Half</div></div>
  <div class="vp-stat-card vp-stat-second-half"><div class="vp-stat-num">${statNum(secondHalfAll, secondHalfFiltered)}</div><div class="vp-stat-label"><i class="fas fa-moon"></i> Second Half</div></div>
- <div class="vp-stat-card vp-stat-school-visits"><div class="vp-stat-num">${statNum(schoolVisitsAll, schoolVisitsFiltered)}</div><div class="vp-stat-label"><i class="fas fa-school"></i> School Visits</div></div>
+ <div class="vp-stat-card vp-stat-school-visits"><div class="vp-stat-num">${statNum(schoolVisitsSent, schoolVisitsSentFiltered)}</div><div class="vp-stat-label"><i class="fas fa-school"></i> Visits Added</div>${schoolVisitsLeft > 0 ? `<div class="vp-stat-left" title="Planned/Executed entries not yet added to School Visits">${hasDateFilter && schoolVisitsLeftFiltered !== null ? schoolVisitsLeftFiltered : schoolVisitsLeft} left to add</div>` : `<div class="vp-stat-left vp-stat-left-done"><i class="fas fa-check"></i> All added</div>`}</div>
  <div class="vp-stat-card"><div class="vp-stat-num">${domains}</div><div class="vp-stat-label">Domains</div></div>
  <div class="vp-stat-card"><div class="vp-stat-num">${clusters}</div><div class="vp-stat-label">Clusters</div></div>
  `;
@@ -25726,7 +25789,7 @@ function renderWorkLog() {
  const badgesHtml = Object.entries(typesUsed).map(([type, count]) => {
  const ic = typeIcons[type] || 'fa-ellipsis-h';
  const co = typeColors[type] || '#6b7280';
- return `<span class="wl-badge" style="--badge-color:${co}"><i class="fas ${ic}"></i> ${escapeHtml(type)}${count > 1 ? ` Ã—${count}` : ''}</span>`;
+ return `<span class="wl-badge" style="--badge-color:${co}"><i class="fas ${ic}"></i> ${escapeHtml(type)}${count > 1 ? ` &times;${count}` : ''}</span>`;
  }).join('');
 
  // Expanded details
@@ -27169,7 +27232,7 @@ function openPdfEditor(bodyHtml, title) {
  // Add size label
  const sizeLabel = document.createElement('span');
  sizeLabel.style.cssText = 'position:absolute;top:4px;left:6px;background:rgba(99,102,241,0.85);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;pointer-events:none;font-family:monospace';
- sizeLabel.textContent = `${img.offsetWidth} Ã— ${img.offsetHeight}`;
+ sizeLabel.textContent = `${img.offsetWidth} × ${img.offsetHeight}`;
  wrap.appendChild(sizeLabel);
  // Add resize handle
  const handle = document.createElement('span');
@@ -27206,7 +27269,7 @@ function openPdfEditor(bodyHtml, title) {
  const btn = document.createElement('button');
  btn.textContent = pct;
  btn.style.cssText = 'background:#6366f1;color:#fff;border:none;padding:2px 6px;border-radius:3px;font-size:10px;cursor:pointer;font-family:sans-serif';
- btn.onmousedown = (e) => { e.preventDefault(); e.stopPropagation(); img.style.width = pct; img.style.height = 'auto'; sizeLabel.textContent = `${img.offsetWidth} Ã— ${img.offsetHeight}`; };
+ btn.onmousedown = (e) => { e.preventDefault(); e.stopPropagation(); img.style.width = pct; img.style.height = 'auto'; sizeLabel.textContent = `${img.offsetWidth} × ${img.offsetHeight}`; };
  controls.appendChild(btn);
  });
  wrap.appendChild(controls);
@@ -27219,7 +27282,7 @@ function openPdfEditor(bodyHtml, title) {
  const newW = Math.max(40, startW + (ev.clientX - startX));
  img.style.width = newW + 'px';
  img.style.height = Math.round(newW * ratio) + 'px';
- sizeLabel.textContent = `${Math.round(newW)} Ã— ${Math.round(newW * ratio)}`;
+ sizeLabel.textContent = `${Math.round(newW)} × ${Math.round(newW * ratio)}`;
  }
  function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
  document.addEventListener('mousemove', onMove);

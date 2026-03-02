@@ -22654,6 +22654,55 @@ body.light-mode .vp-bulk-clear-btn {
     border-color: rgba(16,185,129,0.3);
     color: #10b981;
 }
+.vp-half-badge-left {
+    background: rgba(251,191,36,0.1);
+    border-color: rgba(251,191,36,0.35);
+    color: #f59e0b;
+}
+.vp-half-badge-done {
+    background: rgba(16,185,129,0.08);
+    border-color: rgba(16,185,129,0.25);
+    color: #10b981;
+}
+button.vp-half-badge {
+    cursor: pointer;
+    transition: filter 0.18s, transform 0.18s;
+    font-family: inherit;
+}
+button.vp-half-badge:hover {
+    filter: brightness(1.35);
+    transform: translateY(-1px);
+}
+.vp-sv-active {
+    box-shadow: 0 0 0 2px currentColor;
+    filter: brightness(1.25);
+}
+.vp-sv-clear-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 50%;
+    transition: color 0.18s, background 0.18s;
+    margin-left: 2px;
+}
+.vp-sv-clear-btn:hover {
+    color: #ef4444;
+    background: rgba(239,68,68,0.1);
+}
+/* "X left to add" line inside the school visits stat card */
+.vp-stat-left {
+    font-size: 10px;
+    font-weight: 600;
+    color: #f59e0b;
+    margin-top: 3px;
+    letter-spacing: 0.1px;
+}
+.vp-stat-left-done {
+    color: #10b981;
+}
 .vp-school-visits-summary {
     margin-left: auto;
 }
