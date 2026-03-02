@@ -577,6 +577,19 @@
  </div>
 
  <!-- Calendar View -->
+ <!-- Bulk Action Bar for Visits (hidden until bulk mode is enabled) -->
+ <div id="visitsBulkBar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+ <button class="btn btn-outline btn-sm" id="visitsSelectAllBtn" onclick="visitsToggleSelectAll()" style="display:none;" title="Select / deselect all visible">
+ <i class="fas fa-check-double"></i> Select All
+ </button>
+ <button class="btn btn-danger btn-sm" id="visitsDeleteSelectedBtn" onclick="visitsDeleteSelected()" style="display:none;" disabled title="Delete selected visits">
+ <i class="fas fa-trash"></i> Delete Selected (0)
+ </button>
+ <button class="btn btn-outline btn-sm" id="visitsDeleteFilteredBtn" onclick="visitsDeleteFiltered()" style="display:none;color:#ef4444;border-color:#ef4444;" title="Delete all visits matching current filters">
+ <i class="fas fa-filter"></i> Delete Filtered (0)
+ </button>
+ </div>
+
  <div id="visitCalendarView" class="visit-calendar-view" style="display:none"></div>
 
  <!-- Visits List -->
@@ -2901,6 +2914,7 @@ style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:a
  <h1><i class="fas fa-clipboard-check"></i> Visit Plan vs Execution</h1>
  <p class="section-subtitle">Link your Excel file once all data stays in the app automatically</p>
  </div>
+ <div class="vp-header-right">
  <div class="header-actions">
  <button class="btn btn-primary" onclick="openVisitModal()">
  <i class="fas fa-plus"></i> Add Entry
@@ -2916,9 +2930,13 @@ style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:a
  <i class="fas fa-plug"></i>
  <span id="vpLinkedFileName">Not linked</span>
  <span class="vp-link-mode" id="vpLinkMode">Synced</span>
+ <button class="vp-autosync-toggle" id="vpAutoSyncToggle" onclick="vpToggleAutoSync()" title="Auto-sync to Excel (OFF by default)">
+ <i class="fas fa-sync-alt"></i> <span id="vpAutoSyncLabel">Sync OFF</span>
+ </button>
  <button class="vp-unlink-btn" onclick="vpUnlinkExcel()" title="Unlink"><i
  class="fas fa-times"></i></button>
  <span class="vp-autosave-dot" id="vpAutoSaveDot" title="Data saved in app"></span>
+ </div>
  </div>
  </div>
  <!-- Filters -->
@@ -3025,23 +3043,20 @@ style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:a
  <div class="form-row vp-form-row">
  <div class="form-group vp-fg">
  <label><i class="fas fa-folder-open"></i> Plan Domain</label>
- <select id="vpDomain">
- <option value="">-- Select --</option>
- </select>
+ <input type="text" id="vpDomain" placeholder="Select or type domain" list="vpDomainList">
+ <datalist id="vpDomainList"></datalist>
  </div>
  <div class="form-group vp-fg">
  <label><i class="fas fa-users"></i> Stakeholder Type</label>
- <select id="vpStakeholder">
- <option value="">-- Select --</option>
- </select>
+ <input type="text" id="vpStakeholder" placeholder="Select or type" list="vpStakeholderList">
+ <datalist id="vpStakeholderList"></datalist>
  </div>
  </div>
  <div class="form-row vp-form-row">
  <div class="form-group vp-fg">
  <label><i class="fas fa-map-marker-alt"></i> Cluster</label>
- <select id="vpCluster">
- <option value="">-- Select --</option>
- </select>
+ <input type="text" id="vpCluster" placeholder="Select or type cluster" list="vpClusterList">
+ <datalist id="vpClusterList"></datalist>
  </div>
  <div class="form-group vp-fg">
  <label><i class="fas fa-building"></i> Venue</label>
@@ -3950,6 +3965,26 @@ function getOrCreateFolder() {
  </div>
  </div>
  </div>
+
+ <!-- Bulk Delete by Category -->
+ <div style="grid-column:1 / -1; background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid rgba(239,68,68,0.25); padding:24px;">
+ <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+ <div class="backup-icon" style="background:linear-gradient(135deg,#f97316,#ea580c);margin:0;flex-shrink:0;">
+ <i class="fas fa-broom"></i>
+ </div>
+ <div>
+ <h3 style="margin:0 0 4px;">Bulk Delete by Category</h3>
+ <p style="margin:0;color:var(--text-secondary);font-size:13px;">Select specific data categories to delete individually without touching other data.</p>
+ </div>
+ </div>
+ <div id="bulkDeleteCategoryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:14px;width:100%;"></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;">
+ <button class="btn btn-outline btn-sm" onclick="bulkCategorySelectAll()" style="font-size:12px;"><i class="fas fa-check-double"></i> Select All</button>
+ <button class="btn btn-outline btn-sm" onclick="bulkCategoryDeselectAll()" style="font-size:12px;"><i class="fas fa-times"></i> Deselect All</button>
+ <button class="btn btn-danger btn-sm" id="bulkCategoryDeleteBtn" onclick="executeBulkCategoryDelete()" style="font-size:12px;" disabled><i class="fas fa-trash"></i> Delete Selected (0)</button>
+ </div>
+ </div>
+
  </div>
  </section>
 
@@ -4451,6 +4486,19 @@ function getOrCreateFolder() {
  <label class="settings-toggle">
  <input type="checkbox" id="settingConfirmDeletes" checked
  onchange="saveAppSettings()">
+ <span class="settings-toggle-slider"></span>
+ </label>
+ </div>
+ </div>
+ <div class="settings-row">
+ <div class="settings-label">
+ <i class="fas fa-check-square"></i>
+ <div><strong>Bulk Delete Mode</strong><span>Show checkboxes &amp; bulk delete buttons across all modules</span></div>
+ </div>
+ <div class="settings-control">
+ <label class="settings-toggle">
+ <input type="checkbox" id="settingBulkDeleteEnabled"
+ onchange="saveAppSettings(); applyGlobalBulkDelete(this.checked);">
  <span class="settings-toggle-slider"></span>
  </label>
  </div>

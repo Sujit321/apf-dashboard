@@ -4232,8 +4232,34 @@ async function deleteVisit(id) {
  refreshPlannerIfVisible();
 }
 
+// ===== GLOBAL BULK DELETE MODE =====
+function applyGlobalBulkDelete(enabled) {
+ window._appBulkDeleteEnabled = !!enabled;
+ // update visit bulk bar
+ const visitsBulkBar = document.getElementById('visitsBulkBar');
+ if (visitsBulkBar) visitsBulkBar.style.display = enabled ? 'flex' : 'none';
+ // re-render active sections so checkboxes appear/disappear
+ if (document.getElementById('section-visits')?.classList.contains('active')) renderVisits();
+}
+
+// Toggle bulk-delete mode on/off for School Visits
+function toggleVisitsBulkMode() {
+ const newVal = !window._appBulkDeleteEnabled;
+ // persist to settings
+ const s = getAppSettings();
+ s.bulkDeleteEnabled = newVal;
+ try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(s)); } catch(e) {}
+ // sync settings checkbox if visible
+ const cb = document.getElementById('settingBulkDeleteEnabled');
+ if (cb) cb.checked = newVal;
+ applyGlobalBulkDelete(newVal);
+}
+
 function renderVisits() {
  const visits = DB.get('visits');
+ // Hide/show bulk bar based on mode
+ const bulkBar = document.getElementById('visitsBulkBar');
+ if (bulkBar) bulkBar.style.display = window._appBulkDeleteEnabled ? 'flex' : 'none';
  // Auto-fill block & district from profile for all visits
  const _prof = typeof getProfile === 'function' ? getProfile() : {};
  if (_prof.block || _prof.district) {
@@ -4298,7 +4324,13 @@ function renderVisits() {
  const hmBadge = v.hmPresent ? `<span class="visit-hm-indicator ${v.hmPresent === 'Yes' ? 'hm-yes' : 'hm-no'}"><i class="fas fa-user-tie"></i> HM ${v.hmPresent}</span>` : '';
  const teachersBadge = v.teachersMet ? `<span><i class="fas fa-chalkboard-teacher"></i> ${v.teachersMet} teachers</span>` : '';
 
+ const isSelected = window._appBulkDeleteEnabled && window._visitSelectedEntries && window._visitSelectedEntries.has(v.id);
  return `<div class="visit-item" data-id="${v.id}" onclick="toggleVisitDetailPanel('${v.id}')">
+ <div style="display:${window._appBulkDeleteEnabled ? 'flex' : 'none'};align-items:center;padding:0 6px 0 0;">
+ <input type="checkbox" class="visit-select-entry" data-id="${v.id}" ${isSelected ? 'checked' : ''}
+ onclick="event.stopPropagation(); toggleVisitSelect('${v.id}', this.checked)" title="Select for bulk action"
+ style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;">
+ </div>
  <div class="visit-date-badge">
  <div class="day">${day}</div>
  <div class="month">${month}</div>
@@ -4418,12 +4450,20 @@ function updateVisitsBulkUI() {
  const deleteBtn = document.getElementById('visitsDeleteSelectedBtn');
  const selectAllBtn = document.getElementById('visitsSelectAllBtn');
  const deleteFilteredBtn = document.getElementById('visitsDeleteFilteredBtn');
+
+ // Hide everything if bulk mode is off
+ if (!window._appBulkDeleteEnabled) {
+ if (deleteBtn) deleteBtn.style.display = 'none';
+ if (selectAllBtn) selectAllBtn.style.display = 'none';
+ if (deleteFilteredBtn) deleteFilteredBtn.style.display = 'none';
+ return;
+ }
+
  const selectedCount = window._visitSelectedEntries ? window._visitSelectedEntries.size : 0;
  const visibleCount = document.querySelectorAll('.visit-select-entry').length;
  const filteredCount = getFilteredVisits().length;
 
  if (deleteBtn) {
- // show the button when there are visible checkboxes; disable when nothing is selected
  deleteBtn.style.display = visibleCount > 0 ? '' : 'none';
  deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete Selected (${selectedCount})`;
  deleteBtn.disabled = selectedCount === 0;
@@ -18521,8 +18561,41 @@ async function vpLinkExcel() {
 function vpUnlinkExcel() {
  window._vpFileHandle = null;
  window._vpLinkedName = null;
+ window._vpAutoSyncEnabled = false;
+ _vpUpdateAutoSyncUI();
  _vpUpdateLinkedUI(null);
  showToast(' Excel unlinked');
+}
+
+// Auto-sync toggle: OFF by default to prevent accidental Excel overwrites
+window._vpAutoSyncEnabled = false;
+
+function vpToggleAutoSync() {
+ window._vpAutoSyncEnabled = !window._vpAutoSyncEnabled;
+ _vpUpdateAutoSyncUI();
+ if (window._vpAutoSyncEnabled) {
+ showToast('⚠️ Auto-sync ON — changes will overwrite linked Excel', 'warning');
+ // Immediately sync once when turned on
+ _vpSyncToExcel();
+ } else {
+ showToast('✅ Auto-sync OFF — Excel file is protected', 'success');
+ }
+}
+
+function _vpUpdateAutoSyncUI() {
+ const btn = document.getElementById('vpAutoSyncToggle');
+ const label = document.getElementById('vpAutoSyncLabel');
+ if (btn && label) {
+ if (window._vpAutoSyncEnabled) {
+ btn.classList.add('vp-autosync-on');
+ label.textContent = 'Sync ON';
+ btn.title = 'Auto-sync is ON — changes will overwrite Excel';
+ } else {
+ btn.classList.remove('vp-autosync-on');
+ label.textContent = 'Sync OFF';
+ btn.title = 'Auto-sync is OFF — Excel file is protected';
+ }
+ }
 }
 
 function _vpUpdateLinkedUI(fileName, canWrite) {
@@ -18534,11 +18607,12 @@ function _vpUpdateLinkedUI(fileName, canWrite) {
  if (status) status.style.display = 'flex';
  if (nameEl) nameEl.textContent = fileName;
  if (modeEl) {
- modeEl.textContent = canWrite ? 'Auto-sync' : 'Read-only';
- modeEl.style.background = canWrite ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)';
- modeEl.style.color = canWrite ? '#10b981' : '#f59e0b';
+ modeEl.textContent = canWrite ? 'Linked' : 'Read-only';
+ modeEl.style.background = canWrite ? 'rgba(99,102,241,0.15)' : 'rgba(245,158,11,0.15)';
+ modeEl.style.color = canWrite ? '#6366f1' : '#f59e0b';
  }
  if (linkBtn) { linkBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Re-link'; linkBtn.classList.add('vp-linked-active'); }
+ _vpUpdateAutoSyncUI();
  } else {
  if (status) status.style.display = 'none';
  if (linkBtn) { linkBtn.innerHTML = '<i class="fas fa-link"></i> Link Excel'; linkBtn.classList.remove('vp-linked-active'); }
@@ -18546,8 +18620,16 @@ function _vpUpdateLinkedUI(fileName, canWrite) {
 }
 
 async function _vpSyncToExcel() {
+ // Check if auto-sync is enabled (OFF by default to prevent accidental overwrites)
+ if (!window._vpAutoSyncEnabled) return;
  if (!window._vpFileHandle) return;
  if (window._vpSyncing) return;
+ // Safety guard: never overwrite file with empty data
+ const entries = DB.get('visitPlanEntries') || [];
+ if (entries.length === 0) {
+ console.warn('[VP Sync] Skipped — no entries to write. Will not overwrite file with empty data.');
+ return;
+ }
  window._vpSyncing = true;
  const dot = document.getElementById('vpAutoSaveDot');
  if (dot) dot.classList.add('saving');
@@ -18561,7 +18643,6 @@ async function _vpSyncToExcel() {
  if (dot) dot.classList.remove('saving');
  return;
  }
- const entries = DB.get('visitPlanEntries') || [];
  const wb = XLSX.utils.book_new();
 
  const header = ['Date', 'Day', 'Time', 'Plan Domain', 'Stakeholder Type', 'Cluster', 'Venue',
@@ -18616,6 +18697,7 @@ async function _vpSyncToExcel() {
 
 function _vpParseWorkbook(data) {
  const wb = XLSX.read(data, { type: 'array' });
+ window._vpWorkbook = wb; // stash for re-use after sheet selection
 
  // Parse Sheet4 (Dropdowns)
  const dropdowns = { domains: [], days: [], times: [], stakeholderTypes: [], clusters: [], stakeholderNames: [], venues: [], designations: [] };
@@ -18637,12 +18719,110 @@ function _vpParseWorkbook(data) {
  }
  DB.set('visitPlanDropdowns', dropdowns);
 
- // Parse main visit data
- const mainSheetName = wb.SheetNames.find(n => !n.toLowerCase().includes('sheet4') && !n.toLowerCase().includes('dropdown')) || wb.SheetNames[0];
- const mainSheet = wb.Sheets[mainSheetName];
- const rows = XLSX.utils.sheet_to_json(mainSheet, { header: 1, defval: '' });
+ // Build sheet info for picker — use sheet !ref to get actual range
+ const sheetInfo = wb.SheetNames.map(name => {
+ const ws = wb.Sheets[name];
+ const ref = ws['!ref'] || '';
+ let rowCount = 0;
+ if (ref) {
+ // ref looks like "A1:P120" — extract last row number
+ const match = ref.match(/:.*?(\d+)$/);
+ if (match) rowCount = parseInt(match[1], 10);
+ }
+ // Fallback: try sheet_to_json
+ if (!rowCount) {
+ rowCount = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }).length;
+ }
+ return { name, rows: rowCount, ref };
+ });
+
+ // If only 1 sheet total, import directly — otherwise show picker
+ if (sheetInfo.length <= 1) {
+ _vpParseSheet(wb, sheetInfo[0].name);
+ return;
+ }
+
+ // Show sheet picker dialog
+ _vpShowSheetPicker(sheetInfo, ddSheetName);
+}
+
+function _vpShowSheetPicker(sheetInfo, ddSheetName) {
+ // Remove any existing picker
+ document.getElementById('vpSheetPickerOverlay')?.remove();
+
+ const overlay = document.createElement('div');
+ overlay.id = 'vpSheetPickerOverlay';
+ overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
+
+ const card = document.createElement('div');
+ card.style.cssText = 'background:var(--card-bg,#fff);border-radius:16px;padding:28px 32px;min-width:340px;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+
+ card.innerHTML = `
+ <h3 style="margin:0 0 6px;font-size:1.15rem;color:var(--text-primary,#f0f1f5);font-weight:600;"><i class="fas fa-table" style="color:#6366f1;margin-right:8px;"></i>Select Sheet to Import</h3>
+ <p style="margin:0 0 18px;font-size:0.82rem;color:var(--text-secondary,#9ca3b8);">Choose which sheet contains your visit plan data</p>
+ <div id="vpSheetPickerList" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+ <div style="margin-top:18px;text-align:right;">
+ <button onclick="document.getElementById('vpSheetPickerOverlay').remove()" class="btn btn-outline" style="padding:8px 18px;font-size:0.85rem;">Cancel</button>
+ </div>`;
+
+ overlay.appendChild(card);
+ document.body.appendChild(overlay);
+
+ const list = document.getElementById('vpSheetPickerList');
+ for (const s of sheetInfo) {
+ const isDropdown = ddSheetName && s.name === ddSheetName;
+ const btn = document.createElement('button');
+ btn.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border-color,#e2e8f0);border-radius:10px;background:var(--bg-primary,#f8fafc);cursor:pointer;transition:all 0.15s;font-size:0.88rem;color:var(--text-primary,#1e293b);`;
+ btn.onmouseenter = () => { btn.style.borderColor = '#6366f1'; btn.style.background = 'rgba(99,102,241,0.06)'; };
+ btn.onmouseleave = () => { btn.style.borderColor = 'var(--border-color,#e2e8f0)'; btn.style.background = 'var(--bg-primary,#f8fafc)'; };
+ const dataRows = Math.max(0, s.rows - 1);
+ const refLabel = s.ref ? ` (${s.ref})` : '';
+ btn.innerHTML = `
+ <span style="font-weight:600;"><i class="fas ${isDropdown ? 'fa-list' : 'fa-file-excel'}" style="margin-right:8px;color:${isDropdown ? '#f59e0b' : '#10b981'};"></i>${s.name}</span>
+ <span style="font-size:0.78rem;color:var(--text-secondary,#888);background:var(--bg-secondary,#f1f5f9);padding:3px 10px;border-radius:99px;">${dataRows} rows${refLabel}</span>`;
+ btn.onclick = () => {
+ overlay.remove();
+ _vpParseSheet(window._vpWorkbook, s.name);
+ };
+ list.appendChild(btn);
+ }
+
+ // Close on overlay click
+ overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+function _vpParseSheet(wb, sheetName) {
+ const mainSheet = wb.Sheets[sheetName];
+ let rows = XLSX.utils.sheet_to_json(mainSheet, { header: 1, defval: '' });
+
+ // If sheet_to_json returns too few rows, try with raw:false or explicit range
+ if (rows.length <= 1 && mainSheet['!ref']) {
+ // Try reading with explicit range
+ rows = XLSX.utils.sheet_to_json(mainSheet, { header: 1, defval: '', range: mainSheet['!ref'] });
+ }
+ // Still too few? Try sheet_to_json without defval
+ if (rows.length <= 1 && mainSheet['!ref']) {
+ rows = XLSX.utils.sheet_to_json(mainSheet, { header: 1, range: mainSheet['!ref'] });
+ }
+ // Last resort: build rows from individual cells
+ if (rows.length <= 1 && mainSheet['!ref']) {
+ const ref = XLSX.utils.decode_range(mainSheet['!ref']);
+ rows = [];
+ for (let R = ref.s.r; R <= ref.e.r; R++) {
+ const row = [];
+ for (let C = ref.s.c; C <= ref.e.c; C++) {
+ const addr = XLSX.utils.encode_cell({ r: R, c: C });
+ const cell = mainSheet[addr];
+ row.push(cell ? (cell.v !== undefined ? cell.v : '') : '');
+ }
+ rows.push(row);
+ }
+ }
 
  const entries = [];
+ let sundaySkipped = 0;
+ let tlcSkipped = 0;
+ let emptyDomainSkipped = 0;
  let lastDate = null;
  for (let r = 1; r < rows.length; r++) {
  const row = rows[r];
@@ -18668,10 +18848,17 @@ function _vpParseWorkbook(data) {
  const studentComments = String(row[14] || '').trim();
  const reportSharing = String(row[15] || '').trim();
  const isEmpty = !domain && !venue && !stakeholderName && !objective && !review;
+ const rawDate = lastDate ? _vpExcelDateToJS(lastDate)?.toISOString().split('T')[0] : '';
+ // Skip rows with empty Plan Domain
+ if (!domain) { emptyDomainSkipped++; continue; }
+ // Skip Sunday rows entirely
+ if (rawDate && new Date(rawDate + 'T00:00:00').getDay() === 0) { sundaySkipped++; continue; }
+ // Skip TLC domain or TLC venue rows entirely
+ if (domain.toUpperCase() === 'TLC' || venue.toUpperCase() === 'TLC') { tlcSkipped++; continue; }
  entries.push({
  id: DB.generateId(),
  dateSerial: lastDate,
- date: lastDate ? _vpExcelDateToJS(lastDate)?.toISOString().split('T')[0] : '',
+ date: rawDate,
  day: lastDate ? _vpDayName(lastDate) : String(row[1] || '').trim(),
  time, domain, stakeholderType, cluster, venue,
  stakeholderName, designation, objective, review,
@@ -18680,8 +18867,59 @@ function _vpParseWorkbook(data) {
  source: 'excel'
  });
  }
- DB.set('visitPlanEntries', entries);
+
+ // --- Smart merge: preserve executed, replace planned, add new ---
+ const existingEntries = DB.get('visitPlanEntries') || [];
+ const _mkKey = e => [
+ (e.date || ''),
+ (e.time || '').trim().toLowerCase(),
+ (e.domain || '').trim().toLowerCase(),
+ (e.venue || '').trim().toLowerCase(),
+ (e.stakeholderName || '').trim().toLowerCase()
+ ].join('||');
+ const _isExecuted = e => !!(e.review && String(e.review).trim()) || e.status === 'executed';
+
+ const existingByKey = new Map();
+ for (const e of existingEntries) existingByKey.set(_mkKey(e), e);
+
+ const seenKeys = new Set();
+ const finalEntries = [];
+ let cntPreserved = 0, cntReplaced = 0, cntAdded = 0;
+
+ for (const newEntry of entries) {
+ const key = _mkKey(newEntry);
+ seenKeys.add(key);
+ const existing = existingByKey.get(key);
+ if (existing && _isExecuted(existing)) {
+ // Executed — keep as-is, ignore Excel version
+ finalEntries.push(existing);
+ cntPreserved++;
+ } else {
+ // Planned or new — use Excel version, preserve existing id if replacing
+ finalEntries.push(existing ? { ...newEntry, id: existing.id } : newEntry);
+ if (existing) cntReplaced++; else cntAdded++;
+ }
+ }
+
+ // Carry forward executed entries that are not in the new Excel sheet at all
+ for (const e of existingEntries) {
+ if (!seenKeys.has(_mkKey(e)) && _isExecuted(e)) {
+ finalEntries.push(e);
+ cntPreserved++;
+ }
+ }
+
+ DB.set('visitPlanEntries', finalEntries);
  renderVisitPlan();
+ const skipParts = [];
+ if (emptyDomainSkipped) skipParts.push(emptyDomainSkipped + ' empty domain skipped');
+ if (sundaySkipped) skipParts.push(sundaySkipped + ' Sunday skipped');
+ if (tlcSkipped) skipParts.push(tlcSkipped + ' TLC skipped');
+ const mergeParts = [];
+ if (cntAdded) mergeParts.push(`${cntAdded} added`);
+ if (cntReplaced) mergeParts.push(`${cntReplaced} planned updated`);
+ if (cntPreserved) mergeParts.push(`${cntPreserved} executed preserved`);
+ showToast(`✅ Imported from "${sheetName}" — ${mergeParts.join(', ')}${skipParts.length ? ' | ' + skipParts.join(' | ') : ''}`);
 }
 
 function _vpExcelDateToJS(serial) {
@@ -18713,82 +18951,10 @@ function importVisitPlanExcel(event) {
  reader.onload = function (e) {
  try {
  const data = new Uint8Array(e.target.result);
- const wb = XLSX.read(data, { type: 'array' });
-
- // --- Parse Sheet4 (Dropdowns / Reference) ---
- const dropdowns = { domains: [], days: [], times: [], stakeholderTypes: [], clusters: [], stakeholderNames: [], venues: [], designations: [] };
- const ddSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('sheet4')) || wb.SheetNames.find(n => n.toLowerCase().includes('dropdown'));
- if (ddSheetName) {
- const ddSheet = wb.Sheets[ddSheetName];
- const ddRows = XLSX.utils.sheet_to_json(ddSheet, { header: 1, defval: '' });
- const keys = ['domains', 'days', 'times', 'stakeholderTypes', 'clusters', 'stakeholderNames', 'venues', 'designations'];
- for (let r = 3; r < ddRows.length; r++) {
- const row = ddRows[r];
- for (let c = 0; c < keys.length; c++) {
- const val = row[c + 1]; // data starts at col B (index 1)
- if (val && String(val).trim()) {
- const v = String(val).trim();
- if (!dropdowns[keys[c]].includes(v)) dropdowns[keys[c]].push(v);
- }
- }
- }
- }
- DB.set('visitPlanDropdowns', dropdowns);
-
- // --- Parse main visit data sheet ---
- const mainSheetName = wb.SheetNames.find(n => !n.toLowerCase().includes('sheet4') && !n.toLowerCase().includes('dropdown')) || wb.SheetNames[0];
- const mainSheet = wb.Sheets[mainSheetName];
- const rows = XLSX.utils.sheet_to_json(mainSheet, { header: 1, defval: '' });
-
- const entries = [];
- let lastDate = null;
- for (let r = 1; r < rows.length; r++) {
- const row = rows[r];
- if (!row || row.length === 0) continue;
-
- let dateVal = row[0];
- if (dateVal && !isNaN(dateVal)) {
- lastDate = Number(dateVal);
- } else if (dateVal && typeof dateVal === 'string' && dateVal.trim()) {
- const parsed = new Date(dateVal);
- if (!isNaN(parsed)) lastDate = _vpJSDateToExcel(parsed);
- }
-
- const time = String(row[2] || '').trim();
- const domain = String(row[3] || '').trim();
- const stakeholderType = String(row[4] || '').trim();
- const cluster = String(row[5] || '').trim();
- const venue = String(row[6] || '').trim();
- const stakeholderName = String(row[7] || '').trim();
- const designation = String(row[8] || '').trim();
- const objective = String(row[9] || '').trim();
- const review = String(row[10] || '').trim();
- const tps = String(row[11] || '').trim();
- const stakeholderCount = String(row[12] || '').trim();
- const teacherComments = String(row[13] || '').trim();
- const studentComments = String(row[14] || '').trim();
- const reportSharing = String(row[15] || '').trim();
-
- const isEmpty = !domain && !venue && !stakeholderName && !objective && !review;
-
- entries.push({
- id: DB.generateId(),
- dateSerial: lastDate,
- date: lastDate ? _vpExcelDateToJS(lastDate)?.toISOString().split('T')[0] : '',
- day: lastDate ? _vpDayName(lastDate) : String(row[1] || '').trim(),
- time, domain, stakeholderType, cluster, venue,
- stakeholderName, designation, objective, review,
- tps, stakeholderCount, teacherComments, studentComments, reportSharing,
- status: isEmpty ? 'empty' : (review ? 'executed' : 'planned'),
- source: 'excel'
- });
- }
- DB.set('visitPlanEntries', entries);
- renderVisitPlan();
- showToast(` Imported ${entries.length} entries from Excel`);
+ _vpParseWorkbook(data);
  } catch (err) {
  console.error('Excel Import Error:', err);
- showToast(' Error importing Excel: ' + err.message);
+ showToast('❌ Error importing Excel: ' + err.message);
  }
  };
  reader.readAsArrayBuffer(file);
@@ -18885,11 +19051,8 @@ function _vpPopulateDropdowns() {
  });
  if (current) el.value = current;
  };
- populate('vpDomain', domains);
- populate('vpStakeholder', stakeholderTypes);
- populate('vpCluster', clusters);
 
- // Datalists
+ // Datalists (for combo text inputs — Domain, Stakeholder, Cluster, Venue, Names)
  const fillDatalist = (id, items) => {
  const dl = document.getElementById(id);
  if (!dl) return;
@@ -18900,6 +19063,9 @@ function _vpPopulateDropdowns() {
  dl.appendChild(o);
  });
  };
+ fillDatalist('vpDomainList', domains);
+ fillDatalist('vpStakeholderList', stakeholderTypes);
+ fillDatalist('vpClusterList', clusters);
  fillDatalist('vpVenueList', venues);
  fillDatalist('vpStakeholderNameList', stakeholderNames);
 
@@ -18978,11 +19144,11 @@ function _vpRenderQuickBar(opts) {
  };
  const hasDateFilter = !!(dateFilter || dateFrom || dateTo);
 
- // Per-half counts
- const firstAll = entries.filter(e => e.time === 'First Half');
- const secondAll = entries.filter(e => e.time === 'Second Half');
- const schoolVisitsSent = entries.filter(e => e.sentToVisits && e.time !== 'Evening');
- const schoolVisitsLeft = entries.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening');
+ // Per-half counts (excludes TLC domain and Evening time)
+ const firstAll = entries.filter(e => e.time === 'First Half' && e.domain !== 'TLC');
+ const secondAll = entries.filter(e => e.time === 'Second Half' && e.domain !== 'TLC');
+ const schoolVisitsSent = entries.filter(e => e.sentToVisits && e.time !== 'Evening' && e.domain !== 'TLC');
+ const schoolVisitsLeft = entries.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening' && e.domain !== 'TLC');
 
  const firstFiltered = hasDateFilter ? firstAll.filter(matchesDate) : null;
  const secondFiltered = hasDateFilter ? secondAll.filter(matchesDate) : null;
@@ -19081,18 +19247,26 @@ function showPopupConfirm({ title, message, icon, confirmText, cancelText, confi
 
 // Bulk add ALL entries for a specific half to School Visits
 // planned 'planned', executed 'completed', empty skipped
+// Also skips Sunday-dated entries and TLC domain/venue entries
 async function vpBulkAddHalfToVisits(half) {
  const entries = DB.get('visitPlanEntries') || [];
- const halfEntries = entries.filter(e => e.time === half && e.status !== 'empty');
+ const halfEntries = entries.filter(e => {
+ if (e.time !== half) return false;
+ if (e.status === 'empty') return false;
+ if (e.domain === 'TLC') return false; // skip TLC
+ if ((e.venue || '').trim().toUpperCase() === 'TLC') return false; // skip TLC venue
+ if (e.date && new Date(e.date).getDay() === 0) return false; // skip Sunday
+ return true;
+ });
  if (halfEntries.length === 0) {
- showToast('No "' + half + '" entries to add', 'info');
+ showToast('No eligible "' + half + '" entries to add (Sundays and TLC entries are excluded)', 'info');
  return;
  }
 
  const isFirst = half === 'First Half';
  const confirmed = await showPopupConfirm({
  title: isFirst ? ' First Half Visits' : ' Second Half Visits',
- message: `Add <strong>${halfEntries.length}</strong> "${half}" entries to School Visits?<br><small style="color:var(--text-muted)">Planned Planned &nbsp;|&nbsp; Executed Completed</small>`,
+ message: `Add <strong>${halfEntries.length}</strong> "${half}" entries to School Visits?<br><small style="color:var(--text-muted)">Planned → Planned &nbsp;|&nbsp; Executed → Completed &nbsp;|&nbsp; Sundays &amp; TLC excluded</small>`,
  icon: isFirst ? 'fa-sun' : 'fa-moon',
  confirmText: `Add ${halfEntries.length} Entries`,
  confirmColor: isFirst ? '#f59e0b' : '#8b5cf6'
@@ -19120,12 +19294,18 @@ async function vpBulkAddHalfToVisits(half) {
  const school = (e.venue || '').trim();
  const date = e.date || '';
  const purpose = purposeMap[e.domain] || 'Classroom Observation';
+ const timeSlot = (e.time || '').trim().toLowerCase();
 
- // Duplicate check
+ // Deterministic slot ID for duplicate check (date + time half + school)
+ const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}`;
+ const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}`;
+
+ // Duplicate check 1: already linked by fromVisitPlan id
  const existingByLink = visits.find(v => v.fromVisitPlan === e.id);
  if (existingByLink) { duplicates.push({ entry: e, existingVisit: existingByLink }); return; }
- const existingByMatch = visits.find(v => v.school && school && v.school.trim().toLowerCase() === school.toLowerCase() && v.date === date && v.purpose === purpose);
- if (existingByMatch) { duplicates.push({ entry: e, existingVisit: existingByMatch }); return; }
+ // Duplicate check 2: same slotId — First Half and Second Half produce different slotIds
+ const existingBySlot = visits.find(v => (v.slotId || _makeSlotId(v)) === slotId);
+ if (existingBySlot) { duplicates.push({ entry: e, existingVisit: existingBySlot }); return; }
 
  const notesParts = [];
  if (e.objective) notesParts.push('Objective: ' + e.objective);
@@ -19140,6 +19320,7 @@ async function vpBulkAddHalfToVisits(half) {
 
  visits.push({
  id: DB.generateId(),
+ slotId: slotId,
  school: school,
  block: e.cluster || '',
  cluster: e.cluster || '',
@@ -19178,6 +19359,14 @@ async function vpBulkAddHalfToVisits(half) {
  setTimeout(() => _vpSyncToExcel(), 400);
 }
 
+// Skip Sunday helper: given a YYYY-MM-DD string, advance to Monday if it falls on Sunday (used for pre-fill only)
+function _vpSkipSunday(dateStr) {
+ if (!dateStr) return dateStr;
+ const d = new Date(dateStr);
+ if (d.getDay() === 0) { d.setDate(d.getDate() + 1); }
+ return d.toISOString().split('T')[0];
+}
+
 function vpQuickAdd(domain) {
  const tpl = VP_DOMAIN_TEMPLATES.find(t => t.domain === domain) || {};
  _vpPopulateDropdowns();
@@ -19186,8 +19375,8 @@ function vpQuickAdd(domain) {
  document.getElementById('vpEntryId').value = '';
  document.getElementById('vpModalTitle').innerHTML = `<i class="fas ${tpl.icon || 'fa-clipboard-check'}"></i> ${domain}`;
 
- // Pre-fill today's date
- const today = new Date().toISOString().split('T')[0];
+ // Pre-fill today's date (skip Sunday → Monday)
+ const today = _vpSkipSunday(new Date().toISOString().split('T')[0]);
  document.getElementById('vpDate').value = today;
  document.getElementById('vpTime').value = 'First Half';
  document.getElementById('vpDomain').value = domain;
@@ -19237,8 +19426,14 @@ function openVisitPlanModal(id) {
 function saveVisitPlanEntry(event) {
  event.preventDefault();
  const id = document.getElementById('vpEntryId').value;
- const dateStr = document.getElementById('vpDate').value;
- const dateObj = dateStr ? new Date(dateStr) : null;
+ let dateStr = document.getElementById('vpDate').value;
+ let dateObj = dateStr ? new Date(dateStr) : null;
+
+ // Block Sunday — cannot save a Sunday entry
+ if (dateObj && dateObj.getDay() === 0) {
+ showToast('Sunday is not allowed — please select another date', 'error');
+ return;
+ }
 
  const entry = {
  id: id || DB.generateId(),
@@ -19272,6 +19467,23 @@ function saveVisitPlanEntry(event) {
  entries.push(entry);
  }
  DB.set('visitPlanEntries', entries);
+
+ // Persist any custom-typed dropdown values so they appear in future sessions
+ const dd = DB.get('visitPlanDropdowns') || {};
+ let ddChanged = false;
+ const addToDd = (key, val) => {
+ if (!val || !val.trim()) return;
+ if (!dd[key]) dd[key] = [];
+ if (!dd[key].includes(val.trim())) { dd[key].push(val.trim()); ddChanged = true; }
+ };
+ addToDd('domains', entry.domain);
+ addToDd('stakeholderTypes', entry.stakeholderType);
+ addToDd('clusters', entry.cluster);
+ addToDd('venues', entry.venue);
+ addToDd('stakeholderNames', entry.stakeholderName);
+ addToDd('designations', entry.designation);
+ if (ddChanged) DB.set('visitPlanDropdowns', dd);
+
  closeModal('visitPlanModal');
  renderVisitPlan();
  showToast(id ? ' Entry updated' : ' Entry added');
@@ -19337,6 +19549,10 @@ async function vpBulkClear() {
 // Helper: add a visit from a VisitPlan entry if not duplicate
 function _vpAddVisitFromPlanEntry(entry, allEntries) {
  if (!entry) return { added: false, reason: 'missing' };
+ // Block Sunday dates
+ if (entry.date && new Date(entry.date).getDay() === 0) return { added: false, reason: 'sunday' };
+ // Block TLC domain or TLC venue
+ if (entry.domain === 'TLC' || (entry.venue || '').trim().toUpperCase() === 'TLC') return { added: false, reason: 'tlc' };
  const visits = DB.get('visits') || [];
  const purposeMap = {
  'School Visits': 'Classroom Observation',
@@ -19353,12 +19569,21 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
  const school = (entry.venue || '').trim();
  const date = entry.date || '';
  const purpose = purposeMap[entry.domain] || 'Classroom Observation';
+ const timeSlot = (entry.time || '').trim().toLowerCase();
 
- // Duplicate check: existing link by fromVisitPlan OR same school+date+purpose
+ // Deterministic slot ID: uniquely identifies one physical visit slot (date + half + school)
+ // e.g. "slot|2026-03-02|first half|xyz school" vs "slot|2026-03-02|second half|xyz school"
+ const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}`;
+
+ // Duplicate check 1: already linked by fromVisitPlan id
  const existingByLink = visits.find(v => v.fromVisitPlan === entry.id);
  if (existingByLink) return { added: false, reason: 'already_linked', existingVisit: existingByLink };
- const existingByMatch = visits.find(v => v.school && school && v.school.trim().toLowerCase() === school.trim().toLowerCase() && v.date === date && v.purpose === purpose);
- if (existingByMatch) return { added: false, reason: 'duplicate', existingVisit: existingByMatch };
+
+ // Duplicate check 2: exact slotId match — First Half and Second Half produce different slotIds
+ // Compute slotId on-the-fly for old visits that don't have it stored
+ const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}`;
+ const existingBySlot = visits.find(v => (v.slotId || _makeSlotId(v)) === slotId);
+ if (existingBySlot) return { added: false, reason: 'duplicate', existingVisit: existingBySlot };
 
  const notesParts = [];
  if (entry.objective) notesParts.push('Objective: ' + entry.objective);
@@ -19370,6 +19595,7 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
 
  const visit = {
  id: DB.generateId(),
+ slotId: slotId,
  school: school,
  block: entry.cluster || '',
  cluster: entry.cluster || '',
@@ -19396,14 +19622,12 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
  const idx = allEntries.findIndex(x => x.id === entry.id);
  if (idx >= 0) {
  allEntries[idx].sentToVisits = true;
- allEntries[idx].status = 'executed';
  }
  } else {
  const vp = DB.get('visitPlanEntries') || [];
  const idx = vp.findIndex(x => x.id === entry.id);
  if (idx >= 0) {
  vp[idx].sentToVisits = true;
- vp[idx].status = 'executed';
  }
  DB.set('visitPlanEntries', vp);
  }
@@ -19420,8 +19644,12 @@ function vpSendToSchoolVisits(id) {
  if (res.added) {
  DB.set('visitPlanEntries', entries);
  renderVisitPlan();
- showToast(' Added to School Visits!', 'success');
+ showToast('✅ Added to School Visits!', 'success');
  setTimeout(() => _vpSyncToExcel(), 200);
+ } else if (res.reason === 'sunday') {
+ showToast('Cannot add — Sunday entries are not allowed in School Visits', 'error');
+ } else if (res.reason === 'tlc') {
+ showToast('Cannot add — TLC entries are excluded from School Visits', 'error');
  } else if (res.existingVisit) {
  // Show duplicate popup instead of silently skipping
  _vpShowDuplicateModal(res.existingVisit, e);
@@ -19552,7 +19780,6 @@ function _vpMarkSentToVisits(entryId) {
  const idx = entries.findIndex(x => x.id === entryId);
  if (idx >= 0) {
  entries[idx].sentToVisits = true;
- entries[idx].status = 'executed';
  DB.set('visitPlanEntries', entries);
  }
 }
@@ -19592,12 +19819,15 @@ function vpBulkAddToVisits() {
  if (checked.length === 0) { showToast('Select one or more entries first', 'error'); return; }
 
  const entries = DB.get('visitPlanEntries') || [];
- let added = 0, skipped = 0;
+ let added = 0, skipped = 0, sundaySkipped = 0, tlcSkipped = 0;
  checked.forEach(id => {
  const e = entries.find(x => x.id === id);
  if (!e) { skipped++; return; }
  const res = _vpAddVisitFromPlanEntry(e, entries);
- if (res.added) added++; else skipped++;
+ if (res.added) added++;
+ else if (res.reason === 'sunday') { sundaySkipped++; skipped++; }
+ else if (res.reason === 'tlc') { tlcSkipped++; skipped++; }
+ else skipped++;
  });
 
  DB.set('visitPlanEntries', entries);
@@ -19605,7 +19835,8 @@ function vpBulkAddToVisits() {
  checked.forEach(id => window._vpSelectedEntries.delete(id));
  renderVisitPlan();
  updateVpBulkUI();
- showToast(`Bulk add completed ${added} added, ${skipped} skipped`, added ? 'success' : 'info');
+ const skipNote = [sundaySkipped ? sundaySkipped + ' Sunday' : '', tlcSkipped ? tlcSkipped + ' TLC' : ''].filter(Boolean).join(', ');
+ showToast(`Bulk add: ${added} added, ${skipped} skipped${skipNote ? ' (' + skipNote + ')' : ''}`, added ? 'success' : 'info');
  setTimeout(() => _vpSyncToExcel(), 400);
 }
 
@@ -19760,9 +19991,9 @@ function renderVisitPlan() {
  const m = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
  if (m !== monthF) return false;
  }
- // School visits added / left filter (First Half / Second Half only, not Evening)
- if (svFilter === 'added' && (!e.sentToVisits || e.time === 'Evening')) return false;
- if (svFilter === 'left' && (e.sentToVisits || e.status === 'empty' || e.time === 'Evening')) return false;
+ // School visits added / left filter (First Half / Second Half only, not Evening, not TLC)
+ if (svFilter === 'added' && (!e.sentToVisits || e.time === 'Evening' || e.domain === 'TLC')) return false;
+ if (svFilter === 'left' && (e.sentToVisits || e.status === 'empty' || e.time === 'Evening' || e.domain === 'TLC')) return false;
  // Single date filter
  if (dateFilter) {
  if (!e.date) return false;
@@ -19783,25 +20014,27 @@ function renderVisitPlan() {
  return true;
  });
 
- // --- Stats ---
- const total = entries.length;
- const planned = entries.filter(e => e.status === 'planned').length;
- const executed = entries.filter(e => e.status === 'executed').length;
- const empty = entries.filter(e => e.status === 'empty').length;
- const domains = new Set(entries.map(e => e.domain).filter(Boolean)).size;
- const clusters = new Set(entries.map(e => e.cluster).filter(Boolean)).size;
+ // --- Stats (excludes TLC domain and Sunday-dated entries from counts) ---
+ const countable = entries.filter(e => e.domain !== 'TLC');
+ const total = countable.length;
+ const planned = countable.filter(e => e.status === 'planned').length;
+ const executed = countable.filter(e => e.status === 'executed').length;
+ const empty = countable.filter(e => e.status === 'empty').length;
+ const domains = new Set(countable.map(e => e.domain).filter(Boolean)).size;
+ const clusters = new Set(countable.map(e => e.cluster).filter(Boolean)).size;
 
- // Half / School Visits counts (total + date-filtered)
+ // Half / School Visits counts (total + date-filtered, excludes TLC and Evening)
  const hasDateFilter = !!(dateFilter || dateFrom || dateTo);
- const firstHalfAll = entries.filter(e => e.time === 'First Half').length;
- const secondHalfAll = entries.filter(e => e.time === 'Second Half').length;
- // Sent = already added to School Visits; Left = planned/executed but not yet sent (excludes empty, excludes Evening)
- const schoolVisitsSent = entries.filter(e => e.sentToVisits && e.time !== 'Evening').length;
- const schoolVisitsLeft = entries.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening').length;
- const firstHalfFiltered = hasDateFilter ? filtered.filter(e => e.time === 'First Half').length : null;
- const secondHalfFiltered = hasDateFilter ? filtered.filter(e => e.time === 'Second Half').length : null;
- const schoolVisitsSentFiltered = hasDateFilter ? filtered.filter(e => e.sentToVisits && e.time !== 'Evening').length : null;
- const schoolVisitsLeftFiltered = hasDateFilter ? filtered.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening').length : null;
+ const firstHalfAll = countable.filter(e => e.time === 'First Half').length;
+ const secondHalfAll = countable.filter(e => e.time === 'Second Half').length;
+ // Sent = already added to School Visits; Left = planned/executed but not yet sent (excludes empty, Evening, TLC)
+ const schoolVisitsSent = countable.filter(e => e.sentToVisits && e.time !== 'Evening').length;
+ const schoolVisitsLeft = countable.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening').length;
+ const filteredCountable = filtered.filter(e => e.domain !== 'TLC');
+ const firstHalfFiltered = hasDateFilter ? filteredCountable.filter(e => e.time === 'First Half').length : null;
+ const secondHalfFiltered = hasDateFilter ? filteredCountable.filter(e => e.time === 'Second Half').length : null;
+ const schoolVisitsSentFiltered = hasDateFilter ? filteredCountable.filter(e => e.sentToVisits && e.time !== 'Evening').length : null;
+ const schoolVisitsLeftFiltered = hasDateFilter ? filteredCountable.filter(e => !e.sentToVisits && e.status !== 'empty' && e.time !== 'Evening').length : null;
 
  // Helper: render stat number with optional filtered sub-count
  const statNum = (total, filt) =>
@@ -19825,7 +20058,7 @@ function renderVisitPlan() {
  const statsEl = document.getElementById('vpStats');
  if (statsEl) {
  statsEl.innerHTML = `
- <div class="vp-stat-card"><div class="vp-stat-num">${statNum(total, isFiltered ? filtered.length : null)}</div><div class="vp-stat-label">Total Entries</div></div>
+ <div class="vp-stat-card"><div class="vp-stat-num">${statNum(total, isFiltered ? filteredCountable.length : null)}</div><div class="vp-stat-label">Total Entries</div></div>
  <div class="vp-stat-card vp-stat-planned"><div class="vp-stat-num">${planned}</div><div class="vp-stat-label">Planned</div></div>
  <div class="vp-stat-card vp-stat-executed"><div class="vp-stat-num">${executed}</div><div class="vp-stat-label">Executed</div></div>
  <div class="vp-stat-card vp-stat-empty"><div class="vp-stat-num">${empty}</div><div class="vp-stat-label">Unfilled</div></div>
@@ -20047,6 +20280,9 @@ function renderBackupInfo() {
  } else {
  GoogleDriveSync.updateUI('disconnected');
  }
+
+ // Render bulk delete category grid
+ renderBulkDeleteCategories();
 }
 
 function downloadBackup() {
@@ -20134,6 +20370,92 @@ async function resetAllData() {
  renderBackupInfo();
  navigateTo('dashboard');
  }, 500);
+}
+
+// ===== BULK DELETE BY CATEGORY =====
+const BULK_DELETE_CATEGORIES = [
+ { key: 'visits', label: 'School Visits', icon: 'fa-school', color: '#8b5cf6' },
+ { key: 'trainings', label: 'Trainings', icon: 'fa-chalkboard-teacher', color: '#3b82f6' },
+ { key: 'observations', label: 'Observations', icon: 'fa-eye', color: '#10b981' },
+ { key: 'resources', label: 'Resources', icon: 'fa-book', color: '#f59e0b' },
+ { key: 'notes', label: 'Notes', icon: 'fa-sticky-note', color: '#ec4899' },
+ { key: 'ideas', label: 'Ideas', icon: 'fa-lightbulb', color: '#f97316' },
+ { key: 'reflections', label: 'Reflections', icon: 'fa-journal-whills', color: '#06b6d4' },
+ { key: 'contacts', label: 'Contacts', icon: 'fa-address-book', color: '#6366f1' },
+ { key: 'plannerTasks', label: 'Planner Tasks', icon: 'fa-tasks', color: '#14b8a6' },
+ { key: 'goalTargets', label: 'Goals', icon: 'fa-bullseye', color: '#ef4444' },
+ { key: 'followupStatus', label: 'Follow-ups', icon: 'fa-clipboard-check', color: '#84cc16' },
+ { key: 'worklog', label: 'Work Log', icon: 'fa-clipboard-list', color: '#7c3aed' },
+ { key: 'meetings', label: 'Meetings', icon: 'fa-handshake', color: '#0d9488' },
+ { key: 'maraiTracking', label: 'MARAI', icon: 'fa-route', color: '#d946ef' },
+ { key: 'schoolWork', label: 'School Work', icon: 'fa-chalkboard', color: '#059669' },
+ { key: 'visitPlanEntries', label: 'Visit Plan', icon: 'fa-calendar-alt', color: '#4f46e5' },
+ { key: 'teacherRecords', label: 'Teacher Records', icon: 'fa-user-graduate', color: '#0ea5e9' },
+ { key: 'feedbackReports', label: 'Feedback Reports', icon: 'fa-comments', color: '#a855f7' },
+ { key: 'manualFollowups', label: 'Manual Follow-ups', icon: 'fa-list-check', color: '#22c55e' },
+ { key: 'selfCapacityBuilding', label: 'Self Capacity', icon: 'fa-brain', color: '#e11d48' },
+ { key: 'teachingPractices', label: 'Teaching Practices', icon: 'fa-pen-ruler', color: '#0891b2' },
+ { key: 'learningOutcomes', label: 'Learning Outcomes', icon: 'fa-chart-line', color: '#ca8a04' },
+ { key: 'schoolStudentRecords', label: 'Student Records', icon: 'fa-users', color: '#7e22ce' }
+];
+
+function renderBulkDeleteCategories() {
+ const grid = document.getElementById('bulkDeleteCategoryGrid');
+ if (!grid) return;
+ grid.innerHTML = BULK_DELETE_CATEGORIES.map(cat => {
+ const count = (DB.get(cat.key) || []).length;
+ return `<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all .2s;background:var(--bg-card);"
+ onmouseover="this.style.borderColor='${cat.color}'" onmouseout="this.style.borderColor='var(--border)'">
+ <input type="checkbox" class="bulk-cat-checkbox" data-key="${cat.key}" onchange="updateBulkCategoryBtn()" style="width:16px;height:16px;accent-color:${cat.color};cursor:pointer;">
+ <i class="fas ${cat.icon}" style="color:${cat.color};font-size:14px;width:18px;text-align:center;"></i>
+ <span style="flex:1;font-size:13px;font-weight:500;color:var(--text-primary);">${cat.label}</span>
+ <span style="font-size:11px;background:var(--bg-secondary);padding:2px 7px;border-radius:8px;color:var(--text-secondary);font-weight:600;">${count}</span>
+ </label>`;
+ }).join('');
+ updateBulkCategoryBtn();
+}
+
+function updateBulkCategoryBtn() {
+ const checked = document.querySelectorAll('.bulk-cat-checkbox:checked');
+ const btn = document.getElementById('bulkCategoryDeleteBtn');
+ if (!btn) return;
+ let totalCount = 0;
+ checked.forEach(cb => { totalCount += (DB.get(cb.dataset.key) || []).length; });
+ btn.disabled = checked.length === 0;
+ btn.innerHTML = `<i class="fas fa-trash"></i> Delete Selected (${checked.length} categories, ${totalCount} items)`;
+}
+
+function bulkCategorySelectAll() {
+ document.querySelectorAll('.bulk-cat-checkbox').forEach(cb => { cb.checked = true; });
+ updateBulkCategoryBtn();
+}
+
+function bulkCategoryDeselectAll() {
+ document.querySelectorAll('.bulk-cat-checkbox').forEach(cb => { cb.checked = false; });
+ updateBulkCategoryBtn();
+}
+
+async function executeBulkCategoryDelete() {
+ const checked = Array.from(document.querySelectorAll('.bulk-cat-checkbox:checked'));
+ if (checked.length === 0) { showToast('Select at least one category', 'error'); return; }
+ const names = checked.map(cb => {
+ const cat = BULK_DELETE_CATEGORIES.find(c => c.key === cb.dataset.key);
+ return cat ? cat.label : cb.dataset.key;
+ });
+ let totalItems = 0;
+ checked.forEach(cb => { totalItems += (DB.get(cb.dataset.key) || []).length; });
+ if (!await showPopupConfirm({
+ title: 'Bulk Delete Categories',
+ message: `Delete <strong>${totalItems}</strong> items across <strong>${checked.length}</strong> categories?<br><br><small>${names.join(', ')}</small><br><br><strong>This CANNOT be undone!</strong>`,
+ icon: 'fa-broom',
+ confirmText: `Delete ${totalItems} Items`,
+ confirmColor: '#dc2626'
+ })) return;
+ checked.forEach(cb => { DB.set(cb.dataset.key, []); });
+ showToast(`Deleted ${totalItems} items from ${checked.length} categories`, 'info');
+ renderBulkDeleteCategories();
+ renderBackupInfo();
+ renderDashboard();
 }
 
 // ===== EXPORT ALL DATA =====
@@ -20513,6 +20835,7 @@ function getDefaultSettings() {
  saveToast: true,
  quickCapture: true,
  confirmDeletes: true,
+ bulkDeleteEnabled: false,
  reduceMotion: false,
  splashEnabled: true,
  splashDuration: 2600,
@@ -20562,6 +20885,7 @@ function saveAppSettings() {
  saveToast: document.getElementById('settingSaveToast')?.checked ?? true,
  quickCapture: document.getElementById('settingQuickCapture')?.checked ?? true,
  confirmDeletes: document.getElementById('settingConfirmDeletes')?.checked ?? true,
+ bulkDeleteEnabled: document.getElementById('settingBulkDeleteEnabled')?.checked ?? false,
  reduceMotion: document.getElementById('settingReduceMotion')?.checked ?? false,
  splashEnabled: document.getElementById('settingSplashEnabled')?.checked ?? true,
  splashDuration: parseInt(document.getElementById('settingSplashDuration')?.value || '2600', 10),
@@ -20640,6 +20964,7 @@ function renderSettings() {
  settingSaveToast: s.saveToast,
  settingQuickCapture: s.quickCapture,
  settingConfirmDeletes: s.confirmDeletes,
+ settingBulkDeleteEnabled: s.bulkDeleteEnabled,
  settingReduceMotion: s.reduceMotion,
  settingSplashEnabled: s.splashEnabled !== false
  };
@@ -20958,6 +21283,9 @@ function applyAppSettings() {
 
  // Apply hidden sidebar sections
  applySidebarVisibility();
+
+ // Apply bulk delete mode
+ applyGlobalBulkDelete(s.bulkDeleteEnabled === true);
 }
 
 const SPLASH_THEMES = [
