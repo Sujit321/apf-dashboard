@@ -32164,56 +32164,155 @@ function renderPeriodComparison() {
  const panel = document.getElementById('periodComparePanel');
  if (!panel) return;
 
+ // Default: Period A = current month, Period B = previous month
  const now = new Date();
- const curMonth = now.getMonth(), curYear = now.getFullYear();
+ const curYear = now.getFullYear(), curMonth = now.getMonth();
  const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
  const prevYear = curMonth === 0 ? curYear - 1 : curYear;
 
- const curLabel = new Date(curYear, curMonth).toLocaleDateString('en', { month: 'long', year: 'numeric' });
- const prevLabel = new Date(prevYear, prevMonth).toLocaleDateString('en', { month: 'long', year: 'numeric' });
+ const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+ const fmtBtn = s => { if (!s) return null; const p = s.split('-'); return `${parseInt(p[2])} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]} ${p[0]}`; };
 
- const visits = DB.get('visits');
- const trainings = DB.get('trainings');
- const observations = DB.get('observations');
-
- const inMonth = (arr, y, m) => arr.filter(item => {
- const d = new Date(item.date);
- return d.getFullYear() === y && d.getMonth() === m;
- });
-
- const curVisits = inMonth(visits, curYear, curMonth);
- const prevVisits = inMonth(visits, prevYear, prevMonth);
- const curTrainings = inMonth(trainings, curYear, curMonth);
- const prevTrainings = inMonth(trainings, prevYear, prevMonth);
- const curObs = inMonth(observations, curYear, curMonth);
- const prevObs = inMonth(observations, prevYear, prevMonth);
-
- const curSchools = new Set(curObs.map(o => (o.school || '').toLowerCase().trim()).filter(Boolean));
- const prevSchools = new Set(prevObs.map(o => (o.school || '').toLowerCase().trim()).filter(Boolean));
- const curTeachers = new Set(curObs.map(o => (o.teacher || '').toLowerCase().trim()).filter(Boolean));
- const prevTeachers = new Set(prevObs.map(o => (o.teacher || '').toLowerCase().trim()).filter(Boolean));
-
- const avgEng = (arr) => {
- const scores = arr.filter(o => o.engagementLevel).map(o => o.engagementLevel === 'More Engaged' ? 3 : o.engagementLevel === 'Engaged' ? 2 : 1);
- return scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+ const defs = {
+ aStart: fmt(new Date(curYear, curMonth, 1)),
+ aEnd: fmt(now),
+ bStart: fmt(new Date(prevYear, prevMonth, 1)),
+ bEnd: fmt(new Date(prevYear, prevMonth + 1, 0))
  };
-
- const curVisitSchools = new Set(curVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
- const prevVisitSchools = new Set(prevVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
-
- const metrics = [
- { label: 'Visits (Unique Schools)', cur: curVisitSchools.size, prev: prevVisitSchools.size },
- { label: 'Trainings', cur: curTrainings.length, prev: prevTrainings.length },
- { label: 'Observations', cur: curObs.length, prev: prevObs.length },
- { label: 'Schools Covered', cur: curSchools.size, prev: prevSchools.size },
- { label: 'Teachers Reached (Unique)', cur: curTeachers.size, prev: prevTeachers.size },
- { label: 'Avg Engagement', cur: avgEng(curObs), prev: avgEng(prevObs), decimal: true },
- ];
 
  panel.innerHTML = `
  <div class="period-compare-header">
- <h3><i class="fas fa-columns"></i> ${curLabel} vs ${prevLabel}</h3>
+ <h3><i class="fas fa-calendar-alt"></i> Custom Period Comparison</h3>
  <button class="btn btn-sm btn-ghost" onclick="togglePeriodComparison()"><i class="fas fa-times"></i></button>
+ </div>
+ <div class="pc-date-picker-row">
+ <div class="pc-date-group">
+ <label class="pc-date-label"><i class="fas fa-circle" style="color:var(--accent)"></i> Period A</label>
+ <div class="vdr-trigger-wrap" onclick="event.stopPropagation()">
+ <i class="fas fa-calendar-alt" style="font-size:12px;color:var(--accent);opacity:0.8;margin-left:4px;"></i>
+ <button id="pcAFromBtn" class="vdr-trigger-btn has-value"
+ onclick="VDR.open('from',this,function(f,t){document.getElementById('pcAStart').value=f;document.getElementById('pcAEnd').value=t;pcUpdateBtnLabels();})">  ${fmtBtn(defs.aStart)||'From'}</button>
+ <div class="vdr-sep"></div>
+ <button id="pcAToBtn" class="vdr-trigger-btn has-value"
+ onclick="VDR.open('to',this,function(f,t){document.getElementById('pcAStart').value=f;document.getElementById('pcAEnd').value=t;pcUpdateBtnLabels();})">${fmtBtn(defs.aEnd)||'To'}</button>
+ <button class="vdr-clear-btn" title="Clear A" onclick="document.getElementById('pcAStart').value='';document.getElementById('pcAEnd').value='';pcUpdateBtnLabels();">
+ <i class="fas fa-times"></i></button>
+ </div>
+ <input type="hidden" id="pcAStart" value="${defs.aStart}">
+ <input type="hidden" id="pcAEnd" value="${defs.aEnd}">
+ </div>
+ <div class="pc-date-group">
+ <label class="pc-date-label"><i class="fas fa-circle" style="color:#6b7280"></i> Period B</label>
+ <div class="vdr-trigger-wrap" onclick="event.stopPropagation()">
+ <i class="fas fa-calendar-alt" style="font-size:12px;color:var(--accent);opacity:0.8;margin-left:4px;"></i>
+ <button id="pcBFromBtn" class="vdr-trigger-btn has-value"
+ onclick="VDR.open('from',this,function(f,t){document.getElementById('pcBStart').value=f;document.getElementById('pcBEnd').value=t;pcUpdateBtnLabels();})">${fmtBtn(defs.bStart)||'From'}</button>
+ <div class="vdr-sep"></div>
+ <button id="pcBToBtn" class="vdr-trigger-btn has-value"
+ onclick="VDR.open('to',this,function(f,t){document.getElementById('pcBStart').value=f;document.getElementById('pcBEnd').value=t;pcUpdateBtnLabels();})">${fmtBtn(defs.bEnd)||'To'}</button>
+ <button class="vdr-clear-btn" title="Clear B" onclick="document.getElementById('pcBStart').value='';document.getElementById('pcBEnd').value='';pcUpdateBtnLabels();">
+ <i class="fas fa-times"></i></button>
+ </div>
+ <input type="hidden" id="pcBStart" value="${defs.bStart}">
+ <input type="hidden" id="pcBEnd" value="${defs.bEnd}">
+ </div>
+ <button class="btn btn-primary btn-sm pc-run-btn" onclick="_runPeriodComparison()">
+ <i class="fas fa-chart-bar"></i> Compare
+ </button>
+ </div>
+ <div id="pcResultsArea"></div>
+ `;
+
+ // Auto-run with defaults
+ _runPeriodComparison();
+}
+
+function pcUpdateBtnLabels() {
+ const fmtBtn = s => { if (!s) return null; const p = s.split('-'); return `${parseInt(p[2])} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]} ${p[0]}`; };
+ const aStart = document.getElementById('pcAStart')?.value;
+ const aEnd = document.getElementById('pcAEnd')?.value;
+ const bStart = document.getElementById('pcBStart')?.value;
+ const bEnd = document.getElementById('pcBEnd')?.value;
+ const setBtn = (id, val, fallback) => {
+ const el = document.getElementById(id);
+ if (el) { el.textContent = fmtBtn(val) || fallback; el.classList.toggle('has-value', !!val); }
+ };
+ setBtn('pcAFromBtn', aStart, 'From');
+ setBtn('pcAToBtn', aEnd, 'To');
+ setBtn('pcBFromBtn', bStart, 'From');
+ setBtn('pcBToBtn', bEnd, 'To');
+}
+
+function _runPeriodComparison() {
+ const aStart = document.getElementById('pcAStart')?.value;
+ const aEnd = document.getElementById('pcAEnd')?.value;
+ const bStart = document.getElementById('pcBStart')?.value;
+ const bEnd = document.getElementById('pcBEnd')?.value;
+ const resultsArea = document.getElementById('pcResultsArea');
+ if (!resultsArea) return;
+ if (!aStart || !aEnd || !bStart || !bEnd) {
+ resultsArea.innerHTML = '<p style="color:var(--text-muted);padding:12px">Please fill in all four dates.</p>';
+ return;
+ }
+
+ const inRange = (arr, start, end) => {
+ const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T23:59:59');
+ return arr.filter(item => {
+ const d = new Date(item.date + 'T00:00:00');
+ return d >= s && d <= e;
+ });
+ };
+
+ const fmtLabel = (s, e) => {
+ const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+ const ds = new Date(s + 'T00:00:00'), de = new Date(e + 'T00:00:00');
+ return ds.toLocaleDateString('en-IN', opts) + ' – ' + de.toLocaleDateString('en-IN', opts);
+ };
+
+ // Data sources
+ const visits = DB.get('visits') || [];
+ const trainings = DB.get('trainings') || [];
+ const observations = DB.get('observations') || []; // Field Notes & Observations page
+
+ const aVisits = inRange(visits, aStart, aEnd);
+ const bVisits = inRange(visits, bStart, bEnd);
+ const aTrainings = inRange(trainings, aStart, aEnd);
+ const bTrainings = inRange(trainings, bStart, bEnd);
+ const aObs = inRange(observations, aStart, aEnd);
+ const bObs = inRange(observations, bStart, bEnd);
+
+ // Unique schools from School Visits
+ const aVisitSchools = new Set(aVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
+ const bVisitSchools = new Set(bVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
+
+ // Teachers reached: count entries with "(Teacher)" in Key People Met across visits
+ const sumTeachers = arr => arr.reduce((sum, v) => {
+ if (!v.peopleMet) return sum;
+ const entries = v.peopleMet.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+ return sum + entries.filter(e => /\(teacher\)/i.test(e)).length;
+ }, 0);
+
+ // Avg visit rating (1–5) from School Visits
+ const avgRating = arr => {
+ const rated = arr.filter(v => v.rating && !isNaN(parseFloat(v.rating)));
+ return rated.length ? rated.reduce((s, v) => s + parseFloat(v.rating), 0) / rated.length : 0;
+ };
+
+ const metrics = [
+ { label: 'Visits (Unique Schools)', cur: aVisitSchools.size, prev: bVisitSchools.size, icon: 'fa-school' },
+ { label: 'Trainings', cur: aTrainings.length, prev: bTrainings.length, icon: 'fa-chalkboard-teacher' },
+ { label: 'Observations', cur: aObs.length, prev: bObs.length, icon: 'fa-clipboard-list' },
+ { label: 'Schools Covered', cur: aVisits.length, prev: bVisits.length, icon: 'fa-map-marker-alt' },
+ { label: 'Teachers Reached', cur: sumTeachers(aVisits), prev: sumTeachers(bVisits), icon: 'fa-users' },
+ { label: 'Training Attendees', cur: aTrainings.reduce((s,t)=>s+(parseInt(t.attendees)||0),0), prev: bTrainings.reduce((s,t)=>s+(parseInt(t.attendees)||0),0), icon: 'fa-chalkboard-teacher' },
+ { label: 'Avg Visit Rating', cur: avgRating(aVisits), prev: avgRating(bVisits), decimal: true, icon: 'fa-star', suffix: '/5' },
+ ];
+
+ resultsArea.innerHTML = `
+ <div class="pc-results-header">
+ <span class="pc-period-tag a"><i class="fas fa-circle"></i> A: ${fmtLabel(aStart, aEnd)}</span>
+ <span class="pc-vs-sep">vs</span>
+ <span class="pc-period-tag b"><i class="fas fa-circle"></i> B: ${fmtLabel(bStart, bEnd)}</span>
  </div>
  <div class="period-compare-grid">
  ${metrics.map(m => {
@@ -32222,16 +32321,17 @@ function renderPeriodComparison() {
  const arrowCls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'same';
  const arrowIcon = diff > 0 ? '<i class="fas fa-arrow-up"></i>' : diff < 0 ? '<i class="fas fa-arrow-down"></i>' : '<i class="fas fa-minus"></i>';
  const changeCls = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral';
- const curVal = m.decimal ? m.cur.toFixed(1) : m.cur;
- const prevVal = m.decimal ? m.prev.toFixed(1) : m.prev;
+ const curVal = (m.decimal ? m.cur.toFixed(1) : m.cur) + (m.suffix || '');
+ const prevVal = (m.decimal ? m.prev.toFixed(1) : m.prev) + (m.suffix || '');
+ const diffVal = (diff > 0 ? '+' : '') + (m.decimal ? diff.toFixed(1) : diff) + (m.suffix || '');
  return `<div class="pc-metric">
- <div class="pc-metric-label">${m.label}</div>
+ <div class="pc-metric-label">${m.icon ? `<i class="fas ${m.icon}"></i> ` : ''}${m.label}</div>
  <div class="pc-metric-values">
- <div class="pc-val current"><span class="pc-val-num">${curVal}</span><span class="pc-val-label">Current</span></div>
+ <div class="pc-val current"><span class="pc-val-num">${curVal}</span><span class="pc-val-label">Period A</span></div>
  <span class="pc-arrow ${arrowCls}">${arrowIcon}</span>
- <div class="pc-val previous"><span class="pc-val-num">${prevVal}</span><span class="pc-val-label">Previous</span></div>
+ <div class="pc-val previous"><span class="pc-val-num">${prevVal}</span><span class="pc-val-label">Period B</span></div>
  </div>
- <div class="pc-change ${changeCls}">${diff > 0 ? '+' : ''}${m.decimal ? diff.toFixed(1) : diff} (${pct > 0 ? '+' : ''}${pct}%)</div>
+ <div class="pc-change ${changeCls}">${diffVal} (${pct > 0 ? '+' : ''}${pct}%)</div>
  </div>`;
  }).join('')}
  </div>

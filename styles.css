@@ -22395,7 +22395,76 @@ body.light-mode .sw-card-outcome {
     color: var(--text-muted);
 }
 
-/* ===== Responsive additions ===== */
+/* Period Comparison — custom date picker row */
+.pc-date-picker-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.pc-date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 230px;
+}
+
+.pc-date-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pc-run-btn {
+    white-space: nowrap;
+    align-self: flex-end;
+}
+
+/* Period Comparison results header */
+.pc-results-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.pc-period-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+}
+
+.pc-period-tag.a {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.pc-period-tag.b {
+    color: var(--text-muted);
+}
+
+.pc-vs-sep {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
 @media (max-width: 600px) {
     .quick-capture-fab {
         bottom: 18px;
@@ -22423,7 +22492,14 @@ body.light-mode .sw-card-outcome {
         grid-template-columns: 1fr 1fr;
     }
 
-    .qc-engagement-pills {
+    .pc-date-picker-row {
+        flex-direction: column;
+    }
+
+    .pc-date-group {
+        min-width: 0;
+        width: 100%;
+    }
         flex-direction: column;
     }
 
