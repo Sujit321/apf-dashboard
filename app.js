@@ -4061,7 +4061,7 @@ function renderPaginationControls(key, p, renderFn) {
  }
  buttons += `<button class="pg-btn" ${p.page >= p.totalPages ? 'disabled' : ''} onclick="_pageState['${key}']=${p.page + 1};${renderFn}()"><i class="fas fa-chevron-right"></i></button>`;
 
- return `<div class="pagination-bar"><span class="pg-info">Showing ${p.start}{p.end} of ${p.total}</span><div class="pg-buttons">${buttons}</div></div>`;
+ return `<div class="pagination-bar"><span class="pg-info">Showing ${p.start}–${p.end} of ${p.total}</span><div class="pg-buttons">${buttons}</div></div>`;
 }
 
 // ===== SCHOOL VISITS =====
@@ -4644,11 +4644,12 @@ function renderVisitCalendar() {
       else if (from && to && dk > from && dk < to) cls.push('in-range');
       cells += `<div class="vdr-cell ${cls.join(' ')}" onclick="VDR._pick('${dk}')">${d}</div>`;
     }
-    const picking = S.picking === 'from' ? '▶ Select start date' : '▶ Select end date';
+    const picking = S.singleMode ? '▶ Select a date' : (S.picking === 'from' ? '▶ Select start date' : '▶ Select end date');
     const hasRange = S.fromVal && S.toVal;
     const fromDisp = S.fromVal ? fmt(S.fromVal) : '—';
     const toDisp   = S.toVal   ? fmt(S.toVal)   : '—';
-    const rangeInfo = hasRange ? `${fromDisp} → ${toDisp}` : S.fromVal ? `From: ${fromDisp}` : 'Select a date range';
+    const rangeInfo = S.singleMode ? (S.fromVal ? fromDisp : 'Pick a date') :
+                      hasRange ? `${fromDisp} → ${toDisp}` : S.fromVal ? `From: ${fromDisp}` : 'Select a date range';
     return `
       <div class="vdr-popup-header">
         <div class="vdr-nav-group">
@@ -4753,33 +4754,52 @@ function renderVisitCalendar() {
     const popup = getPopup();
     if (!popup) return;
     if (popup.contains(e.target)) return;
-    if (e.target.closest('.vdr-trigger-wrap')) return;
+    if (e.target.closest('.vdr-trigger-wrap,.vp-daterange-wrap,.vp-date-single-wrap')) return;
     removePopup();
   }
 
   function updateTriggerBtns() {
-    const fromBtn = document.getElementById('vdrFromBtn');
-    const toBtn   = document.getElementById('vdrToBtn');
-    if (fromBtn) {
-      fromBtn.textContent = S.fromVal ? fmt(S.fromVal) : 'From';
-      fromBtn.className = 'vdr-trigger-btn' + (S.fromVal ? ' has-value' : '');
+    // Find buttons in the container of the current anchor (context-aware)
+    const wrap = S.anchor && S.anchor.closest('.vdr-trigger-wrap, .vp-daterange-wrap, .vp-date-single-wrap');
+    if (wrap) {
+      const btns = wrap.querySelectorAll('.vdr-trigger-btn');
+      const fromBtn = btns[0]; const toBtn = btns[1];
+      if (fromBtn) {
+        const isFrom = fromBtn.id.toLowerCase().includes('from') || btns.length === 1;
+        const val = isFrom ? S.fromVal : S.fromVal;
+        fromBtn.textContent = S.fromVal ? fmt(S.fromVal) : (btns.length === 1 ? 'Pick Date' : 'From');
+        fromBtn.className = 'vdr-trigger-btn' + (S.fromVal ? ' has-value' : '');
+      }
+      if (toBtn) {
+        toBtn.textContent = S.toVal ? fmt(S.toVal) : 'To';
+        toBtn.className = 'vdr-trigger-btn' + (S.toVal ? ' has-value' : '');
+      }
     }
-    if (toBtn) {
-      toBtn.textContent = S.toVal ? fmt(S.toVal) : 'To';
-      toBtn.className = 'vdr-trigger-btn' + (S.toVal ? ' has-value' : '');
+    // Also update the original School Visits buttons if they exist (backwards compat)
+    const svFromBtn = document.getElementById('vdrFromBtn');
+    const svToBtn   = document.getElementById('vdrToBtn');
+    if (svFromBtn && (!wrap || wrap.contains(svFromBtn))) {
+      svFromBtn.textContent = S.fromVal ? fmt(S.fromVal) : 'From';
+      svFromBtn.className = 'vdr-trigger-btn' + (S.fromVal ? ' has-value' : '');
+    }
+    if (svToBtn && (!wrap || wrap.contains(svToBtn))) {
+      svToBtn.textContent = S.toVal ? fmt(S.toVal) : 'To';
+      svToBtn.className = 'vdr-trigger-btn' + (S.toVal ? ' has-value' : '');
     }
   }
 
   window.VDR = {
-    open(picking, anchor, onChangeCb) {
+    open(picking, anchor, onChangeCb, opts) {
       if (S.open && S.anchor === anchor) { removePopup(); return; }
       S.open = true; S.calView = 'days';
       S.picking = picking; S.anchor = anchor; S.onChangeCb = onChangeCb;
+      S.singleMode = opts && opts.single;
+      if (S.singleMode) { S.fromVal = ''; S.toVal = ''; }
       const seed = (picking === 'from' ? S.fromVal : S.toVal) || S.fromVal || S.toVal || todayStr();
       const [sy, sm] = seed.split('-');
       S.viewYear = parseInt(sy); S.viewMonth = parseInt(sm) - 1;
-      document.querySelectorAll('.vdr-trigger-wrap').forEach(w => w.classList.remove('open'));
-      anchor.closest('.vdr-trigger-wrap')?.classList.add('open');
+      document.querySelectorAll('.vdr-trigger-wrap,.vp-daterange-wrap,.vp-date-single-wrap').forEach(w => w.classList.remove('open'));
+      anchor.closest('.vdr-trigger-wrap,.vp-daterange-wrap,.vp-date-single-wrap')?.classList.add('open');
       render();
     },
     _switchView(v) { S.calView = v; render(); },
@@ -4794,6 +4814,12 @@ function renderVisitCalendar() {
     _pickMonth(m) { S.viewMonth = m; S.calView = 'days'; render(); },
     _pickYear(y)  { S.viewYear  = y; S.calView = 'months'; render(); },
     _pick(dk) {
+      if (S.singleMode) {
+        S.fromVal = dk; S.toVal = dk;
+        updateTriggerBtns();
+        this._apply();
+        return;
+      }
       if (S.picking === 'from') {
         S.fromVal = dk;
         if (S.toVal && S.toVal < dk) S.toVal = '';
@@ -18887,12 +18913,68 @@ const VP_DOMAIN_TEMPLATES = [
  { domain: 'Data Collection', icon: 'fa-database', color: '#ef4444', stakeholder: '', fields: {} },
 ];
 
-function _vpRenderQuickBar() {
+function _vpRenderQuickBar(opts) {
  const bar = document.getElementById('vpQuickBar');
  if (!bar) return;
+
+ const entries = DB.get('visitPlanEntries') || [];
+ const { dateFilter = '', dateFrom = '', dateTo = '' } = opts || {};
+
+ // Helper: check if an entry matches the active date filters
+ const matchesDate = e => {
+ if (!dateFilter && !dateFrom && !dateTo) return true;
+ if (!e.date) return false;
+ const d = e.date.slice(0, 10);
+ if (dateFilter && d !== dateFilter) return false;
+ if (dateFrom && d < dateFrom) return false;
+ if (dateTo && d > dateTo) return false;
+ return true;
+ };
+ const hasDateFilter = !!(dateFilter || dateFrom || dateTo);
+
+ // Per-half counts
+ const firstAll = entries.filter(e => e.time === 'First Half');
+ const secondAll = entries.filter(e => e.time === 'Second Half');
+ const schoolVisitsAll = entries.filter(e => e.sentToVisits);
+
+ const firstFiltered = hasDateFilter ? firstAll.filter(matchesDate) : null;
+ const secondFiltered = hasDateFilter ? secondAll.filter(matchesDate) : null;
+ const schoolFiltered = hasDateFilter ? schoolVisitsAll.filter(matchesDate) : null;
+
+ // First Half sent-to-visits count
+ const firstSent = firstAll.filter(e => e.sentToVisits).length;
+ const secondSent = secondAll.filter(e => e.sentToVisits).length;
+
+ const badge = (all, filtered, sent) => {
+ let b = `<span class="vp-half-badge">${all.length}</span>`;
+ if (filtered !== null) {
+ b += `<span class="vp-half-badge vp-half-badge-filtered" title="Matching date filter">${filtered.length} filtered</span>`;
+ }
+ if (sent > 0) {
+ b += `<span class="vp-half-badge vp-half-badge-sent" title="Added to School Visits"><i class="fas fa-school"></i> ${sent}</span>`;
+ }
+ return b;
+ };
+
  let html = '<div class="vp-bulk-half-actions">';
- html += `<button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" title="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half \u2192 Visits</button>`;
- html += `<button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" title="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half \u2192 Visits</button>`;
+ html += `<div class="vp-half-group">
+ <button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" title="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half → Visits</button>
+ <div class="vp-half-counts">${badge(firstAll, firstFiltered, firstSent)}</div>
+ </div>`;
+ html += `<div class="vp-half-group">
+ <button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" title="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half → Visits</button>
+ <div class="vp-half-counts">${badge(secondAll, secondFiltered, secondSent)}</div>
+ </div>`;
+
+ // School Visits summary chip
+ const svCount = schoolVisitsAll.length;
+ const svFiltered = hasDateFilter ? schoolFiltered.length : null;
+ html += `<div class="vp-half-group vp-school-visits-summary">
+ <span class="vp-school-chip"><i class="fas fa-school"></i> School Visits Added <span class="vp-half-badge vp-half-badge-sent">${svCount}</span>`;
+ if (svFiltered !== null) html += ` <span class="vp-half-badge vp-half-badge-filtered">${svFiltered} filtered</span>`;
+ html += `</span>
+ </div>`;
+
  html += '</div>';
  bar.innerHTML = html;
 }
@@ -19595,7 +19677,6 @@ function renderVisitPlan() {
  try {
  const entries = DB.get('visitPlanEntries') || [];
  _vpPopulateDropdowns();
- _vpRenderQuickBar();
 
  // --- Filters ---
  const domainF = document.getElementById('vpDomainFilter')?.value || 'all';
@@ -19604,6 +19685,12 @@ function renderVisitPlan() {
  const monthF = document.getElementById('vpMonthFilter')?.value || 'all';
  const statusF = document.getElementById('vpStatusFilter')?.value || 'all';
  const search = (document.getElementById('vpSearchInput')?.value || '').toLowerCase().trim();
+ const dateFilter = (document.getElementById('vpDateFilter')?.value || '').trim();
+ const dateFrom = (document.getElementById('vpDateFrom')?.value || '').trim();
+ const dateTo = (document.getElementById('vpDateTo')?.value || '').trim();
+
+ // Render quick bar with date-filter-aware counts
+ _vpRenderQuickBar({ dateFilter, dateFrom, dateTo });
 
  let filtered = entries.filter(e => {
  if (domainF !== 'all' && e.domain !== domainF) return false;
@@ -19615,6 +19702,19 @@ function renderVisitPlan() {
  const d = new Date(e.date);
  const m = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
  if (m !== monthF) return false;
+ }
+ // Single date filter
+ if (dateFilter) {
+ if (!e.date) return false;
+ const entryDate = e.date.slice(0, 10);
+ if (entryDate !== dateFilter) return false;
+ }
+ // Date range filter
+ if (dateFrom || dateTo) {
+ if (!e.date) return false;
+ const entryDate = e.date.slice(0, 10);
+ if (dateFrom && entryDate < dateFrom) return false;
+ if (dateTo && entryDate > dateTo) return false;
  }
  if (search) {
  const hay = [e.domain, e.venue, e.stakeholderName, e.cluster, e.objective, e.review, e.time, e.designation].join(' ').toLowerCase();
@@ -19631,8 +19731,23 @@ function renderVisitPlan() {
  const domains = new Set(entries.map(e => e.domain).filter(Boolean)).size;
  const clusters = new Set(entries.map(e => e.cluster).filter(Boolean)).size;
 
+ // Half / School Visits counts (total + date-filtered)
+ const hasDateFilter = !!(dateFilter || dateFrom || dateTo);
+ const firstHalfAll = entries.filter(e => e.time === 'First Half').length;
+ const secondHalfAll = entries.filter(e => e.time === 'Second Half').length;
+ const schoolVisitsAll = entries.filter(e => e.sentToVisits).length;
+ const firstHalfFiltered = hasDateFilter ? filtered.filter(e => e.time === 'First Half').length : null;
+ const secondHalfFiltered = hasDateFilter ? filtered.filter(e => e.time === 'Second Half').length : null;
+ const schoolVisitsFiltered = hasDateFilter ? filtered.filter(e => e.sentToVisits).length : null;
+
+ // Helper: render stat number with optional filtered sub-count
+ const statNum = (total, filt) =>
+ filt !== null
+ ? `${total}<span class="vp-stat-filtered" title="Matching date filter">${filt} <i class="fas fa-filter" style="font-size:9px"></i></span>`
+ : `${total}`;
+
  // --- Bulk Clear Button ---
- const isFiltered = domainF !== 'all' || stakeholderF !== 'all' || clusterF !== 'all' || monthF !== 'all' || statusF !== 'all' || search;
+ const isFiltered = domainF !== 'all' || stakeholderF !== 'all' || clusterF !== 'all' || monthF !== 'all' || statusF !== 'all' || search || dateFilter || dateFrom || dateTo;
  const bulkBtn = document.getElementById('vpBulkClearBtn');
  const bulkLabel = document.getElementById('vpBulkClearLabel');
  if (bulkBtn) {
@@ -19646,12 +19761,14 @@ function renderVisitPlan() {
 
  const statsEl = document.getElementById('vpStats');
  if (statsEl) {
- // Stat cards (display only, not clickable)
  statsEl.innerHTML = `
- <div class="vp-stat-card"><div class="vp-stat-num">${total}</div><div class="vp-stat-label">Total Entries</div></div>
+ <div class="vp-stat-card"><div class="vp-stat-num">${statNum(total, isFiltered ? filtered.length : null)}</div><div class="vp-stat-label">Total Entries</div></div>
  <div class="vp-stat-card vp-stat-planned"><div class="vp-stat-num">${planned}</div><div class="vp-stat-label">Planned</div></div>
  <div class="vp-stat-card vp-stat-executed"><div class="vp-stat-num">${executed}</div><div class="vp-stat-label">Executed</div></div>
  <div class="vp-stat-card vp-stat-empty"><div class="vp-stat-num">${empty}</div><div class="vp-stat-label">Unfilled</div></div>
+ <div class="vp-stat-card vp-stat-first-half"><div class="vp-stat-num">${statNum(firstHalfAll, firstHalfFiltered)}</div><div class="vp-stat-label"><i class="fas fa-sun"></i> First Half</div></div>
+ <div class="vp-stat-card vp-stat-second-half"><div class="vp-stat-num">${statNum(secondHalfAll, secondHalfFiltered)}</div><div class="vp-stat-label"><i class="fas fa-moon"></i> Second Half</div></div>
+ <div class="vp-stat-card vp-stat-school-visits"><div class="vp-stat-num">${statNum(schoolVisitsAll, schoolVisitsFiltered)}</div><div class="vp-stat-label"><i class="fas fa-school"></i> School Visits</div></div>
  <div class="vp-stat-card"><div class="vp-stat-num">${domains}</div><div class="vp-stat-label">Domains</div></div>
  <div class="vp-stat-card"><div class="vp-stat-num">${clusters}</div><div class="vp-stat-label">Clusters</div></div>
  `;
@@ -19737,6 +19854,79 @@ function renderVisitPlan() {
  const container = document.getElementById('vpContainer');
  if (container) container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Rendering Error</h3><p>${err.message}</p></div>`;
  }
+}
+
+function vpClearDateFilters() {
+ const dateFilter = document.getElementById('vpDateFilter');
+ const dateFrom = document.getElementById('vpDateFrom');
+ const dateTo = document.getElementById('vpDateTo');
+ if (dateFilter) dateFilter.value = '';
+ if (dateFrom) dateFrom.value = '';
+ if (dateTo) dateTo.value = '';
+ // Reset button labels
+ const pickBtn = document.getElementById('vpDatePickBtn');
+ if (pickBtn) { pickBtn.textContent = 'Pick Date'; pickBtn.className = 'vdr-trigger-btn'; }
+ const fromBtn = document.getElementById('vpVdrFromBtn');
+ if (fromBtn) { fromBtn.textContent = 'From'; fromBtn.className = 'vdr-trigger-btn'; }
+ const toBtn = document.getElementById('vpVdrToBtn');
+ if (toBtn) { toBtn.textContent = 'To'; toBtn.className = 'vdr-trigger-btn'; }
+ _pageState.visitplan = 1;
+ renderVisitPlan();
+}
+
+function vpClearSingleDate() {
+ const dateFilter = document.getElementById('vpDateFilter');
+ if (dateFilter) dateFilter.value = '';
+ const pickBtn = document.getElementById('vpDatePickBtn');
+ if (pickBtn) { pickBtn.textContent = 'Pick Date'; pickBtn.className = 'vdr-trigger-btn'; }
+ _pageState.visitplan = 1;
+ renderVisitPlan();
+}
+
+function vpClearRangeDates() {
+ const dateFrom = document.getElementById('vpDateFrom');
+ const dateTo = document.getElementById('vpDateTo');
+ if (dateFrom) dateFrom.value = '';
+ if (dateTo) dateTo.value = '';
+ // Just reset VDR internal state without triggering callbacks
+ VDR.syncFrom('', '');
+ const fromBtn = document.getElementById('vpVdrFromBtn');
+ if (fromBtn) { fromBtn.textContent = 'From'; fromBtn.className = 'vdr-trigger-btn'; }
+ const toBtn = document.getElementById('vpVdrToBtn');
+ if (toBtn) { toBtn.textContent = 'To'; toBtn.className = 'vdr-trigger-btn'; }
+ _pageState.visitplan = 1;
+ renderVisitPlan();
+}
+
+function vpDateRangeCallback(fromVal, toVal) {
+ document.getElementById('vpDateFrom').value = fromVal;
+ document.getElementById('vpDateTo').value = toVal;
+ // Update trigger button labels
+ const fromBtn = document.getElementById('vpVdrFromBtn');
+ const toBtn = document.getElementById('vpVdrToBtn');
+ const fmt = d => { if (!d) return ''; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
+ if (fromBtn) { fromBtn.textContent = fromVal ? fmt(fromVal) : 'From'; fromBtn.className = 'vdr-trigger-btn' + (fromVal ? ' has-value' : ''); }
+ if (toBtn) { toBtn.textContent = toVal ? fmt(toVal) : 'To'; toBtn.className = 'vdr-trigger-btn' + (toVal ? ' has-value' : ''); }
+ _pageState.visitplan = 1;
+ renderVisitPlan();
+}
+
+function vpOpenDatePicker(anchor) {
+ VDR.open('from', anchor, function(fromVal, toVal) {
+ document.getElementById('vpDateFilter').value = fromVal;
+ // Also clear range if single date chosen
+ document.getElementById('vpDateFrom').value = '';
+ document.getElementById('vpDateTo').value = '';
+ const fromBtn = document.getElementById('vpVdrFromBtn');
+ const toBtn = document.getElementById('vpVdrToBtn');
+ if (fromBtn) { fromBtn.textContent = 'From'; fromBtn.className = 'vdr-trigger-btn'; }
+ if (toBtn) { toBtn.textContent = 'To'; toBtn.className = 'vdr-trigger-btn'; }
+ const pickBtn = document.getElementById('vpDatePickBtn');
+ const fmt = d => { if (!d) return 'Pick Date'; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
+ if (pickBtn) { pickBtn.textContent = fmt(fromVal); pickBtn.className = 'vdr-trigger-btn' + (fromVal ? ' has-value' : ''); }
+ _pageState.visitplan = 1;
+ renderVisitPlan();
+ }, { single: true });
 }
 
 // ===== DATA & SECURITY =====
@@ -21125,6 +21315,8 @@ function hydrateAIChatState() {
 function _aiModeLabel(mode) {
  const labels = {
  balanced: 'Balanced',
+ 'general-chat': 'General Chat',
+ 'research': 'Research & Brainstorm',
  'deep-analysis': 'Deep Analysis',
  'action-plan': 'Action Planner',
  'report-draft': 'Report Writer',
@@ -21136,6 +21328,7 @@ function _aiModeLabel(mode) {
 function _aiScopeLabel(scope) {
  const labels = {
  auto: 'All Data',
+ none: 'No Data (Pure Chat)',
  visits: 'Visits',
  observations: 'Observations',
  trainings: 'Trainings',
@@ -21792,13 +21985,25 @@ function _getAIChatModeConfig(mode) {
  const configs = {
  balanced: {
  label: 'Balanced Assistant',
- instruction: 'Give concise, practical guidance with evidence from available data.',
+ instruction: 'Give concise, practical guidance with evidence from available data. If the user sends a casual greeting or general question unrelated to data, respond naturally and conversationally — do not force data analysis.',
  temperature: 0.6,
  maxTokens: 1500
  },
+ 'general-chat': {
+ label: 'General Chat',
+ instruction: 'You are a friendly, helpful conversational assistant. Respond naturally to any topic — greetings, general knowledge, opinions, ideas, or casual conversation. Only reference the user\'s APF data if they explicitly ask about it. Keep responses warm, concise, and human-like.',
+ temperature: 0.75,
+ maxTokens: 1500
+ },
+ 'research': {
+ label: 'Research & Brainstorm',
+ instruction: 'Help the user brainstorm ideas, research topics, think through problems, and explore concepts creatively. Provide multiple perspectives, ask thought-provoking questions, and build on ideas. You can reference APF data when relevant but also freely discuss education research, pedagogy, policy, strategies, and any general topic the user wants to explore.',
+ temperature: 0.8,
+ maxTokens: 2500
+ },
  'deep-analysis': {
  label: 'Deep Analysis',
- instruction: 'Provide pattern analysis, root causes, trade-offs, and risk flags.',
+ instruction: 'Provide pattern analysis, root causes, trade-offs, and risk flags using the available data.',
  temperature: 0.45,
  maxTokens: 2000
  },
@@ -21826,20 +22031,32 @@ function _getAIChatModeConfig(mode) {
 
 function buildAIChatSystemPrompt(mode, scope, contextData) {
  const modeConfig = _getAIChatModeConfig(mode);
- return `You are an AI assistant for an Academic Resource Person (APF) at Azim Premji Foundation.
+ const profile = DB.get('userProfile') || {};
+ const userName = profile.name || 'there';
+ const noData = scope === 'none' || !contextData;
+
+ let prompt = `You are a smart, friendly AI assistant for ${userName}, an Academic Resource Person (ARP) at Azim Premji Foundation.
 
 Operating mode: ${modeConfig.label}
-Scope: ${_aiScopeLabel(scope)}
+Today's date: ${new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
 Core behavior:
 - ${modeConfig.instruction}
-- Reply in the same language the user uses.
-- Stay factual, practical, and specific.
-- When data is missing, clearly say what is missing.
-- Prefer short sections and bullets when useful.
+- Reply in the same language the user uses (Hindi, English, Tamil, Telugu, Kannada, etc.).
+- Be conversational and natural. Match the tone of the user — if they say "hi" or "hello", greet them back warmly and ask how you can help. Do NOT dump data analysis for casual messages.
+- When the user asks about their data (visits, observations, trainings, follow-ups, etc.), use the data snapshot provided below to give specific, evidence-based answers.
+- When the user asks general questions, research topics, brainstorming, or anything unrelated to their APF data, respond helpfully like a knowledgeable assistant without forcing data references.
+- Stay factual and practical. When data is missing or insufficient, clearly say so.
+- Use short sections, bullets, and bold text for readability when helpful.
+- For greetings and casual chat, keep it brief and friendly (2-4 sentences).`;
 
-Use this data snapshot:
-${contextData}`;
+ if (!noData) {
+ prompt += `\n\nUser's APF Data Snapshot (use this when the user asks about their work/data):\n${contextData}`;
+ } else {
+ prompt += `\n\nNo data scope selected — respond as a general-purpose assistant.`;
+ }
+
+ return prompt;
 }
 
 async function sendAIChat() {
@@ -21862,8 +22079,10 @@ async function sendAIChat() {
  input.value = ''; input.style.height = 'auto';
 
  // Build mode-aware context from data
- const contextData = buildScopedDataContext(prefs.scope);
- const systemPrompt = buildAIChatSystemPrompt(prefs.mode, prefs.scope, contextData);
+ // For general-chat mode with auto scope, skip data injection for cleaner conversational responses
+ const effectiveScope = (prefs.mode === 'general-chat' && prefs.scope === 'auto') ? 'none' : prefs.scope;
+ const contextData = buildScopedDataContext(effectiveScope);
+ const systemPrompt = buildAIChatSystemPrompt(prefs.mode, effectiveScope, contextData);
 
  _aiChatHistory.push({ role: 'user', content: message, ts: new Date().toISOString() });
  _saveAIChatState();
@@ -22029,27 +22248,109 @@ function buildDataContext() {
  const observations = DB.get('observations') || [];
  const followups = DB.get('followupStatus') || [];
  const notes = DB.get('notes') || [];
+ const tasks = DB.get('plannerTasks') || [];
+ const goals = DB.get('goalTargets') || [];
+ const reflections = DB.get('reflections') || [];
+ const meetings = DB.get('meetings') || [];
+ const profile = DB.get('userProfile') || {};
 
  const now = new Date();
+ const today = now.toISOString().split('T')[0];
  const thisMonth = now.toISOString().slice(0, 7);
  const thisWeek = new Date(now - 7 * 86400000).toISOString().split('T')[0];
+ const last30 = new Date(now - 30 * 86400000).toISOString().split('T')[0];
 
  const recentVisits = visits.filter(v => v.date >= thisWeek);
  const monthVisits = visits.filter(v => (v.date || '').startsWith(thisMonth));
+ const last30Visits = visits.filter(v => v.date >= last30);
  const completedVisits = visits.filter(v => v.status === 'completed');
  const pendingFollowups = followups.filter(f => f.status !== 'completed' && f.status !== 'done');
+ const overdueFollowups = pendingFollowups.filter(f => f.dueDate && f.dueDate < today);
  const uniqueSchools = new Set(visits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
 
- return `- Total visits: ${visits.length} (Completed: ${completedVisits.length}, This month: ${monthVisits.length}, This week: ${recentVisits.length})
-- Schools covered: ${uniqueSchools.size}
-- Trainings conducted: ${trainings.length}, Total teachers reached: ${trainings.reduce((s, t) => s + (t.attendees || 0), 0)}
-- Observations recorded: ${observations.length}
-- Pending follow-ups: ${pendingFollowups.length}
-- Notes: ${notes.length}
-- Recent visits (last 7 days): ${recentVisits.map(v => v.school + ' (' + v.date + ')').join(', ') || 'None'}`;
+ // School visit frequency
+ const schoolFreq = {};
+ visits.forEach(v => { const s = v.school || 'Unknown'; schoolFreq[s] = (schoolFreq[s] || 0) + 1; });
+ const topSchools = Object.entries(schoolFreq).sort((a, b) => b[1] - a[1]).slice(0, 10);
+ const leastVisited = Object.entries(schoolFreq).sort((a, b) => a[1] - b[1]).slice(0, 5);
+
+ // Visit purpose breakdown
+ const purposeCounts = {};
+ visits.forEach(v => { const p = v.purpose || 'General Visit'; purposeCounts[p] = (purposeCounts[p] || 0) + 1; });
+
+ // Observation analysis
+ const engagementCounts = {};
+ const subjectCounts = {};
+ const uniqueTeachers = new Set();
+ observations.forEach(o => {
+  const lvl = o.engagementLevel || 'Unknown';
+  engagementCounts[lvl] = (engagementCounts[lvl] || 0) + 1;
+  if (o.subject) subjectCounts[o.subject] = (subjectCounts[o.subject] || 0) + 1;
+  if (o.teacher) uniqueTeachers.add(o.teacher.toLowerCase().trim());
+ });
+
+ // Training analysis
+ const completedTrainings = trainings.filter(t => t.status === 'completed');
+ const upcomingTrainings = trainings.filter(t => t.status === 'upcoming' || (t.date && t.date >= today));
+ const totalAttendees = trainings.reduce((s, t) => s + Number(t.attendees || 0), 0);
+ const trainingTopics = {};
+ trainings.forEach(t => { const topic = t.title || t.topic || 'Untitled'; trainingTopics[topic] = (trainingTopics[topic] || 0) + 1; });
+
+ // Planner tasks
+ const pendingTasks = tasks.filter(t => !t.done);
+ const weekEnd = new Date(now.getTime() + 7 * 86400000).toISOString().split('T')[0];
+ const weekTasks = tasks.filter(t => t.date >= today && t.date <= weekEnd);
+
+ // Monthly trend (visits per month)
+ const monthlyVisits = {};
+ visits.forEach(v => { const m = (v.date || '').slice(0, 7); if (m) monthlyVisits[m] = (monthlyVisits[m] || 0) + 1; });
+ const sortedMonths = Object.entries(monthlyVisits).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6);
+
+ return `=== USER PROFILE ===
+- Name: ${profile.name || 'Not set'}
+- Role: Academic Resource Person (ARP)
+- Block: ${profile.block || 'Not set'}, District: ${profile.district || 'Not set'}, State: ${profile.state || 'Not set'}
+
+=== VISIT DATA (${visits.length} total) ===
+- Completed: ${completedVisits.length}, This month: ${monthVisits.length}, This week: ${recentVisits.length}, Last 30 days: ${last30Visits.length}
+- Unique schools visited: ${uniqueSchools.size}
+- Visit purposes: ${Object.entries(purposeCounts).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
+- Top visited schools: ${topSchools.map(([s, c]) => s + '(' + c + ')').join(', ') || 'None'}
+- Least visited schools: ${leastVisited.map(([s, c]) => s + '(' + c + ')').join(', ') || 'None'}
+- Monthly visit trend: ${sortedMonths.map(([m, c]) => m + ':' + c).join(', ') || 'None'}
+- Recent visits (last 7 days): ${recentVisits.slice(0, 12).map(v => v.school + ' (' + v.date + ', ' + (v.purpose || 'Visit') + ')').join(' | ') || 'None'}
+
+=== OBSERVATION DATA (${observations.length} total) ===
+- Unique teachers observed: ${uniqueTeachers.size}
+- Engagement levels: ${Object.entries(engagementCounts).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
+- Subjects observed: ${Object.entries(subjectCounts).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
+- Recent observations: ${observations.slice(0, 8).map(o => (o.date || 'N/A') + ' ' + (o.school || '') + ' ' + (o.teacher || '') + ' ' + (o.subject || '')).join(' | ') || 'None'}
+
+=== TRAINING DATA (${trainings.length} total) ===
+- Completed: ${completedTrainings.length}, Upcoming: ${upcomingTrainings.length}
+- Total teachers/attendees reached: ${totalAttendees}
+- Training topics: ${Object.entries(trainingTopics).slice(0, 10).map(([k, v]) => k + (v > 1 ? '(' + v + ')' : '')).join(', ') || 'None'}
+- Recent trainings: ${trainings.slice(0, 6).map(t => (t.date || 'N/A') + ' ' + (t.title || t.topic || 'Untitled') + ' (' + (t.status || 'N/A') + ', ' + (t.attendees || 0) + ' attendees)').join(' | ') || 'None'}
+
+=== FOLLOW-UP DATA (${followups.length} total) ===
+- Pending: ${pendingFollowups.length}, Overdue: ${overdueFollowups.length}
+- Overdue items: ${overdueFollowups.slice(0, 8).map(f => (f.title || f.description || 'Untitled') + ' [due:' + f.dueDate + ', ' + (f.priority || 'normal') + ']').join(' | ') || 'None'}
+- Pending items: ${pendingFollowups.slice(0, 10).map(f => (f.title || f.description || 'Untitled') + ' [' + (f.priority || 'normal') + ']').join(' | ') || 'None'}
+
+=== PLANNER (${tasks.length} tasks) ===
+- Pending tasks: ${pendingTasks.length}, This week: ${weekTasks.length}
+- Upcoming tasks: ${weekTasks.slice(0, 8).map(t => (t.date || 'N/A') + ' ' + (t.text || 'Task') + ' (' + (t.type || 'other') + ')').join(' | ') || 'None'}
+
+=== OTHER DATA ===
+- Goals set: ${goals.length}
+- Meetings: ${meetings.length}
+- Reflections: ${reflections.length}
+- Notes: ${notes.length}`;
 }
 
 function buildScopedDataContext(scope = 'auto') {
+ if (scope === 'none') return '';
+
  const visits = DB.get('visits') || [];
  const trainings = DB.get('trainings') || [];
  const observations = DB.get('observations') || [];

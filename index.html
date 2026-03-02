@@ -2902,7 +2902,7 @@ style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:a
  <p class="section-subtitle">Link your Excel file once all data stays in the app automatically</p>
  </div>
  <div class="header-actions">
- <button class="btn btn-primary" onclick="openVisitPlanModal()">
+ <button class="btn btn-primary" onclick="openVisitModal()">
  <i class="fas fa-plus"></i> Add Entry
  </button>
  <button class="btn btn-outline vp-link-btn" onclick="vpLinkExcel()" id="vpLinkBtn">
@@ -2949,6 +2949,33 @@ style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:a
  </select>
  <input type="text" id="vpSearchInput" class="filter-input" placeholder="Search..."
  oninput="_pageState.visitplan=1;renderVisitPlan()">
+ </div>
+ <div class="vp-filter-row" style="margin-top:8px;gap:10px;align-items:center;flex-wrap:wrap">
+ <div class="vp-date-single-wrap" onclick="event.stopPropagation()">
+ <i class="fas fa-calendar-day" style="font-size:11px;color:var(--accent);opacity:0.7;margin-left:6px"></i>
+ <button id="vpDatePickBtn" class="vdr-trigger-btn"
+ onclick="vpOpenDatePicker(this)">Pick Date</button>
+ <button class="vdr-clear-btn" title="Clear date" onclick="vpClearSingleDate()">
+ <i class="fas fa-times"></i></button>
+ </div>
+ <span style="font-size:11px;color:var(--text-muted);font-weight:500">or</span>
+ <div class="vp-daterange-wrap" onclick="event.stopPropagation()">
+ <i class="fas fa-calendar-alt" style="font-size:11px;color:var(--accent);opacity:0.7;margin-left:6px"></i>
+ <button id="vpVdrFromBtn" class="vdr-trigger-btn"
+ onclick="VDR.open('from',this,vpDateRangeCallback)">From</button>
+ <div class="vdr-sep"></div>
+ <button id="vpVdrToBtn" class="vdr-trigger-btn"
+ onclick="VDR.open('to',this,vpDateRangeCallback)">To</button>
+ <button class="vdr-clear-btn" title="Clear range"
+ onclick="vpClearRangeDates()">
+ <i class="fas fa-times"></i></button>
+ </div>
+ <!-- Hidden native date inputs for filter logic -->
+ <input type="date" id="vpDateFilter" style="display:none" onchange="_pageState.visitplan=1;renderVisitPlan()">
+ <input type="date" id="vpDateFrom" style="display:none" onchange="_pageState.visitplan=1;renderVisitPlan()">
+ <input type="date" id="vpDateTo" style="display:none" onchange="_pageState.visitplan=1;renderVisitPlan()">
+ </div>
+ <div class="vp-filter-row" style="margin-top:4px;gap:6px">
  <button class="btn btn-outline" id="vpSelectAllBtn" onclick="vpToggleSelectAll()"
  title="Select / Deselect all" style="display:none"><i class="fas fa-check-square"></i>
  Select</button>
@@ -7145,6 +7172,8 @@ function getOrCreateFolder() {
  <label><i class="fas fa-compass"></i> Response Mode</label>
  <select id="aiChatMode" onchange="handleAIChatControlChange()">
  <option value="balanced">Balanced Assistant</option>
+ <option value="general-chat">💬 General Chat</option>
+ <option value="research">🧠 Research & Brainstorm</option>
  <option value="deep-analysis">Deep Analysis</option>
  <option value="action-plan">Action Planner</option>
  <option value="report-draft">Report Writer</option>
@@ -7155,6 +7184,7 @@ function getOrCreateFolder() {
  <label><i class="fas fa-database"></i> Data Scope</label>
  <select id="aiContextScope" onchange="handleAIChatControlChange()">
  <option value="auto">Auto (All Data)</option>
+ <option value="none">💬 No Data (Pure Chat)</option>
  <option value="visits">Visits Focus</option>
  <option value="observations">Observations Focus</option>
  <option value="trainings">Trainings Focus</option>

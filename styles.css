@@ -22569,6 +22569,29 @@ body.light-mode .sw-card-outcome {
     transition: all 0.2s;
 }
 
+/* VP Modern Date Picker Wrappers - reuse VDR styles */
+.vp-date-single-wrap,
+.vp-daterange-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 0 8px 0 4px;
+    height: 36px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+.vp-date-single-wrap:hover,
+.vp-date-single-wrap.open,
+.vp-daterange-wrap:hover,
+.vp-daterange-wrap.open {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
 .vp-bulk-clear-btn:hover {
     background: rgba(239, 68, 68, 0.2) !important;
     border-color: #ef4444 !important;
@@ -22577,6 +22600,76 @@ body.light-mode .sw-card-outcome {
 body.light-mode .vp-bulk-clear-btn {
     background: rgba(239, 68, 68, 0.08) !important;
 }
+
+/* ---- VP stat card colour variants ---- */
+.vp-stat-first-half  { border-top: 3px solid #f59e0b; }
+.vp-stat-second-half { border-top: 3px solid #8b5cf6; }
+.vp-stat-school-visits { border-top: 3px solid #10b981; }
+.vp-stat-first-half  .vp-stat-label { color: #f59e0b; }
+.vp-stat-second-half .vp-stat-label { color: #8b5cf6; }
+.vp-stat-school-visits .vp-stat-label { color: #10b981; }
+
+/* Filtered sub-count inside a stat number */
+.vp-stat-filtered {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    opacity: 0.85;
+    margin-top: 2px;
+}
+
+/* ---- VP quick-bar half-group layout ---- */
+.vp-half-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.vp-half-counts {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+.vp-half-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.vp-half-badge-filtered {
+    background: rgba(99,102,241,0.12);
+    border-color: rgba(99,102,241,0.3);
+    color: var(--accent);
+}
+.vp-half-badge-sent {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.3);
+    color: #10b981;
+}
+.vp-school-visits-summary {
+    margin-left: auto;
+}
+.vp-school-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 99px;
+    padding: 4px 12px;
+}
+.vp-school-chip i { color: #10b981; }
 
 .vp-import-btn {
     cursor: pointer;
@@ -22761,6 +22854,7 @@ body.light-mode .vp-quick-chip:hover {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    align-items: center;
     width: 100%;
     margin-top: 4px;
     padding-top: 10px;
