@@ -22285,71 +22285,252 @@ body.light-mode .sw-card-outcome {
 }
 
 /* ===== Period Comparison Panel ===== */
+/* ===== PERIOD COMPARISON — modern redesign ===== */
+@keyframes pcCardIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .period-compare-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 20px;
-    animation: aiFadeIn 0.3s ease;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    animation: aiFadeIn 0.35s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
 }
 
 .period-compare-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .period-compare-header h3 {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     margin: 0;
     color: var(--text);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
+.period-compare-header h3 i {
+    color: var(--accent);
+    font-size: 1rem;
+}
+
+.period-compare-header .btn-ghost {
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background .2s, color .2s;
+}
+
+.period-compare-header .btn-ghost:hover {
+    background: var(--bg-main);
+}
+
+/* ---------- Date picker row ---------- */
+.pc-date-picker-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 14px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+
+.pc-date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 240px;
+}
+
+.pc-date-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.pc-date-label i.fa-circle { font-size: 7px; }
+
+.pc-run-btn {
+    white-space: nowrap;
+    align-self: flex-end;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: transform .15s, box-shadow .15s;
+}
+
+.pc-run-btn:active {
+    transform: scale(0.96);
+}
+
+/* ---------- Results header ---------- */
+.pc-results-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.pc-period-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    letter-spacing: -0.01em;
+}
+
+.pc-period-tag i.fa-circle { font-size: 6px; }
+
+.pc-period-tag.a {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-main));
+}
+
+.pc-period-tag.b {
+    color: var(--text-muted);
+    background: var(--bg-main);
+}
+
+.pc-vs-sep {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ---------- Metric grid ---------- */
 .period-compare-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 14px;
 }
 
 .pc-metric {
-    padding: 14px;
+    position: relative;
+    padding: 18px 14px 16px;
     background: var(--bg-main);
-    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    border-radius: 14px;
     text-align: center;
+    transition: transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s;
+    animation: pcCardIn .4s cubic-bezier(.4,0,.2,1) both;
+    overflow: hidden;
 }
 
+.pc-metric::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity .2s;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%);
+    pointer-events: none;
+}
+
+.pc-metric:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.10);
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+}
+
+.pc-metric:hover::before { opacity: 1; }
+
+/* stagger animation */
+.pc-metric:nth-child(1) { animation-delay: 0s; }
+.pc-metric:nth-child(2) { animation-delay: .04s; }
+.pc-metric:nth-child(3) { animation-delay: .08s; }
+.pc-metric:nth-child(4) { animation-delay: .12s; }
+.pc-metric:nth-child(5) { animation-delay: .16s; }
+.pc-metric:nth-child(6) { animation-delay: .20s; }
+.pc-metric:nth-child(7) { animation-delay: .24s; }
+
 .pc-metric-label {
-    font-size: 0.78rem;
+    font-size: 0.73rem;
     color: var(--text-muted);
-    margin-bottom: 8px;
-    font-weight: 600;
+    margin-bottom: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1.3;
+}
+
+.pc-metric-label i {
+    font-size: 0.72rem;
+    opacity: 0.75;
 }
 
 .pc-metric-values {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 4px;
 }
 
 .pc-val {
     text-align: center;
+    min-width: 44px;
 }
 
 .pc-val-num {
     display: block;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .pc-val-label {
-    font-size: 0.7rem;
+    display: block;
+    margin-top: 2px;
+    font-size: 0.65rem;
     color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .pc-val.current .pc-val-num {
@@ -22360,110 +22541,58 @@ body.light-mode .sw-card-outcome {
     color: var(--text-muted);
 }
 
+/* Arrow indicator */
 .pc-arrow {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .pc-arrow.up {
     color: #10b981;
+    background: rgba(16,185,129,.12);
 }
 
 .pc-arrow.down {
     color: #ef4444;
+    background: rgba(239,68,68,.12);
 }
 
 .pc-arrow.same {
     color: var(--text-muted);
+    background: var(--bg-card);
 }
 
+/* Change badge */
 .pc-change {
-    margin-top: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: -0.01em;
 }
 
 .pc-change.positive {
     color: #10b981;
+    background: rgba(16,185,129,.10);
 }
 
 .pc-change.negative {
     color: #ef4444;
+    background: rgba(239,68,68,.10);
 }
 
 .pc-change.neutral {
     color: var(--text-muted);
-}
-
-/* Period Comparison — custom date picker row */
-.pc-date-picker-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 16px;
-    background: var(--bg-main);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 16px;
-}
-
-.pc-date-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-    min-width: 230px;
-}
-
-.pc-date-label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.pc-run-btn {
-    white-space: nowrap;
-    align-self: flex-end;
-}
-
-/* Period Comparison results header */
-.pc-results-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.pc-period-tag {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 99px;
-    background: var(--bg-main);
-    border: 1px solid var(--border);
-}
-
-.pc-period-tag.a {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.pc-period-tag.b {
-    color: var(--text-muted);
-}
-
-.pc-vs-sep {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 700;
+    background: var(--bg-card);
 }
 @media (max-width: 600px) {
     .quick-capture-fab {
@@ -22488,23 +22617,58 @@ body.light-mode .sw-card-outcome {
         display: none;
     }
 
+    .period-compare-panel { padding: 16px; border-radius: 12px; }
+
     .period-compare-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
 
     .pc-date-picker-row {
         flex-direction: column;
+        padding: 12px;
+        gap: 12px;
     }
 
     .pc-date-group {
         min-width: 0;
         width: 100%;
     }
-        flex-direction: column;
+
+    .pc-run-btn {
+        width: 100%;
+        justify-content: center;
     }
+
+    .pc-metric { padding: 14px 10px 12px; }
+    .pc-val-num { font-size: 1.25rem; }
+    .pc-arrow { width: 22px; height: 22px; font-size: 10px; }
+    .pc-results-header { gap: 6px; font-size: 0.72rem; }
+    .pc-period-tag { padding: 4px 8px; font-size: 0.68rem; }
 
     .qc-pill {
         min-width: 0;
+    }
+}
+
+@media (max-width: 400px) {
+    .period-compare-grid {
+        grid-template-columns: 1fr;
+    }
+    .pc-metric-values { gap: 8px; }
+    .pc-val-num { font-size: 1.1rem; }
+    .pc-period-tag { font-size: 0.64rem; padding: 3px 6px; }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .period-compare-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+    .period-compare-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
