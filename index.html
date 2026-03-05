@@ -7798,6 +7798,51 @@ function getOrCreateFolder() {
     <textarea id="lpObjectiveInput" rows="2" placeholder="What should students be able to do by the end of this lesson?"></textarea>
    </div>
 
+   <!-- Chapter / Unit (optional) -->
+   <div class="lp-field-row">
+    <label><i class="fas fa-bookmark"></i> Chapter / Unit <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+    <input type="text" id="lpChapterInput" placeholder="e.g. Chapter 3: Addition & Subtraction" />
+   </div>
+
+   <!-- Link to Teacher / School -->
+   <div class="lp-field-row lp-field-row-2col">
+    <div>
+     <label><i class="fas fa-user-tie"></i> Teacher <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+     <select id="lpLinkTeacher" onchange="lpOnTeacherLinkChange()">
+      <option value="">-- Select Teacher --</option>
+     </select>
+    </div>
+    <div>
+     <label><i class="fas fa-school"></i> School <span style="font-weight:400;color:var(--text-muted)">(auto-filled)</span></label>
+     <input type="text" id="lpLinkSchool" placeholder="Auto-filled from teacher record" />
+    </div>
+   </div>
+
+   <!-- Auto-Suggest from Observations -->
+   <div class="lp-autosuggest-panel" id="lpAutoSuggestPanel">
+    <div class="lp-autosuggest-header" onclick="lpToggleAutoSuggest()">
+     <div class="lp-autosuggest-title">
+      <i class="fas fa-magic"></i> Auto-Suggest from Observations
+     </div>
+     <span class="lp-autosuggest-hint">Select a teacher to find improvement areas from observations</span>
+     <i class="fas fa-chevron-down lp-autosuggest-arrow" id="lpAutoSuggestArrow"></i>
+    </div>
+    <div class="lp-autosuggest-body" id="lpAutoSuggestBody" style="display:none">
+     <div class="lp-autosuggest-controls">
+      <div class="lp-autosuggest-field">
+       <label><i class="fas fa-user-tie"></i> Teacher</label>
+       <select id="lpAutoTeacher">
+        <option value="">-- Select Teacher --</option>
+       </select>
+      </div>
+      <button type="button" class="btn btn-primary lp-autosuggest-btn" id="lpAutoAnalyzeBtn" onclick="lpAnalyzeObservations()">
+       <i class="fas fa-search"></i> Analyze
+      </button>
+     </div>
+     <div id="lpAutoSuggestResults"></div>
+    </div>
+   </div>
+
    <!-- TP Selection -->
    <div class="lp-section-wrap lp-section-wrap-tp">
     <div class="lp-section-header lp-section-tp">
@@ -7836,10 +7881,58 @@ function getOrCreateFolder() {
     </div>
    </div>
 
+   <!-- Template Type -->
+   <div class="lp-options-row lp-options-row-single">
+    <div class="lp-option-group">
+     <label><i class="fas fa-file-alt"></i> Template</label>
+     <div class="lp-toggle-pills" id="lpTemplate">
+      <button type="button" class="lp-pill active" data-value="standard" onclick="lpSelectPill(this)"><i class="fas fa-align-left"></i> Standard</button>
+      <button type="button" class="lp-pill" data-value="5e" onclick="lpSelectPill(this)"><i class="fas fa-layer-group"></i> 5E Model</button>
+      <button type="button" class="lp-pill" data-value="quick" onclick="lpSelectPill(this)"><i class="fas fa-bolt"></i> Quick Plan</button>
+      <button type="button" class="lp-pill" data-value="observation" onclick="lpSelectPill(this)"><i class="fas fa-eye"></i> Observation</button>
+     </div>
+    </div>
+   </div>
+
+   <!-- Detail Level & Assessment Options -->
+   <div class="lp-options-row">
+    <div class="lp-option-group">
+     <label><i class="fas fa-sliders-h"></i> Detail Level</label>
+     <div class="lp-toggle-pills" id="lpDetailLevel">
+      <button type="button" class="lp-pill" data-value="concise" onclick="lpSelectPill(this)"><i class="fas fa-compress-alt"></i> Concise</button>
+      <button type="button" class="lp-pill active" data-value="standard" onclick="lpSelectPill(this)"><i class="fas fa-align-left"></i> Standard</button>
+      <button type="button" class="lp-pill" data-value="detailed" onclick="lpSelectPill(this)"><i class="fas fa-expand-alt"></i> Detailed</button>
+     </div>
+    </div>
+    <div class="lp-option-group">
+     <label><i class="fas fa-clipboard-check"></i> Include Assessment</label>
+     <div class="lp-toggle-pills" id="lpAssessment">
+      <button type="button" class="lp-pill" data-value="none" onclick="lpSelectPill(this)"><i class="fas fa-times-circle"></i> None</button>
+      <button type="button" class="lp-pill active" data-value="basic" onclick="lpSelectPill(this)"><i class="fas fa-check-circle"></i> Basic</button>
+      <button type="button" class="lp-pill" data-value="detailed" onclick="lpSelectPill(this)"><i class="fas fa-tasks"></i> Detailed</button>
+     </div>
+    </div>
+   </div>
+
+   <!-- Language Selection -->
+   <div class="lp-options-row lp-options-row-single">
+    <div class="lp-option-group">
+     <label><i class="fas fa-language"></i> Language</label>
+     <div class="lp-toggle-pills" id="lpLanguage">
+      <button type="button" class="lp-pill active" data-value="english" onclick="lpSelectPill(this)"><i class="fas fa-font"></i> English</button>
+      <button type="button" class="lp-pill" data-value="hindi" onclick="lpSelectPill(this)">हिन्दी Hindi</button>
+      <button type="button" class="lp-pill" data-value="bilingual" onclick="lpSelectPill(this)"><i class="fas fa-exchange-alt"></i> Bilingual</button>
+     </div>
+    </div>
+   </div>
+
    <!-- Generate / Clear -->
    <div class="lp-generate-row">
     <button class="btn btn-primary lp-generate-btn" id="lpAIBtn" onclick="lpGeneratePlanAI()">
      <i class="fas fa-robot"></i> Generate with Sarvam AI
+    </button>
+    <button class="btn lp-weekly-btn" id="lpWeeklyBtn" onclick="lpGenerateWeeklyPlanAI()" title="Generate Mon–Fri connected lesson plans">
+     <i class="fas fa-calendar-week"></i> Weekly Plan
     </button>
     <button class="btn btn-secondary lp-clear-btn" onclick="lpClearPlan()">
      <i class="fas fa-trash-alt"></i> Clear
@@ -7849,13 +7942,50 @@ function getOrCreateFolder() {
    <!-- Output -->
    <div class="lp-output-wrap" id="lpOutputWrap" style="display:none;">
     <div class="lp-output-toolbar">
-     <span class="lp-output-title"><i class="fas fa-file-alt"></i> Generated Lesson Plan</span>
+     <span class="lp-output-title" id="lpOutputTitle"><i class="fas fa-file-alt"></i> Generated Lesson Plan</span>
+     <button class="lp-tool-btn lp-tool-btn-save" onclick="lpSavePlan()"><i class="fas fa-save"></i> Save</button>
      <button class="lp-tool-btn" onclick="lpOpenEditor()"><i class="fas fa-pen-to-square"></i> Edit</button>
-     <button class="lp-tool-btn" onclick="lpExportPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
      <button class="lp-tool-btn" onclick="lpCopyPlan()"><i class="fas fa-copy"></i> Copy</button>
      <button class="lp-tool-btn" onclick="lpPrintPlan()"><i class="fas fa-print"></i> Print</button>
     </div>
     <div class="lp-output" id="lpOutput"></div>
+   </div>
+
+   <!-- Saved Plans History -->
+   <div class="lp-history-panel" id="lpHistoryPanel">
+    <div class="lp-history-header" onclick="lpToggleHistory()">
+     <div class="lp-history-header-left">
+      <i class="fas fa-history"></i>
+      <span>Saved Plans</span>
+      <span class="lp-history-count" id="lpHistoryCount">0</span>
+     </div>
+     <i class="fas fa-chevron-down lp-history-arrow" id="lpHistoryArrow"></i>
+    </div>
+    <div class="lp-history-body" id="lpHistoryBody" style="display:none">
+     <div class="lp-history-search-row">
+      <div class="lp-history-search-wrap">
+       <i class="fas fa-search"></i>
+       <input type="text" id="lpHistorySearch" placeholder="Search by title, subject, class, teacher…" oninput="lpSearchHistory()" />
+      </div>
+     </div>
+     <div class="lp-history-list" id="lpHistoryList"></div>
+    </div>
+   </div>
+
+   <!-- LP Analytics Panel -->
+   <div class="lp-analytics-panel" id="lpAnalyticsPanel">
+    <div class="lp-analytics-header" onclick="lpToggleAnalytics()">
+     <div class="lp-analytics-header-left">
+      <i class="fas fa-chart-pie"></i>
+      <span>Lesson Plan Analytics</span>
+      <span class="lp-analytics-count" id="lpAnalyticsPlanCount">0</span>
+     </div>
+     <i class="fas fa-chevron-down lp-analytics-arrow" id="lpAnalyticsArrow"></i>
+    </div>
+    <div class="lp-analytics-body" id="lpAnalyticsBody" style="display:none">
+     <div class="lp-analytics-kpi" id="lpAnalyticsKPI"></div>
+     <div class="lp-analytics-charts" id="lpAnalyticsCharts"></div>
+    </div>
    </div>
 
   </div>
