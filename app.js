@@ -23520,6 +23520,9 @@ function renderLPAnalytics() {
   const chartsEl = document.getElementById('lpAnalyticsCharts');
   const countEl = document.getElementById('lpAnalyticsPlanCount');
   if (!kpiEl || !chartsEl) return;
+  // Read current accent color for inline styles
+  const _ac = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f59e0b';
+  const _acL = getComputedStyle(document.documentElement).getPropertyValue('--accent-light').trim() || 'rgba(245,158,11,0.12)';
 
   const plans = DB.get('savedLessonPlans') || [];
   const observations = DB.get('observations') || [];
@@ -23557,7 +23560,7 @@ function renderLPAnalytics() {
     : '';
 
   kpiEl.innerHTML = `
-    <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(99,102,241,0.12);color:#6366f1"><i class="fas fa-file-alt"></i></div><div class="lpa-kpi-val">${plans.length}</div><div class="lpa-kpi-lbl">Total Plans</div></div>
+    <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:${_acL};color:${_ac}"><i class="fas fa-file-alt"></i></div><div class="lpa-kpi-val">${plans.length}</div><div class="lpa-kpi-lbl">Total Plans</div></div>
     <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(16,185,129,0.12);color:#10b981"><i class="fas fa-book"></i></div><div class="lpa-kpi-val">${subjects.size}</div><div class="lpa-kpi-lbl">Subjects</div></div>
     <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b"><i class="fas fa-chalkboard-teacher"></i></div><div class="lpa-kpi-val">${teachers.size}</div><div class="lpa-kpi-lbl">Teachers</div></div>
     <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6"><i class="fas fa-layer-group"></i></div><div class="lpa-kpi-val">${totalTPs}</div><div class="lpa-kpi-lbl">TPs Used</div></div>
@@ -23570,7 +23573,7 @@ function renderLPAnalytics() {
   plans.forEach(p => { const s = p.subject || 'Unknown'; subjCounts[s] = (subjCounts[s] || 0) + 1; });
   const subjEntries = Object.entries(subjCounts).sort((a, b) => b[1] - a[1]);
   const subjMax = subjEntries.length ? subjEntries[0][1] : 1;
-  const barColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#0ea5e9', '#14b8a6', '#a855f7'];
+  const barColors = [_ac, '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#0ea5e9', '#14b8a6', '#a855f7'];
   const subjBars = subjEntries.map((e, i) => {
     const pct = Math.round((e[1] / subjMax) * 100);
     return `<div class="lpa-bar-row"><div class="lpa-bar-label" title="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[i % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
@@ -23624,7 +23627,7 @@ function renderLPAnalytics() {
     const barMax = Math.max(planCount, obsCount, 1);
     return `<tr>
       <td style="font-weight:600">${escapeHtml(t.length > 20 ? t.substring(0, 18) + '…' : t)}</td>
-      <td><div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.round(planCount / barMax * 60)}px;height:8px;border-radius:4px;background:#6366f1;min-width:2px"></div>${planCount}</div></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.round(planCount / barMax * 60)}px;height:8px;border-radius:4px;background:${_ac};min-width:2px"></div>${planCount}</div></td>
       <td><div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.round(obsCount / barMax * 60)}px;height:8px;border-radius:4px;background:#10b981;min-width:2px"></div>${obsCount}</div></td>
       <td style="color:var(--text-muted)">${ratio}</td>
     </tr>`;
@@ -23679,7 +23682,7 @@ function renderLPAnalytics() {
       <div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-layer-group"></i> Most-Used Teaching Practices</div><div class="lpa-card-body">${tpList}</div></div>
       <div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-bullseye"></i> Most-Used Learning Outcomes</div><div class="lpa-card-body">${loList}</div></div>
     </div>
-    ${teacherArr.length ? `<div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-exchange-alt"></i> Plans vs Observations <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:auto">${teacherArr.length} teachers</span></div><div class="lpa-card-body"><div class="lpa-table-wrap"><table class="lpa-table"><thead><tr><th>Teacher</th><th><i class="fas fa-file-alt" style="color:#6366f1;margin-right:3px"></i>Plans</th><th><i class="fas fa-microscope" style="color:#10b981;margin-right:3px"></i>Obs</th><th>Ratio</th></tr></thead><tbody>${pvoRows}</tbody></table></div></div></div>` : ''}
+    ${teacherArr.length ? `<div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-exchange-alt"></i> Plans vs Observations <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:auto">${teacherArr.length} teachers</span></div><div class="lpa-card-body"><div class="lpa-table-wrap"><table class="lpa-table"><thead><tr><th>Teacher</th><th><i class="fas fa-file-alt" style="color:${_ac};margin-right:3px"></i>Plans</th><th><i class="fas fa-microscope" style="color:#10b981;margin-right:3px"></i>Obs</th><th>Ratio</th></tr></thead><tbody>${pvoRows}</tbody></table></div></div></div>` : ''}
     ${followupRows.length ? `<div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-route"></i> Planning → Follow-up Tracking <span style="font-weight:400;font-size:11px;margin-left:auto"><span style="color:${followRate >= 60 ? '#10b981' : followRate >= 30 ? '#f59e0b' : '#ef4444'};font-weight:700">${followRate}%</span> follow-up rate (${followedUp}/${followupRows.length})</span></div><div class="lpa-card-body"><div class="lpa-table-wrap"><table class="lpa-table"><thead><tr><th>Teacher</th><th>Subject</th><th>Plan Date</th><th>Follow-up (14d)</th></tr></thead><tbody>${fuTableRows}</tbody></table></div></div></div>` : ''}
   `;
 }
