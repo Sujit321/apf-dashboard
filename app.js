@@ -2354,7 +2354,7 @@ const LiveSync = {
       return;
     }
     el.innerHTML = this._syncLog.map(l =>
-      `<div class="sync-log-item sync-log-${l.type}"><span class="sync-log-icon">${l.icon}</span><span class="sync-log-msg">${l.msg}</span><span class="sync-log-time">${l.time}</span></div>`
+      `<div class="sync-log-item sync-log-${escapeHtml(l.type)}"><span class="sync-log-icon">${l.icon}</span><span class="sync-log-msg">${escapeHtml(l.msg)}</span><span class="sync-log-time">${escapeHtml(l.time)}</span></div>`
     ).join('');
   },
 
@@ -2407,8 +2407,8 @@ const LiveSync = {
       return `<div class="sync-device-item">
  <div class="sync-device-icon"><i class="fas fa-${/iOS|Android/i.test(name) ? 'mobile-alt' : 'laptop'}"></i></div>
  <div class="sync-device-info">
- <span class="sync-device-name">${name}</span>
- <span class="sync-device-id">${id}${latency ? ' · ' + latency : ''}</span>
+ <span class="sync-device-name">${escapeHtml(name)}</span>
+ <span class="sync-device-id">${escapeHtml(id)}${latency ? ' · ' + escapeHtml(latency) : ''}</span>
  </div>
  <span class="sync-device-status online"><i class="fas fa-circle"></i> Live</span>
  </div>`;
@@ -23177,34 +23177,64 @@ function lpExportPDF() {
   const fileName = (title || subject + ' Lesson Plan').replace(/[^a-zA-Z0-9 ]/g, '').trim();
 
   const clone = output.cloneNode(true);
-  // Remove reasoning blocks from PDF
+  // Remove reasoning blocks and refine UI from PDF
   clone.querySelectorAll('.ai-thinking-block').forEach(el => el.remove());
-  // Remove refine UI elements from PDF
   clone.querySelectorAll('.lp-refine-btn, .lp-refine-menu').forEach(el => el.remove());
   clone.querySelectorAll('.lp-refine-section').forEach(w => { while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w); w.remove(); });
+
   const wrapper = document.createElement('div');
   wrapper.appendChild(clone);
-  // Resolve dark-mode CSS variables to light-mode for PDF
+
+  // Resolve any remaining var() references in inline styles / attribute strings
   wrapper.innerHTML = _resolveCssVarsForPrint(wrapper.innerHTML);
-  Object.assign(wrapper.style, { fontFamily: "'Segoe UI',Arial,sans-serif", color: '#1e293b', fontSize: '13px', lineHeight: '1.7', padding: '0' });
-  // Add page-break-inside:avoid to all block elements so html2pdf won't slice them mid-content
+
+  // ── Self-contained style block ──────────────────────────────────────────
+  // html2canvas clones this wrapper into an isolated iframe where only the
+  // app's dark-mode stylesheet loads — no body.light-mode class exists there.
+  // By embedding a <style> with (a) !important CSS-variable overrides and
+  // (b) all LP class rules hard-coded in light-mode values, we make the
+  // wrapper completely independent of the app's CSS theme state.
   const styleTag = document.createElement('style');
   styleTag.textContent = `
-  p, li, tr, blockquote, pre { page-break-inside: avoid; }
-  h2, h3, h4, strong { page-break-after: avoid; }
-  ul, ol, table { page-break-inside: avoid; }
-  .lp-plan-meta-grid { page-break-inside: avoid; }
-  .lp-ai-response > * { page-break-inside: avoid; }
- `;
+  /* ① Force every CSS variable to its light-mode value so any surviving
+       var() references resolve correctly inside the html2canvas iframe.   */
+  :root {
+    --bg-primary:#f5f6fa!important; --bg-secondary:#ffffff!important;
+    --bg-tertiary:#f1f5f9!important; --bg-card:#ffffff!important;
+    --bg-card-hover:#f0f1f5!important; --bg-input:#f0f1f5!important;
+    --card-bg:#ffffff!important;
+    --text-primary:#1a1d2e!important; --text-secondary:#4b5563!important;
+    --text-muted:#9ca3af!important;
+    --accent:#d97706!important; --accent-hover:#b45309!important;
+    --accent-light:rgba(217,119,6,0.1)!important;
+    --success:#059669!important; --danger:#dc2626!important;
+    --info:#2563eb!important; --purple:#7c3aed!important;
+    --warning:#d97706!important;
+    --border:rgba(0,0,0,0.08)!important;
+    --border-light:rgba(0,0,0,0.12)!important;
+    --border-color:rgba(0,0,0,0.1)!important;
+    --glass-bg:rgba(255,255,255,0.85)!important;
+    --glass-border:rgba(0,0,0,0.06)!important;
+  }
+  /* ② Hard-coded light-mode LP styles (no CSS variables, no dependencies). */
+  ${lpGetPrintCSS()}
+  /* ③ Page-break hints */
+  p,li,tr,blockquote,pre{page-break-inside:avoid}
+  h2,h3,h4,strong{page-break-after:avoid}
+  ul,ol,table{page-break-inside:avoid}
+  .lp-plan-meta-grid{page-break-inside:avoid}
+  .lp-ai-response>*{page-break-inside:avoid}
+  `;
   wrapper.insertBefore(styleTag, wrapper.firstChild);
 
-  // Resolve color-mix() expressions that html2canvas cannot parse
-  wrapper.style.cssText = 'position:fixed;left:0;top:0;opacity:0;pointer-events:none;z-index:-1;';
-  document.body.appendChild(wrapper);
-  _resolveColorMixForPdf(wrapper);
-  document.body.removeChild(wrapper);
-  wrapper.style.cssText = '';
-  Object.assign(wrapper.style, { fontFamily: "'Segoe UI',Arial,sans-serif", color: '#1e293b', fontSize: '13px', lineHeight: '1.7', padding: '0' });
+  Object.assign(wrapper.style, {
+    fontFamily: "'Segoe UI',Arial,sans-serif",
+    color: '#1e293b',
+    background: '#ffffff',
+    fontSize: '13px',
+    lineHeight: '1.7',
+    padding: '0'
+  });
 
   const opt = {
     margin: [14, 14, 14, 14],
@@ -23245,10 +23275,16 @@ function lpGetPrintCSS() {
   .lp-plan-meta-item span{font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
   .lp-plan-meta-item strong{font-size:13px;color:#111827}
   .lp-plan-meta-item i{display:none}
-  .lp-ai-response{font-size:14px;line-height:1.65}
-  .lp-ai-response h2{color:#7c3aed;font-size:17px;margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #ede9fe}
-  .lp-ai-response h3{color:#374151;font-size:14px;margin:14px 0 6px}
-  .lp-ai-response h4{color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .lp-ai-response{font-size:14px;line-height:1.65;color:#1e293b;background:#ffffff}
+  .lp-ai-response h2{color:#7c3aed;font-size:17px;margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid #ede9fe;background:transparent}
+  .lp-ai-response h3{color:#374151;font-size:14px;margin:14px 0 6px;background:transparent}
+  .lp-ai-response h4{color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:transparent}
+  .lp-ai-response p{color:#1e293b;background:transparent}
+  .lp-ai-response li{color:#1e293b;background:transparent}
+  .lp-ai-response ul,.lp-ai-response ol{background:transparent}
+  .lp-ai-response strong{color:#1e293b;background:transparent}
+  .lp-plan-title{color:#7c3aed;background:transparent}
+  .lp-plan-section p,.lp-plan-section h3{color:#1e293b;background:transparent}
   .lp-refine-btn,.lp-refine-menu,.lp-refine-section,.lp-refine-heading-row{all:unset;display:contents}
   .lp-plan-footer{font-size:11px;color:#6b7280;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;display:flex;align-items:center;gap:6px}
   .lp-plan-footer i{display:none}
@@ -23619,7 +23655,7 @@ function renderLPAnalytics() {
   plans.forEach(p => { const t = p.linkedTeacher || p.teacher; if (t) teacherSet.add(t); });
   observations.forEach(o => { if (o.teacher) teacherSet.add(o.teacher); });
   const teacherArr = [...teacherSet].sort();
-  const pvoRows = teacherArr.slice(0, 15).map(t => {
+  const pvoRows = teacherArr.map(t => {
     const tLower = t.toLowerCase();
     const planCount = plans.filter(p => (p.linkedTeacher || p.teacher || '').toLowerCase() === tLower).length;
     const obsCount = observations.filter(o => (o.teacher || '').toLowerCase() === tLower).length;
@@ -23662,7 +23698,7 @@ function renderLPAnalytics() {
   });
   const followedUp = followupRows.filter(r => r.hasFollow).length;
   const followRate = followupRows.length ? Math.round((followedUp / followupRows.length) * 100) : 0;
-  const fuTableRows = followupRows.slice(0, 15).map(r => `<tr>
+  const fuTableRows = followupRows.map(r => `<tr>
     <td style="font-weight:600">${escapeHtml((r.teacher || '').length > 18 ? r.teacher.substring(0, 16) + '…' : (r.teacher || ''))}</td>
     <td>${escapeHtml(r.subject)}</td>
     <td style="white-space:nowrap">${r.planDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>

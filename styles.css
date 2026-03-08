@@ -32356,6 +32356,8 @@ body.light-mode .lp-weekly-day-left {
 
 .lpa-table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 520px; /* ~20 rows visible, scrolls after */
 }
 
 .lpa-table {
@@ -32368,11 +32370,15 @@ body.light-mode .lp-weekly-day-left {
     text-align: left;
     padding: 8px 10px;
     font-weight: 700;
+    position: sticky;
+    top: 0;
+    z-index: 1;
     color: var(--text-muted);
     border-bottom: 2px solid var(--border);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    background: var(--bg-card);
 }
 
 .lpa-table td {
