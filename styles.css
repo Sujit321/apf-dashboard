@@ -7876,28 +7876,97 @@ body.modal-open {
 
 /* AI Answer Panel */
 .excel-ai-answer {
-    background: rgba(245, 158, 11, 0.04);
-    border-top: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), rgba(139, 92, 246, 0.03));
+    border-top: 1px solid rgba(245, 158, 11, 0.15);
+    animation: fadeSlideUp 0.3s ease;
 }
 .excel-ai-answer-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 18px;
-    font-size: 12px;
-    font-weight: 700;
+    padding: 14px 20px 8px;
+    font-size: 11px;
+    font-weight: 800;
     color: var(--accent);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
 }
-.excel-ai-answer-header i {
-    margin-right: 6px;
+.excel-ai-answer-header i.fa-robot {
+    margin-right: 8px;
+    font-size: 14px;
+    background: linear-gradient(135deg, var(--accent), #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .excel-ai-answer-body {
-    padding: 0 18px 16px;
-    font-size: 13px;
-    line-height: 1.65;
+    padding: 4px 20px 20px;
+    font-size: 13.5px;
+    line-height: 1.75;
     color: var(--text-primary);
+}
+.excel-ai-answer-body p {
+    margin: 0 0 10px;
+}
+.excel-ai-answer-body ul,
+.excel-ai-answer-body ol {
+    margin: 6px 0 14px;
+    padding-left: 20px;
+}
+.excel-ai-answer-body li {
+    margin-bottom: 6px;
+    padding-left: 4px;
+}
+.excel-ai-answer-body li::marker {
+    color: var(--accent);
+}
+.excel-ai-answer-body strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+.excel-ai-answer-body code {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+.excel-ai-answer-body h1,
+.excel-ai-answer-body h2,
+.excel-ai-answer-body h3,
+.excel-ai-answer-body h4 {
+    color: var(--text-primary);
+    margin: 16px 0 8px;
+    font-weight: 700;
+}
+.excel-ai-answer-body h2 { font-size: 15px; }
+.excel-ai-answer-body h3 { font-size: 14px; }
+.excel-ai-answer-body h4 { font-size: 13px; color: var(--accent); }
+
+/* AI Result Modal Body styling */
+.ai-insight-text,
+.ai-output-content {
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--text-primary);
+}
+.ai-insight-text p { margin: 0 0 10px; }
+.ai-insight-text ul,
+.ai-insight-text ol { margin: 6px 0 14px; padding-left: 20px; }
+.ai-insight-text li { margin-bottom: 6px; padding-left: 4px; }
+.ai-insight-text li::marker { color: var(--accent); }
+.ai-insight-text strong { color: var(--text-primary); font-weight: 700; }
+.ai-insight-text h2 { font-size: 16px; margin: 18px 0 8px; font-weight: 700; color: var(--text-primary); }
+.ai-insight-text h3 { font-size: 14px; margin: 14px 0 6px; font-weight: 700; color: var(--text-primary); }
+.ai-insight-text h4 { font-size: 13px; margin: 12px 0 4px; font-weight: 700; color: var(--accent); }
+.ai-insight-text code {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', 'Monaco', monospace;
 }
 
 /* ===== Excel Tab Bar ===== */
