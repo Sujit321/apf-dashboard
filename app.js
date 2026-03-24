@@ -1,4 +1,4 @@
-﻿// ===== APF Resource Person Dashboard App Logic =====
+// ===== APF Resource Person Dashboard App Logic =====
 
 // ===== Security: HTTPS Check for Crypto API =====
 if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -20884,11 +20884,15 @@ function getSarvamMessageDisplayText(message, fallback = '') {
 
   const content = normalizePart(message.content);
   const reasoning = normalizePart(message.reasoning_content);
-  if (reasoning) {
-    if (content.includes('<think>')) return content || fallback;
-    return `<think>${reasoning}</think>${content ? `\n\n${content}` : ''}`.trim();
-  }
-  return content || fallback;
+
+  // If actual content exists, always prefer it (ignore reasoning for display)
+  if (content && !content.includes('<think>')) return content;
+  if (content) return content;
+
+  // Fallback: if only reasoning was returned (no content), use the reasoning text directly
+  if (reasoning) return reasoning;
+
+  return fallback;
 }
 
 function getAppSettings() {
@@ -21614,11 +21618,33 @@ const SarvamAI = {
   },
   async chat(messages, options = {}) {
     const s = getAppSettings();
+    const model = normalizeSarvamModel(options.model || s.sarvamModel || 'sarvam-m');
+    // Reasoning models use 60-70% of tokens on chain-of-thought, so scale up aggressively
+    let maxTokens = options.max_tokens || 2048;
+    if (model === 'sarvam-105b') maxTokens = Math.max(4096, Math.round(maxTokens * 4));
+    else if (model === 'sarvam-30b') maxTokens = Math.max(4096, Math.round(maxTokens * 3));
+
+    // Inject user's preferred response language into the system prompt
+    const langCode = s.sarvamDefaultLang || 'en-IN';
+    const langNames = {
+      'hi-IN': 'Hindi (हिन्दी)', 'bn-IN': 'Bengali (বাংলা)', 'ta-IN': 'Tamil (தமிழ்)',
+      'te-IN': 'Telugu (తెలుగు)', 'kn-IN': 'Kannada (ಕನ್ನಡ)', 'ml-IN': 'Malayalam (മലയാളം)',
+      'mr-IN': 'Marathi (मराठी)', 'gu-IN': 'Gujarati (ગુજરાતી)', 'or-IN': 'Odia (ଓଡ଼ିଆ)',
+      'pa-IN': 'Punjabi (ਪੰਜਾਬੀ)', 'ur-IN': 'Urdu (اردو)'
+    };
+    const langName = langNames[langCode];
+    if (langName && messages.length > 0 && messages[0].role === 'system') {
+      messages = messages.map((m, i) => i === 0
+        ? { ...m, content: m.content + `\n\nIMPORTANT: You MUST respond entirely in ${langName}. Write all your output in ${langName} — headings, bullets, explanations, everything. Do NOT respond in English.` }
+        : m
+      );
+    }
+
     const data = await this.request('/v1/chat/completions', {
-      model: normalizeSarvamModel(options.model || s.sarvamModel || 'sarvam-m'),
+      model,
       messages,
       temperature: options.temperature ?? 0.5,
-      max_tokens: options.max_tokens || 2048,
+      max_tokens: maxTokens,
       reasoning_effort: options.reasoning_effort || s.sarvamReasoning || 'medium',
       stream: false
     });
@@ -24036,9 +24062,10 @@ function formatAIResponse(text) {
     });
     cleaned = text.replace(thinkRegex, '').trim();
     if (!cleaned) {
-      // Some Sarvam reasoning models occasionally return only reasoning_content.
-      // In that case, show the reasoning text itself instead of an "incomplete" placeholder.
-      cleaned = reasoningParts.join('\n\n').trim() || "<em>(AI response was incomplete. Please try again.)</em>";
+      // Reasoning models sometimes return only reasoning_content with no final answer.
+      // Show a clean fallback — the reasoning block is already visible above if present.
+      cleaned = reasoningParts.join('\n\n').trim() || '';
+      if (!cleaned) cleaned = "<em>(AI response was incomplete. Please try again.)</em>";
       thinkingHtml = '';
     }
   }
@@ -25701,11 +25728,11 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Use emojis sparingly.`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences.' },
+      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- 🏫 Your point here".' },
       { role: 'user', content: prompt }
     ], { temperature: 0.7, max_tokens: 1500 });
     const reply = res.choices?.[0]?.message?.content || 'No digest available.';

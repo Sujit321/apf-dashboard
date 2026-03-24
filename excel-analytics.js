@@ -155,6 +155,8 @@ function buildChartToolbar(canvasId, chartType) {
             <i class="fas fa-download"></i></button>
         <button class="chart-tool-btn" title="Fullscreen" onclick="fullscreenChart('${canvasId}')">
             <i class="fas fa-expand"></i></button>
+        <button class="chart-tool-btn ai-chart-narrate-btn" title="AI Narrate" onclick="aiNarrateChart('${canvasId}')" style="display:none">
+            <i class="fas fa-robot"></i></button>
     </div>`;
 }
 
@@ -324,31 +326,93 @@ function switchChartType(canvasId, newType) {
     }
 }
 
+// Register a GLOBAL Chart.js plugin for data labels (runs on every chart, but only draws when _labelsVisible is true)
+if (typeof Chart !== 'undefined') {
+    Chart.register({
+        id: 'excelDataLabels',
+        afterDatasetsDraw(chart) {
+            // Find this chart's canvas ID and check registry
+            const canvasId = chart.canvas?.id;
+            if (!canvasId || !chartRegistry[canvasId] || !chartRegistry[canvasId]._labelsVisible) return;
+
+            const ctx = chart.ctx;
+            const chartType = chart.config.type;
+            const isPie = ['doughnut', 'pie', 'polarArea'].includes(chartType);
+            const isRadar = chartType === 'radar';
+
+            chart.data.datasets.forEach((dataset, dsIndex) => {
+                const meta = chart.getDatasetMeta(dsIndex);
+                if (!meta || meta.hidden) return;
+
+                meta.data.forEach((element, index) => {
+                    const value = dataset.data[index];
+                    if (value === null || value === undefined) return;
+
+                    // Format value
+                    let label;
+                    if (typeof value === 'number') {
+                        if (Math.abs(value) >= 100000) label = (value / 100000).toFixed(1) + 'L';
+                        else if (Math.abs(value) >= 1000) label = (value / 1000).toFixed(1) + 'K';
+                        else if (Number.isInteger(value)) label = value.toString();
+                        else label = value.toFixed(1);
+                    } else {
+                        label = String(value);
+                    }
+
+                    ctx.save();
+                    ctx.font = 'bold 10px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    if (isPie) {
+                        const arc = element;
+                        const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                        const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        const midAngle = (arc.startAngle + arc.endAngle) / 2;
+                        const midRadius = ((arc.outerRadius || 0) + (arc.innerRadius || 0)) / 2;
+                        const x = centerX + Math.cos(midAngle) * midRadius;
+                        const y = centerY + Math.sin(midAngle) * midRadius;
+                        if ((arc.endAngle - arc.startAngle) < 0.2) { ctx.restore(); return; }
+                        ctx.fillStyle = '#fff';
+                        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                        ctx.shadowBlur = 3;
+                        ctx.fillText(label, x, y);
+                    } else if (isRadar) {
+                        ctx.fillStyle = '#e2e8f0';
+                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                        ctx.shadowBlur = 2;
+                        ctx.fillText(label, element.x, element.y - 10);
+                    } else {
+                        // Bar / Line
+                        const isHorizontal = chart.options?.indexAxis === 'y';
+                        if (isHorizontal) {
+                            ctx.textAlign = 'left';
+                            ctx.fillStyle = '#e2e8f0';
+                            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                            ctx.shadowBlur = 2;
+                            ctx.fillText(label, element.x + 6, element.y);
+                        } else {
+                            const yOff = chartType === 'line' ? -12 : -8;
+                            ctx.fillStyle = '#e2e8f0';
+                            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                            ctx.shadowBlur = 2;
+                            ctx.fillText(label, element.x, element.y + yOff);
+                        }
+                    }
+                    ctx.restore();
+                });
+            });
+        }
+    });
+}
+
 function toggleChartLabels(canvasId) {
     const reg = chartRegistry[canvasId];
     if (!reg || !reg.chart) return;
-    const chart = reg.chart;
-    const show = !chart.options.plugins?.datalabels?.display;
-    if (!chart.options.plugins) chart.options.plugins = {};
-    // Use built-in tooltip enhancement as datalabels plugin may not be loaded
-    chart.data.datasets.forEach(ds => {
-        if (show) {
-            ds._origPointRadius = ds.pointRadius;
-            ds.pointRadius = ds.pointRadius ? ds.pointRadius + 2 : 4;
-        } else if (ds._origPointRadius !== undefined) {
-            ds.pointRadius = ds._origPointRadius;
-        }
-    });
-    // Toggle persistent tooltip mode
-    if (show) {
-        chart.options.plugins.tooltip = { ...chart.options.plugins.tooltip, enabled: true, mode: 'index', intersect: false };
-    } else {
-        chart.options.plugins.tooltip = { ...chart.options.plugins.tooltip, mode: 'nearest', intersect: true };
-    }
-    chart.update();
-    
+    reg._labelsVisible = !reg._labelsVisible;
+    reg.chart.update();
     const btn = document.getElementById(canvasId)?.closest('.excel-chart-card, .dist-chart-card, .trend-chart-card, .chart-card-wrap')?.querySelector('[title="Labels"]');
-    if (btn) btn.classList.toggle('active', show);
+    if (btn) btn.classList.toggle('active', reg._labelsVisible);
 }
 
 function togglePaletteMenu(canvasId, btn) {
@@ -1081,6 +1145,9 @@ function selectSheet(name, btn) {
 
     // Show auto tab
     switchAnalysisTab('auto');
+
+    // Show AI buttons if Sarvam is configured (must run after all charts are rendered)
+    if (typeof _toggleExcelAIButtons === 'function') _toggleExcelAIButtons();
 }
 
 function clearExcelData() {
@@ -1105,6 +1172,8 @@ function switchAnalysisTab(tab) {
     if (btn) btn.classList.add('active');
     document.querySelectorAll('.analysis-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(`panel-${tab}`).classList.add('active');
+    // Ensure AI narrate buttons are visible on newly rendered charts
+    if (typeof _toggleExcelAIButtons === 'function') setTimeout(_toggleExcelAIButtons, 100);
 }
 
 // ===== Column Type Analysis =====
@@ -3781,4 +3850,325 @@ function generateSmartReport() {
     window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     showToast('Smart Report generated — opened in new tab!', 'success');
+}
+
+// ===== AI-POWERED EXCEL ANALYTICS FEATURES =====
+
+// --- Helper: Build concise data summary for AI context ---
+function _buildExcelDataSummary(maxRows) {
+    if (!excelData.length || !excelColumns.length) return 'No data loaded.';
+    const nums = getNumericColumns();
+    const cats = getCategoricalColumns();
+    const dates = getDateColumns();
+    const apf = detectAPFFields(excelColumns);
+    const filled = excelData.reduce((s, row) => s + excelColumns.filter(c => row[c] !== null && row[c] !== undefined && row[c] !== '').length, 0);
+    const completeness = ((filled / (excelData.length * excelColumns.length)) * 100).toFixed(1);
+
+    let summary = `DATASET: ${excelData.length} rows × ${excelColumns.length} columns | Completeness: ${completeness}%\n`;
+    summary += `COLUMN TYPES: ${nums.length} numeric, ${cats.length} categorical, ${dates.length} date\n`;
+    summary += `COLUMNS: ${excelColumns.map(c => `${c} (${excelColumnTypes[c]})`).join(', ')}\n\n`;
+
+    // Numeric stats
+    nums.slice(0, 10).forEach(col => {
+        const vals = excelData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+        if (!vals.length) return;
+        const min = Math.min(...vals), max = Math.max(...vals);
+        const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2);
+        const missing = excelData.length - vals.length;
+        summary += `${col}: min=${min}, max=${max}, avg=${avg}, count=${vals.length}${missing > 0 ? `, missing=${missing}` : ''}\n`;
+    });
+
+    // Categorical top values
+    cats.slice(0, 8).forEach(col => {
+        const freq = {};
+        excelData.forEach(r => { const v = String(r[col] ?? '').trim(); if (v) freq[v] = (freq[v] || 0) + 1; });
+        const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+        const uniq = sorted.length;
+        const topVals = sorted.slice(0, 5).map(([v, c]) => `${v}(${c})`).join(', ');
+        summary += `${col}: ${uniq} unique values. Top: ${topVals}\n`;
+    });
+
+    // APF context
+    const apfLabels = Object.keys(apf);
+    if (apfLabels.length) summary += `\nAPF FIELDS DETECTED: ${apfLabels.map(f => `${f}(${apf[f][0]})`).join(', ')}\n`;
+
+    // Sample rows
+    const sampleCount = Math.min(maxRows || 5, excelData.length);
+    summary += `\nSAMPLE DATA (first ${sampleCount} rows):\n`;
+    excelData.slice(0, sampleCount).forEach((row, i) => {
+        const vals = excelColumns.slice(0, 12).map(c => `${c}=${row[c] ?? ''}`).join(' | ');
+        summary += `Row ${i + 1}: ${vals}\n`;
+    });
+
+    return summary;
+}
+
+// --- 1. AI Data Story: One-click narrative of entire dataset ---
+async function aiExcelDataStory(event) {
+    if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+        showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+    }
+    if (!excelData.length) { showToast('Upload data first', 'warning'); return; }
+
+    const btn = event?.target?.closest('button');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...'; }
+
+    const dataSummary = _buildExcelDataSummary(8);
+    const prompt = `You are a senior data analyst. Analyze this spreadsheet data and write a professional data story.
+
+${dataSummary}
+
+Write a compelling data narrative with these sections:
+1. **📊 Executive Summary** — 2-3 sentence overview of the dataset
+2. **🔍 Key Findings** — 4-5 most important patterns, trends, or insights (be specific with numbers)
+3. **⚠️ Data Quality Issues** — Missing data, outliers, duplicates, mixed types
+4. **💡 Interesting Patterns** — Correlations, concentrations, distributions worth noting
+5. **📋 Recommendations** — 3-4 actionable next steps based on the data
+
+Be specific — cite actual column names, values, and percentages. Do not be generic.`;
+
+    try {
+        const res = await SarvamAI.chat([
+            { role: 'system', content: 'You are an expert data analyst who writes insightful, concise data narratives. Use bullet points, bold text, and emojis. Be specific with numbers and column names.' },
+            { role: 'user', content: prompt }
+        ], { temperature: 0.6, max_tokens: 2500 });
+        const reply = res.choices?.[0]?.message?.content || 'Could not generate data story.';
+        _showExcelAIResult('🧠 AI Data Story', reply);
+    } catch (err) {
+        showToast('AI Error: ' + err.message, 'error');
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-brain"></i> AI Data Story'; }
+}
+
+// --- 2. AI Ask Your Data: Natural language query ---
+async function aiAskExcelData(event) {
+    if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+        showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+    }
+    const input = document.getElementById('excelAIQueryInput');
+    const question = (input?.value || '').trim();
+    if (!question) { showToast('Type a question about your data', 'info'); return; }
+    if (!excelData.length) { showToast('Upload data first', 'warning'); return; }
+
+    const btn = event?.target?.closest('button');
+    const outputEl = document.getElementById('excelAIQueryOutput');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+    if (outputEl) {
+        outputEl.style.display = 'block';
+        outputEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary)"><i class="fas fa-spinner fa-spin"></i> Analyzing your data...</div>';
+    }
+
+    const dataSummary = _buildExcelDataSummary(10);
+    const prompt = `The user uploaded a spreadsheet. Here is the data summary:
+
+${dataSummary}
+
+USER QUESTION: "${question}"
+
+Answer the question using the data provided above. Be specific — reference actual column names, values, counts, and percentages. If the question cannot be answered from the available data, explain why. Use bullet points and bold text for clarity. Keep the answer concise (3-8 bullet points max).`;
+
+    try {
+        const res = await SarvamAI.chat([
+            { role: 'system', content: 'You are a data analyst assistant. Answer questions about spreadsheet data concisely and accurately. Always cite specific numbers. Use markdown formatting.' },
+            { role: 'user', content: prompt }
+        ], { temperature: 0.5, max_tokens: 2000 });
+        const reply = res.choices?.[0]?.message?.content || 'Could not answer the question.';
+        if (outputEl) {
+            outputEl.innerHTML = `<div class="excel-ai-answer">
+                <div class="excel-ai-answer-header"><i class="fas fa-robot"></i> AI Answer <button class="btn btn-sm btn-ghost" onclick="document.getElementById('excelAIQueryOutput').style.display='none'" title="Close"><i class="fas fa-times"></i></button></div>
+                <div class="excel-ai-answer-body">${typeof formatAIResponse === 'function' ? formatAIResponse(reply) : reply}</div>
+            </div>`;
+        }
+    } catch (err) {
+        if (outputEl) outputEl.innerHTML = `<div style="padding:12px;color:#ef4444;font-size:13px"><i class="fas fa-times-circle"></i> ${err.message}</div>`;
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+}
+
+// --- 3. AI Column Explainer ---
+async function aiExplainColumn(col, event) {
+    if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+        showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+    }
+    if (!excelData.length || !col) return;
+
+    const btn = event?.target?.closest('button');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+    const type = excelColumnTypes[col] || 'unknown';
+    let colInfo = `COLUMN: "${col}" | TYPE: ${type}\n`;
+
+    if (type === 'numeric') {
+        const vals = excelData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+        if (vals.length) {
+            const sorted = [...vals].sort((a, b) => a - b);
+            const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+            const sd = Math.sqrt(vals.reduce((s, v) => s + (v - avg) ** 2, 0) / vals.length);
+            colInfo += `Count: ${vals.length} | Missing: ${excelData.length - vals.length}\n`;
+            colInfo += `Min: ${sorted[0]} | Max: ${sorted[sorted.length - 1]} | Avg: ${avg.toFixed(2)} | Median: ${sorted[Math.floor(sorted.length / 2)]} | StdDev: ${sd.toFixed(2)}\n`;
+            const outliers = vals.filter(v => Math.abs(v - avg) > 2 * sd).length;
+            colInfo += `Outliers (>2σ): ${outliers}\n`;
+        }
+    } else {
+        const freq = {};
+        excelData.forEach(r => { const v = String(r[col] ?? '').trim(); if (v) freq[v] = (freq[v] || 0) + 1; });
+        const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+        const missing = excelData.filter(r => !r[col] && r[col] !== 0).length;
+        colInfo += `Unique values: ${sorted.length} | Missing: ${missing}\n`;
+        colInfo += `Top values: ${sorted.slice(0, 10).map(([v, c]) => `"${v}"(${c})`).join(', ')}\n`;
+        if (sorted.length > 10) colInfo += `...and ${sorted.length - 10} more\n`;
+    }
+
+    const otherCols = excelColumns.filter(c => c !== col).slice(0, 10).join(', ');
+    colInfo += `\nOther columns in dataset: ${otherCols}`;
+
+    try {
+        const res = await SarvamAI.chat([
+            { role: 'system', content: 'You are a data analyst explaining spreadsheet columns to non-technical users. Be concise and helpful.' },
+            { role: 'user', content: `Explain this column from a spreadsheet:\n\n${colInfo}\n\nProvide:\n1. **What this column likely represents** (1-2 sentences)\n2. **Data Quality assessment** (completeness, outliers, distribution)\n3. **Key observations** (2-3 bullet points with specific numbers)\n4. **Suggested actions** (1-2 recommendations)\n\nKeep it concise — max 150 words total.` }
+        ], { temperature: 0.5, max_tokens: 1000 });
+        const reply = res.choices?.[0]?.message?.content || 'Could not explain.';
+        _showExcelAIResult(`🔍 AI Analysis: ${col}`, reply);
+    } catch (err) {
+        showToast('AI Error: ' + err.message, 'error');
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-robot"></i>'; }
+}
+
+// --- 4. AI Chart Narrator ---
+async function aiNarrateChart(canvasId) {
+    if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+        showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+    }
+    const reg = chartRegistry[canvasId];
+    if (!reg || !reg.chart) { showToast('Chart not found', 'error'); return; }
+
+    const chart = reg.chart;
+    const labels = chart.data.labels || [];
+    const datasets = chart.data.datasets || [];
+    const chartType = chart.config.type;
+    const title = reg.title || 'Chart';
+
+    // Build chart data description
+    let chartDesc = `CHART: "${title}" | TYPE: ${chartType}\n`;
+    chartDesc += `LABELS (${labels.length}): ${labels.slice(0, 20).join(', ')}${labels.length > 20 ? '...' : ''}\n`;
+    datasets.forEach((ds, i) => {
+        const data = ds.data || [];
+        const total = data.reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0);
+        const max = Math.max(...data.filter(v => typeof v === 'number'));
+        const min = Math.min(...data.filter(v => typeof v === 'number'));
+        chartDesc += `DATASET ${i + 1} "${ds.label || 'Data'}": ${data.length} points | Total: ${total} | Min: ${min} | Max: ${max}\n`;
+        chartDesc += `Values: ${data.slice(0, 15).map((v, j) => `${labels[j] || j}=${v}`).join(', ')}${data.length > 15 ? '...' : ''}\n`;
+    });
+
+    const card = document.getElementById(canvasId)?.closest('.excel-chart-card, .dist-chart-card, .trend-chart-card');
+    const narrateBtn = card?.querySelector('[title="AI Narrate"]');
+    if (narrateBtn) { narrateBtn.disabled = true; narrateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+    try {
+        const res = await SarvamAI.chat([
+            { role: 'system', content: 'You are a data visualization expert. Write brief, insightful chart narratives. Use professional language with specific numbers.' },
+            { role: 'user', content: `Describe the key insights from this chart in 3-5 bullet points:\n\n${chartDesc}\n\nFor each point:\n- Start with an emoji\n- Be specific (cite values and percentages)\n- Highlight the most important pattern, trend, or anomaly\n- Keep each bullet under 20 words` }
+        ], { temperature: 0.6, max_tokens: 1000 });
+        const reply = res.choices?.[0]?.message?.content || 'No insights generated.';
+        _showExcelAIResult(`📊 AI Chart Insights: ${title}`, reply);
+    } catch (err) {
+        showToast('AI Error: ' + err.message, 'error');
+    }
+    if (narrateBtn) { narrateBtn.disabled = false; narrateBtn.innerHTML = '<i class="fas fa-robot"></i>'; }
+}
+
+// --- Shared: Show AI result in modal ---
+function _showExcelAIResult(title, content) {
+    if (typeof showAIOutputModal === 'function') {
+        showAIOutputModal(title, content);
+    } else {
+        // Fallback: create inline overlay
+        let modal = document.getElementById('excelAIModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'excelAIModal';
+            modal.innerHTML = `<div class="modal" style="max-width:720px;">
+                <div class="modal-header">
+                    <h2 id="excelAIModalTitle"><i class="fas fa-robot"></i> AI</h2>
+                    <button class="modal-close" onclick="closeModal('excelAIModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                    <div id="excelAIModalBody" class="ai-output-content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('excelAIModalBody')?.innerText || '').then(()=>showToast('Copied!','success'))"><i class="fas fa-copy"></i> Copy</button>
+                    <button class="btn btn-ghost" onclick="closeModal('excelAIModal')">Close</button>
+                </div>
+            </div>`;
+            document.body.appendChild(modal);
+        }
+        document.getElementById('excelAIModalTitle').innerHTML = '<i class="fas fa-robot"></i> ' + title;
+        const formatter = typeof formatAIResponse === 'function' ? formatAIResponse : t => t;
+        document.getElementById('excelAIModalBody').innerHTML = '<div class="ai-insight-text">' + formatter(content) + '</div>';
+        modal.classList.add('active');
+    }
+}
+
+// --- Toggle AI buttons visibility based on SarvamAI config ---
+function _toggleExcelAIButtons() {
+    const isAI = typeof SarvamAI !== 'undefined' && SarvamAI.isConfigured();
+    // AI Data Story button
+    const storyBtn = document.getElementById('excelAIStoryBtn');
+    if (storyBtn) storyBtn.style.display = isAI ? '' : 'none';
+    // AI Ask bar
+    const askBar = document.getElementById('excelAIAskBar');
+    if (askBar) askBar.style.display = isAI ? '' : 'none';
+    // AI Narrate buttons on charts
+    document.querySelectorAll('.ai-chart-narrate-btn').forEach(b => b.style.display = isAI ? '' : 'none');
+}
+
+// Hook into selectSheet to toggle AI buttons after data loads
+const _origSelectSheet = typeof selectSheet === 'function' ? selectSheet : null;
+if (_origSelectSheet) {
+    // Patch renderAutoInsights to inject AI column explain buttons
+    const _origRenderAutoInsights = typeof renderAutoInsights === 'function' ? renderAutoInsights : null;
+    if (_origRenderAutoInsights) {
+        const _patchedRenderAutoInsights = renderAutoInsights;
+        renderAutoInsights = function() {
+            _patchedRenderAutoInsights();
+            _injectColumnAIButtons();
+        };
+    }
+    // Patch renderAutoCharts to show AI narrate buttons AFTER charts exist in DOM
+    const _origRenderAutoCharts = typeof renderAutoCharts === 'function' ? renderAutoCharts : null;
+    if (_origRenderAutoCharts) {
+        const _patchedRenderAutoCharts = renderAutoCharts;
+        renderAutoCharts = function() {
+            _patchedRenderAutoCharts();
+            _toggleExcelAIButtons();
+        };
+    }
+}
+
+// Inject AI explain icon into column-specific insight cards
+function _injectColumnAIButtons() {
+    if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) return;
+    const panel = document.getElementById('excelInsightsPanel');
+    if (!panel) return;
+    panel.querySelectorAll('.insight-card').forEach(card => {
+        const titleEl = card.querySelector('.insight-type');
+        if (!titleEl) return;
+        const titleText = titleEl.textContent || '';
+        // Match cards that reference a specific column (format: "COLUMN — TYPE")
+        const match = titleText.match(/^(.+?)\s*[—–-]\s*(STATISTICS|MOST COMMON|OUTLIERS|SKEWED|ZERO VALUES|NEGATIVE|MISSING|HIGH CARDINALITY|MANY RARE)/i);
+        if (match) {
+            const colName = match[1].trim();
+            if (excelColumns.includes(colName) && !card.querySelector('.ai-col-explain-btn')) {
+                const btn = document.createElement('button');
+                btn.className = 'ai-col-explain-btn';
+                btn.title = 'AI Explain';
+                btn.innerHTML = '<i class="fas fa-robot"></i>';
+                btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--accent);font-size:11px;margin-left:6px;opacity:0.7;padding:2px 4px;';
+                btn.onclick = (e) => aiExplainColumn(colName, e);
+                titleEl.appendChild(btn);
+            }
+        }
+    });
 }
