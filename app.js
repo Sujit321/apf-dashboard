@@ -20856,12 +20856,49 @@ function getDefaultSettings() {
   };
 }
 
+const SUPPORTED_SARVAM_MODELS = new Set(['sarvam-m', 'sarvam-30b', 'sarvam-105b']);
+
+function normalizeSarvamModel(value) {
+  const model = (value || '').toString().trim().toLowerCase();
+  if (SUPPORTED_SARVAM_MODELS.has(model)) return model;
+  return 'sarvam-m';
+}
+
+function getSarvamMessageDisplayText(message, fallback = '') {
+  if (!message || typeof message !== 'object') return fallback;
+
+  const normalizePart = (value) => {
+    if (typeof value === 'string') return value.trim();
+    if (Array.isArray(value)) {
+      return value.map(part => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object') {
+          if (typeof part.text === 'string') return part.text;
+          if (typeof part.content === 'string') return part.content;
+        }
+        return '';
+      }).filter(Boolean).join('\n').trim();
+    }
+    return '';
+  };
+
+  const content = normalizePart(message.content);
+  const reasoning = normalizePart(message.reasoning_content);
+  if (reasoning) {
+    if (content.includes('<think>')) return content || fallback;
+    return `<think>${reasoning}</think>${content ? `\n\n${content}` : ''}`.trim();
+  }
+  return content || fallback;
+}
+
 function getAppSettings() {
   try {
     const raw = localStorage.getItem(APP_SETTINGS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return { ...getDefaultSettings(), ...parsed };
+      const merged = { ...getDefaultSettings(), ...parsed };
+      merged.sarvamModel = normalizeSarvamModel(merged.sarvamModel);
+      return merged;
     }
   } catch (e) { }
   return getDefaultSettings();
@@ -20898,7 +20935,7 @@ function saveAppSettings() {
     sarvamApiKey: (document.getElementById('settingSarvamApiKey')?.value || '').trim(),
     sarvamDefaultLang: document.getElementById('settingSarvamLang')?.value || 'hi-IN',
     sarvamEnabled: document.getElementById('settingSarvamEnabled')?.checked ?? true,
-    sarvamModel: document.getElementById('settingSarvamModel')?.value || 'sarvam-m',
+    sarvamModel: normalizeSarvamModel(document.getElementById('settingSarvamModel')?.value || 'sarvam-m'),
     sarvamReasoning: document.getElementById('settingSarvamReasoning')?.value || 'medium',
     fontFamily: getAppSettings().fontFamily || 'system',
     lineHeight: getAppSettings().lineHeight || 'default',
@@ -21043,7 +21080,7 @@ function renderSettings() {
   const sarvamEnabled = document.getElementById('settingSarvamEnabled');
   if (sarvamEnabled) sarvamEnabled.checked = s.sarvamEnabled !== false;
   const sarvamModel = document.getElementById('settingSarvamModel');
-  if (sarvamModel) sarvamModel.value = s.sarvamModel || 'sarvam-m';
+  if (sarvamModel) sarvamModel.value = normalizeSarvamModel(s.sarvamModel);
   const sarvamReasoning = document.getElementById('settingSarvamReasoning');
   if (sarvamReasoning) sarvamReasoning.value = s.sarvamReasoning || 'medium';
 }
@@ -21577,14 +21614,17 @@ const SarvamAI = {
   },
   async chat(messages, options = {}) {
     const s = getAppSettings();
-    return this.request('/v1/chat/completions', {
-      model: options.model || s.sarvamModel || 'sarvam-m',
+    const data = await this.request('/v1/chat/completions', {
+      model: normalizeSarvamModel(options.model || s.sarvamModel || 'sarvam-m'),
       messages,
       temperature: options.temperature ?? 0.5,
       max_tokens: options.max_tokens || 2048,
       reasoning_effort: options.reasoning_effort || s.sarvamReasoning || 'medium',
       stream: false
     });
+    const message = data?.choices?.[0]?.message;
+    if (message) message.content = getSarvamMessageDisplayText(message, '');
+    return data;
   },
   async translate(text, sourceLang, targetLang) {
     return this.request('/translate', {
@@ -23985,16 +24025,21 @@ function formatAIResponse(text) {
   }
 
   if (thinkMatches) {
+    const reasoningParts = [];
     thinkMatches.forEach(m => {
       const inner = m.replace(/<\/?think>/gi, '').trim();
       if (inner) {
+        reasoningParts.push(inner);
         const formatted = parseMarkdown(inner);
         thinkingHtml += `<details class="ai-thinking-block"><summary><i class="fas fa-brain"></i> Reasoning</summary><div class="ai-thinking-content">${formatted}</div></details>`;
       }
     });
     cleaned = text.replace(thinkRegex, '').trim();
     if (!cleaned) {
-      cleaned = "<em>(AI response was incomplete. Please try again.)</em>";
+      // Some Sarvam reasoning models occasionally return only reasoning_content.
+      // In that case, show the reasoning text itself instead of an "incomplete" placeholder.
+      cleaned = reasoningParts.join('\n\n').trim() || "<em>(AI response was incomplete. Please try again.)</em>";
+      thinkingHtml = '';
     }
   }
 
@@ -24996,7 +25041,7 @@ Keep the tone friendly and supportive, like a mentor talking to a colleague. Use
     const res = await SarvamAI.chat([
       { role: 'system', content: 'You are a compassionate and experienced academic mentor. Write coaching notes that inspire teachers to improve while feeling valued. Be specific, practical, and encouraging.' },
       { role: 'user', content: prompt }
-    ], { temperature: 0.6, max_tokens: 1500 });
+    ], { temperature: 0.6, max_tokens: 2200, reasoning_effort: 'low' });
     const reply = res.choices?.[0]?.message?.content || 'Could not generate coaching note.';
     showAIOutputModal('AI Coach Note ' + (o.teacher || o.school), reply, obsId);
   } catch (err) {
