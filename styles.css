@@ -7829,6 +7829,77 @@ body.modal-open {
     margin-top: 2px;
 }
 
+/* ===== Excel AI Ask Your Data Bar ===== */
+.excel-ai-ask-bar {
+    margin-bottom: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s;
+    position: relative;
+}
+.excel-ai-ask-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), #8b5cf6, #3b82f6, var(--accent));
+    background-size: 200% 100%;
+    animation: gradientShift 4s ease infinite;
+}
+.excel-ai-ask-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+}
+.excel-ai-query-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    padding: 4px 0;
+}
+.excel-ai-query-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 13px;
+}
+.excel-ai-ask-btn {
+    border-radius: 10px !important;
+    padding: 8px 14px !important;
+    min-width: 40px;
+}
+
+/* AI Answer Panel */
+.excel-ai-answer {
+    background: rgba(245, 158, 11, 0.04);
+    border-top: 1px solid var(--border);
+}
+.excel-ai-answer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.excel-ai-answer-header i {
+    margin-right: 6px;
+}
+.excel-ai-answer-body {
+    padding: 0 18px 16px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-primary);
+}
+
 /* ===== Excel Tab Bar ===== */
 .excel-tab-bar {
     display: flex;
@@ -32356,6 +32427,8 @@ body.light-mode .lp-weekly-day-left {
 
 .lpa-table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 520px; /* ~20 rows visible, scrolls after */
 }
 
 .lpa-table {
@@ -32368,11 +32441,15 @@ body.light-mode .lp-weekly-day-left {
     text-align: left;
     padding: 8px 10px;
     font-weight: 700;
+    position: sticky;
+    top: 0;
+    z-index: 1;
     color: var(--text-muted);
     border-bottom: 2px solid var(--border);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    background: var(--bg-card);
 }
 
 .lpa-table td {

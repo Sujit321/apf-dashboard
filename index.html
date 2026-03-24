@@ -1031,6 +1031,10 @@
  </p>
  </div>
  <div class="header-actions">
+ <button class="btn btn-accent" onclick="aiExcelDataStory(event)" id="excelAIStoryBtn"
+ style="display:none;">
+ <i class="fas fa-brain"></i> AI Data Story
+ </button>
  <button class="btn btn-primary" onclick="generateSmartReport()" id="generateReportBtn"
  style="display:none;">
  <i class="fas fa-file-alt"></i> Smart Report
@@ -1079,6 +1083,20 @@
  <div id="excelDashboard" style="display:none;">
  <!-- Summary Stats -->
  <div class="excel-kpi-strip" id="excelSummaryBar"></div>
+
+ <!-- AI Ask Your Data Bar -->
+ <div class="excel-ai-ask-bar" id="excelAIAskBar" style="display:none;">
+ <div class="excel-ai-ask-inner">
+ <i class="fas fa-robot" style="color:var(--accent);font-size:16px;"></i>
+ <input type="text" id="excelAIQueryInput" class="excel-ai-query-input"
+ placeholder="Ask anything about your data... e.g. 'Which school has the highest attendance?'"
+ onkeydown="if(event.key==='Enter')aiAskExcelData(event)">
+ <button class="btn btn-sm btn-primary excel-ai-ask-btn" onclick="aiAskExcelData(event)">
+ <i class="fas fa-paper-plane"></i>
+ </button>
+ </div>
+ <div id="excelAIQueryOutput" style="display:none;"></div>
+ </div>
 
  <!-- Analysis Tabs -->
  <div class="excel-tab-bar">
@@ -1745,7 +1763,7 @@
  <option value="date-asc">Oldest First</option>
  <option value="priority">Priority</option>
  <option value="sla">SLA Due Soon</option>
- <option value="school">School A�Z</option>
+ <option value="school">School A-Z</option>
  </select>
  <div class="fu-view-toggle">
  <button class="fu-view-btn active" id="fuViewList" onclick="setFollowupView('list')" title="List view"><i class="fas fa-list"></i></button>
@@ -4421,8 +4439,8 @@ function getOrCreateFolder() {
  <div class="settings-control">
  <select id="settingSarvamModel" class="settings-select" onchange="saveAppSettings()">
  <option value="sarvam-m">Sarvam-M (Default)</option>
- <option value="sarvam-2">Sarvam-2</option>
- <option value="sarvam-2-lite">Sarvam-2 Lite</option>
+ <option value="sarvam-30b">Sarvam-30B</option>
+ <option value="sarvam-105b">Sarvam-105B</option>
  </select>
  </div>
  </div>
@@ -7616,7 +7634,7 @@ function getOrCreateFolder() {
  <i class="fas fa-brain"></i>
  </div>
  <h4>Reflection Synthesis</h4>
- <p>Synthesize themes from your monthly reflections � moods, challenges, growth</p>
+ <p>Synthesize themes from your monthly reflections &mdash; moods, challenges, growth</p>
  </div>
  <div class="ai-insight-card" onclick="generateAIInsight('teacher-demographics')">
  <div class="ai-insight-card-icon"
@@ -7656,7 +7674,7 @@ function getOrCreateFolder() {
  <i class="fas fa-database"></i>
  </div>
  <h4>Data Completeness</h4>
- <p>AI-powered quality audit � find missing fields, gaps, and data health score</p>
+ <p>AI-powered quality audit &mdash; find missing fields, gaps, and data health score</p>
  </div>
  </div>
 
