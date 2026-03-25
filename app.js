@@ -463,7 +463,7 @@ const SessionPersist = {
 // Unsaved changes tracking
 let hasUnsavedChanges = false;
 let lastEncSaveTime = null;
-const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments', 'teacherActionPlans', 'manualFollowups', 'savedLessonPlans'];
+const ENCRYPTED_DATA_KEYS = ['visits', 'trainings', 'observations', 'resources', 'notes', 'ideas', 'reflections', 'contacts', 'plannerTasks', 'goalTargets', 'followupStatus', 'worklog', 'userProfile', 'meetings', 'growthAssessments', 'growthActionPlans', 'maraiTracking', 'schoolWork', 'visitPlanEntries', 'visitPlanDropdowns', 'feedbackReports', 'teacherRecords', 'schoolStudentRecords', 'selfCapacityBuilding', 'teachingPractices', 'tpAssignments', 'interventionPlaybookRuns', 'learningOutcomes', 'loAssignments', 'teacherActionPlans', 'manualFollowups', 'savedLessonPlans', 'yearlyObjectives'];
 
 // ===== Google Drive Auto-Backup (via Google Apps Script) =====
 const GoogleDriveSync = {
@@ -1599,6 +1599,801 @@ function handleLockIconTap() {
 }
 
 // Attach tap listener once DOM is ready
+// ===== Objective Setting & Performance Review Module =====
+
+// Objective Templates from APF docx
+const OBJ_TEMPLATES = {
+  fln: {
+    category: 'FLN & GLL',
+    title: 'Teacher Professional Development: FLN and GLL Achievement',
+    description: `Working in ___ schools with ___ focused teachers at primary level and ___ focused teachers at upper primary level.
+
+Targets:
+• Increase in number of more engaged teachers as per annual plan and cover all teachers of assigned cluster
+• Ensuring updation on Field App for all more engaged teachers
+• ___ More Engaged teachers whose practice would have converted to some effect and ___ teachers in Significant effect
+• ___ More Engaged teachers whose students shall attain Foundation Literacy and Numeracy (___ Some Effect and ___ in Significant Effect)
+• ___ More Engaged teachers whose students shall attain grade appropriate Learning Outcomes (___ Some Effect and ___ in Significant Effect)
+• Working with Head Teachers (With xx number of teachers/schools)
+• ___ schools of these HTs where students have attained FLN, grade appropriate LOs
+• ___ schools in which various practices happen continuously which directly influence learning processes
+• ___ school Reading corner, ___ Print rich classroom, ___ Creative writing, ___ Story Fest
+• ___ teachers whose articles will be published in Pathshala, Right Angles, Learning Curve etc.`
+  },
+  ece: {
+    category: 'ECE',
+    title: 'Contribution in ECE - in Assigned Sectors',
+    description: `Significant Effect in Children Development.
+
+Targets:
+• Working with ___ number of Anganwadi and actively involve in bringing out children development
+• Working with ___ number of Anganwadi teachers - observing better practices in their centres
+• Developing ___ number of Anganwadi centres as functional Anganwadis
+• Developing ___ number of Anganwadi centres as Demonstrable Anganwadis
+• Working with ___ number of Sector Supervisors in grooming them for providing better support in each of their 20-25 centres`
+  },
+  cluster: {
+    category: 'Cluster Development',
+    title: 'Contribution in Cluster Level Development Plan through CACs and PLC heads',
+    description: `Targets:
+• ___ CACs, cluster heads and PLC/MTs/FLN mentors consulted in beginning of academic year to prepare cluster development plan with focus on FLN and GLL achievement
+• All CACs, cluster heads, and PLCs/MTs/FLN mentors will practice suggested pedagogies in their school
+• Weekly consultation with CACs, cluster heads and PLC/MT/FLN mentors before making weekly plans
+• Zone level monthly review of CACs, cluster heads, and PLCs/MT/FLN mentors
+• All CACs, cluster heads, PLCs/MTs/FLN mentors encouraged to document impact of their work
+• Field engagement details shared with CACs, cluster heads, PLCs/MTs/FLN mentors over WhatsApp
+• PLCs/MTs/FLN mentors encouraged to practice content of upcoming cluster meetings in advance
+• CACs, cluster heads, PLCs/MTs/FLN mentors encouraged to document annual engagement`
+  },
+  self: {
+    category: 'Self-Capacity',
+    title: 'Self-Capacity Enhancement to Support Teachers Better',
+    description: `Targets:
+• Attaining clear and concrete knowledge in primary level subjects (math and language)
+• Develop capacity to work in at least 1 subject of MS level content
+• Understanding policies and their perspective - NEP, NCF FS and SE
+• Attaining in-depth understanding on assessment and curriculum
+• Reading books, articles, reference material related to subject domain and education
+• Writing 2 articles for Pathshala, Right Angle, Learning Curve etc.`
+  },
+  tlc: {
+    category: 'TLC',
+    title: 'Contribution in Smooth Functioning of TLC, Block Office',
+    description: `Targets:
+• Working with team members for better functioning of the TLC
+• Support in regular functioning of TLCs; regular opening; maintaining good environment
+• Contribute in contacting and inviting teachers for engagements at TLC or Block level
+• Supporting team for organizing engagements with teachers
+• Support in increasing library membership and usage of library and TLC resources
+• Support team for making healthy and welcoming team building culture
+• Any other specific work as per roles and responsibilities
+• Content development - Module/Content development, Charcha Patra content writing
+• Support to SCERT – Textbook writing, workbook, worksheet etc.
+• Cluster meeting module development`
+  },
+  other: {
+    category: 'Other',
+    title: '',
+    description: ''
+  }
+};
+
+// Category color mapping
+const OBJ_CATEGORY_COLORS = {
+  'FLN & GLL': { bg: 'rgba(99,102,241,0.12)', text: '#6366f1', border: 'rgba(99,102,241,0.3)' },
+  'ECE': { bg: 'rgba(16,185,129,0.12)', text: '#10b981', border: 'rgba(16,185,129,0.3)' },
+  'Cluster Development': { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b', border: 'rgba(245,158,11,0.3)' },
+  'Self-Capacity': { bg: 'rgba(139,92,246,0.12)', text: '#8b5cf6', border: 'rgba(139,92,246,0.3)' },
+  'TLC': { bg: 'rgba(236,72,153,0.12)', text: '#ec4899', border: 'rgba(236,72,153,0.3)' },
+  'Other': { bg: 'rgba(148,163,184,0.12)', text: '#94a3b8', border: 'rgba(148,163,184,0.3)' }
+};
+
+const OBJ_STATUS_MAP = {
+  'not-started': { label: 'Not Started', icon: 'fa-circle', color: '#94a3b8' },
+  'in-progress': { label: 'In Progress', icon: 'fa-spinner', color: '#f59e0b' },
+  'completed': { label: 'Completed', icon: 'fa-check-circle', color: '#10b981' }
+};
+
+const OBJ_RATING_MAP = {
+  'exceeds': { label: 'Exceeds Expectations', icon: '⭐', color: '#f59e0b' },
+  'meets': { label: 'Meets Expectations', icon: '✅', color: '#10b981' },
+  'below': { label: 'Below Expectations', icon: '⚠️', color: '#ef4444' }
+};
+
+// ---- Render Objectives ----
+function renderObjectives() {
+  const objectives = DB.get('yearlyObjectives') || [];
+  const container = document.getElementById('objectivesContainer');
+  const statsBar = document.getElementById('objStatsBar');
+  if (!container) return;
+
+  // Show AI button if configured
+  const aiBtn = document.getElementById('aiObjActionBtn');
+  if (aiBtn && typeof SarvamAI !== 'undefined') {
+    aiBtn.style.display = SarvamAI.isConfigured() ? '' : 'none';
+  }
+
+  // Apply filters
+  const yearF = document.getElementById('objYearFilter')?.value || 'all';
+  const catF = document.getElementById('objCategoryFilter')?.value || 'all';
+  const statusF = document.getElementById('objStatusFilter')?.value || 'all';
+  const searchF = (document.getElementById('objSearchInput')?.value || '').toLowerCase().trim();
+
+  let filtered = objectives.filter(o => {
+    if (yearF !== 'all' && o.year !== yearF) return false;
+    if (catF !== 'all' && o.category !== catF) return false;
+    if (statusF !== 'all' && o.status !== statusF) return false;
+    if (searchF && !(o.title || '').toLowerCase().includes(searchF) && !(o.description || '').toLowerCase().includes(searchF)) return false;
+    return true;
+  });
+
+  // Sort: in-progress first, then not-started, then completed
+  const statusOrder = { 'in-progress': 0, 'not-started': 1, 'completed': 2 };
+  filtered.sort((a, b) => (statusOrder[a.status] || 9) - (statusOrder[b.status] || 9));
+
+  // Stats
+  const total = filtered.length;
+  const inProgress = filtered.filter(o => o.status === 'in-progress').length;
+  const completed = filtered.filter(o => o.status === 'completed').length;
+  const avgProgress = total ? Math.round(filtered.reduce((s, o) => s + (o.progress || 0), 0) / total) : 0;
+  const totalAP = filtered.reduce((s, o) => s + (o.actionPoints || []).length, 0);
+  const completedAP = filtered.reduce((s, o) => s + (o.actionPoints || []).filter(a => a.status === 'done').length, 0);
+
+  if (statsBar) {
+    statsBar.innerHTML = `
+      <div class="obj-stat-pill"><i class="fas fa-flag"></i> <strong>${total}</strong> Objectives</div>
+      <div class="obj-stat-pill"><i class="fas fa-spinner" style="color:#f59e0b"></i> <strong>${inProgress}</strong> In Progress</div>
+      <div class="obj-stat-pill"><i class="fas fa-check-circle" style="color:#10b981"></i> <strong>${completed}</strong> Completed</div>
+      <div class="obj-stat-pill"><i class="fas fa-chart-line" style="color:#6366f1"></i> <strong>${avgProgress}%</strong> Avg Progress</div>
+      <div class="obj-stat-pill"><i class="fas fa-tasks" style="color:#8b5cf6"></i> <strong>${completedAP}/${totalAP}</strong> Actions Done</div>
+    `;
+  }
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-flag-checkered"></i><h3>No objectives found</h3><p>${objectives.length ? 'Try adjusting your filters' : 'Click "New Objective" to get started'}</p></div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(obj => {
+    const cc = OBJ_CATEGORY_COLORS[obj.category] || OBJ_CATEGORY_COLORS['Other'];
+    const st = OBJ_STATUS_MAP[obj.status] || OBJ_STATUS_MAP['not-started'];
+    const apTotal = (obj.actionPoints || []).length;
+    const apDone = (obj.actionPoints || []).filter(a => a.status === 'done').length;
+    const rating = obj.performanceRating ? OBJ_RATING_MAP[obj.performanceRating] : null;
+    const commentCount = (obj.comments || []).length;
+
+    const aiButtonsHtml = (typeof SarvamAI !== 'undefined' && SarvamAI.isConfigured()) ? `
+      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAIActionPointers('${obj.id}')" title="AI Action Pointers">
+        <i class="fas fa-robot"></i> AI Actions
+      </button>
+      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAIReviewComments('${obj.id}')" title="AI Review Comments">
+        <i class="fas fa-pen-fancy"></i> AI Review
+      </button>
+      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAISmartSuggestions('${obj.id}')" title="AI Smart Suggestions">
+        <i class="fas fa-lightbulb"></i> AI Insights
+      </button>
+    ` : '';
+
+    return `
+    <div class="obj-card" style="border-left:4px solid ${cc.text}">
+      <div class="obj-card-header">
+        <div class="obj-card-badges">
+          <span class="obj-cat-badge" style="background:${cc.bg};color:${cc.text};border:1px solid ${cc.border}">
+            <i class="fas fa-tag"></i> ${escapeHtml(obj.category)}
+          </span>
+          <span class="obj-status-badge" style="color:${st.color}">
+            <i class="fas ${st.icon}"></i> ${st.label}
+          </span>
+          ${rating ? `<span class="obj-rating-badge" style="color:${rating.color}">${rating.icon} ${rating.label}</span>` : ''}
+          <span class="obj-year-badge"><i class="fas fa-calendar-alt"></i> ${escapeHtml(obj.year)}</span>
+        </div>
+        <div class="obj-card-actions">
+          <button class="obj-card-action-btn" onclick="event.stopPropagation();openObjectiveModal('${obj.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+          <button class="obj-card-action-btn" onclick="event.stopPropagation();generatePerformanceReview('${obj.id}')" title="Generate Review PDF"><i class="fas fa-file-pdf"></i></button>
+          <button class="obj-card-action-btn obj-del-btn" onclick="event.stopPropagation();deleteObjective('${obj.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <h3 class="obj-card-title">${escapeHtml(obj.title)}</h3>
+      <p class="obj-card-desc">${escapeHtml((obj.description || '').substring(0, 200))}${(obj.description || '').length > 200 ? '…' : ''}</p>
+
+      <!-- Progress Bar -->
+      <div class="obj-progress-wrap">
+        <div class="obj-progress-bar">
+          <div class="obj-progress-fill" style="width:${obj.progress || 0}%;background:${st.color}"></div>
+        </div>
+        <span class="obj-progress-label">${obj.progress || 0}%</span>
+      </div>
+
+      <!-- Action Points Preview -->
+      ${apTotal > 0 ? `
+        <div class="obj-ap-section">
+          <div class="obj-ap-header">
+            <span><i class="fas fa-tasks"></i> Action Points (${apDone}/${apTotal})</span>
+            <button class="obj-card-action-btn" onclick="event.stopPropagation();toggleObjSection(this,'ap-${obj.id}')" title="Toggle"><i class="fas fa-chevron-down"></i></button>
+          </div>
+          <div class="obj-ap-list" id="ap-${obj.id}" style="display:none">
+            ${(obj.actionPoints || []).map(ap => `
+              <div class="obj-ap-item ${ap.status === 'done' ? 'obj-ap-done' : ''}">
+                <label class="obj-ap-check">
+                  <input type="checkbox" ${ap.status === 'done' ? 'checked' : ''} onchange="toggleActionPoint('${obj.id}','${ap.id}')">
+                  <span>${escapeHtml(ap.text)}</span>
+                </label>
+                ${ap.dueDate ? `<span class="obj-ap-due"><i class="fas fa-clock"></i> ${ap.dueDate}</span>` : ''}
+                <button class="obj-ap-del" onclick="event.stopPropagation();deleteActionPoint('${obj.id}','${ap.id}')" title="Remove"><i class="fas fa-times"></i></button>
+              </div>
+            `).join('')}
+            <div class="obj-ap-add">
+              <input type="text" id="apInput-${obj.id}" placeholder="Add action point..." onkeydown="if(event.key==='Enter'){addActionPoint('${obj.id}');event.preventDefault()}">
+              <button onclick="addActionPoint('${obj.id}')" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i></button>
+            </div>
+          </div>
+        </div>
+      ` : `
+        <div class="obj-ap-section">
+          <div class="obj-ap-add" style="margin-top:8px">
+            <input type="text" id="apInput-${obj.id}" placeholder="Add first action point..." onkeydown="if(event.key==='Enter'){addActionPoint('${obj.id}');event.preventDefault()}">
+            <button onclick="addActionPoint('${obj.id}')" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+      `}
+
+      <!-- Comments Preview -->
+      <div class="obj-comments-section">
+        <div class="obj-comments-header">
+          <span><i class="fas fa-comments"></i> Comments & Notes (${commentCount})</span>
+          <button class="obj-card-action-btn" onclick="event.stopPropagation();toggleObjSection(this,'cm-${obj.id}')" title="Toggle"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div class="obj-comments-list" id="cm-${obj.id}" style="display:none">
+          ${(obj.comments || []).map(c => `
+            <div class="obj-comment-item">
+              <div class="obj-comment-meta">
+                <span class="obj-comment-type"><i class="fas ${c.type === 'review' ? 'fa-star' : c.type === 'observation' ? 'fa-eye' : 'fa-comment'}"></i> ${c.type || 'comment'}</span>
+                <span class="obj-comment-date">${c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</span>
+                <button class="obj-ap-del" onclick="event.stopPropagation();deleteComment('${obj.id}','${c.id}')" title="Remove"><i class="fas fa-times"></i></button>
+              </div>
+              <p>${escapeHtml(c.text)}</p>
+            </div>
+          `).join('')}
+          <div class="obj-comment-add">
+            <textarea id="cmInput-${obj.id}" rows="2" placeholder="Add a comment or observation..."></textarea>
+            <div class="obj-comment-add-row">
+              <select id="cmType-${obj.id}">
+                <option value="comment">💬 Comment</option>
+                <option value="review">⭐ Review Note</option>
+                <option value="observation">👁️ Observation</option>
+              </select>
+              <button onclick="addComment('${obj.id}')" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Buttons -->
+      ${aiButtonsHtml ? `<div class="obj-ai-buttons">${aiButtonsHtml}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleObjSection(btn, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+}
+
+// ---- Template Fill ----
+function fillObjTemplate(key) {
+  const tpl = OBJ_TEMPLATES[key];
+  if (!tpl) return;
+  document.getElementById('objTitle').value = tpl.title;
+  document.getElementById('objDescription').value = tpl.description;
+  if (tpl.category) {
+    const catSelect = document.getElementById('objCategory');
+    for (let i = 0; i < catSelect.options.length; i++) {
+      if (catSelect.options[i].value === tpl.category) { catSelect.selectedIndex = i; break; }
+    }
+  }
+  showToast('Template loaded! Fill in your specific numbers.', 'info');
+}
+
+// ---- Open / Save / Delete ----
+function openObjectiveModal(editId) {
+  document.getElementById('objEditId').value = editId || '';
+  document.getElementById('objModalTitle').innerHTML = editId
+    ? '<i class="fas fa-edit"></i> Edit Objective'
+    : '<i class="fas fa-flag-checkered"></i> New Objective';
+
+  if (editId) {
+    const objectives = DB.get('yearlyObjectives') || [];
+    const obj = objectives.find(o => o.id === editId);
+    if (obj) {
+      document.getElementById('objYear').value = obj.year || '2025-26';
+      document.getElementById('objCategory').value = obj.category || 'Other';
+      document.getElementById('objTitle').value = obj.title || '';
+      document.getElementById('objDescription').value = obj.description || '';
+      document.getElementById('objStatus').value = obj.status || 'not-started';
+      document.getElementById('objProgress').value = obj.progress || 0;
+      document.getElementById('objProgressVal').textContent = (obj.progress || 0) + '%';
+      document.getElementById('objRating').value = obj.performanceRating || '';
+      document.getElementById('objReviewNotes').value = obj.reviewNotes || '';
+    }
+  } else {
+    document.getElementById('objYear').value = '2025-26';
+    document.getElementById('objCategory').value = 'FLN & GLL';
+    document.getElementById('objTitle').value = '';
+    document.getElementById('objDescription').value = '';
+    document.getElementById('objStatus').value = 'not-started';
+    document.getElementById('objProgress').value = 0;
+    document.getElementById('objProgressVal').textContent = '0%';
+    document.getElementById('objRating').value = '';
+    document.getElementById('objReviewNotes').value = '';
+  }
+  openModal('objectiveModal');
+}
+
+function saveObjective() {
+  const title = document.getElementById('objTitle').value.trim();
+  if (!title) { showToast('Please enter an objective title', 'warning'); return; }
+
+  const objectives = DB.get('yearlyObjectives') || [];
+  const editId = document.getElementById('objEditId').value;
+
+  const data = {
+    year: document.getElementById('objYear').value,
+    category: document.getElementById('objCategory').value,
+    title: title,
+    description: document.getElementById('objDescription').value.trim(),
+    status: document.getElementById('objStatus').value,
+    progress: parseInt(document.getElementById('objProgress').value) || 0,
+    performanceRating: document.getElementById('objRating').value || null,
+    reviewNotes: document.getElementById('objReviewNotes').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (editId) {
+    const idx = objectives.findIndex(o => o.id === editId);
+    if (idx >= 0) {
+      objectives[idx] = { ...objectives[idx], ...data };
+    }
+  } else {
+    objectives.push({
+      id: DB.generateId(),
+      ...data,
+      actionPoints: [],
+      comments: [],
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  closeModal('objectiveModal');
+  renderObjectives();
+  showToast(editId ? 'Objective updated!' : 'Objective created!', 'success');
+}
+
+async function deleteObjective(id) {
+  const confirmed = await showPopupConfirm({
+    title: 'Delete Objective',
+    message: 'Are you sure you want to delete this objective? This cannot be undone.',
+    icon: 'fa-trash',
+    confirmText: 'Delete',
+    confirmColor: '#ef4444'
+  });
+  if (!confirmed) return;
+
+  let objectives = DB.get('yearlyObjectives') || [];
+  objectives = objectives.filter(o => o.id !== id);
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderObjectives();
+  showToast('Objective deleted', 'success');
+}
+
+// ---- Action Points ----
+function addActionPoint(objId) {
+  const input = document.getElementById('apInput-' + objId);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj) return;
+  if (!obj.actionPoints) obj.actionPoints = [];
+  obj.actionPoints.push({ id: DB.generateId(), text, status: 'pending', dueDate: '', completedDate: '' });
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderObjectives();
+}
+
+function toggleActionPoint(objId, apId) {
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj || !obj.actionPoints) return;
+  const ap = obj.actionPoints.find(a => a.id === apId);
+  if (!ap) return;
+  ap.status = ap.status === 'done' ? 'pending' : 'done';
+  ap.completedDate = ap.status === 'done' ? new Date().toISOString().split('T')[0] : '';
+
+  // Auto-update progress based on action points
+  const total = obj.actionPoints.length;
+  const done = obj.actionPoints.filter(a => a.status === 'done').length;
+  obj.progress = total > 0 ? Math.round((done / total) * 100) : obj.progress;
+  if (obj.progress === 100) obj.status = 'completed';
+  else if (obj.progress > 0) obj.status = 'in-progress';
+
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderObjectives();
+}
+
+function deleteActionPoint(objId, apId) {
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj || !obj.actionPoints) return;
+  obj.actionPoints = obj.actionPoints.filter(a => a.id !== apId);
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderObjectives();
+}
+
+// ---- Comments ----
+function addComment(objId) {
+  const input = document.getElementById('cmInput-' + objId);
+  const typeSelect = document.getElementById('cmType-' + objId);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj) return;
+  if (!obj.comments) obj.comments = [];
+  obj.comments.unshift({ id: DB.generateId(), text, type: typeSelect?.value || 'comment', date: new Date().toISOString() });
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderObjectives();
+}
+
+function deleteComment(objId, cmId) {
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj || !obj.comments) return;
+  obj.comments = obj.comments.filter(c => c.id !== cmId);
+  DB.set('yearlyObjectives', objectives);
+  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+  renderObjectives();
+}
+
+// ---- Performance Review PDF ----
+function generatePerformanceReview(objId) {
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj) { showToast('Objective not found', 'error'); return; }
+
+  const profile = typeof getProfile === 'function' ? getProfile() : {};
+  const st = OBJ_STATUS_MAP[obj.status] || OBJ_STATUS_MAP['not-started'];
+  const rating = obj.performanceRating ? OBJ_RATING_MAP[obj.performanceRating] : null;
+  const apTotal = (obj.actionPoints || []).length;
+  const apDone = (obj.actionPoints || []).filter(a => a.status === 'done').length;
+
+  let html = `<div style="font-family:Inter,sans-serif;max-width:700px;margin:0 auto;padding:20px">
+    <div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #6366f1;padding-bottom:16px">
+      <h1 style="margin:0;font-size:22px;color:#1e293b">Performance Review Report</h1>
+      <p style="color:#64748b;font-size:14px;margin:6px 0 0">Academic Year: ${escapeHtml(obj.year)}</p>
+      ${profile.name ? `<p style="color:#64748b;font-size:13px;margin:4px 0 0">Resource Person: ${escapeHtml(profile.name)} ${profile.block ? '| Block: ' + escapeHtml(profile.block) : ''}</p>` : ''}
+    </div>
+
+    <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-bottom:16px;border-left:4px solid #6366f1">
+      <h2 style="margin:0 0 8px;font-size:16px;color:#1e293b">${escapeHtml(obj.title)}</h2>
+      <span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${st.color}22;color:${st.color}">${st.label}</span>
+      <span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:#6366f122;color:#6366f1;margin-left:6px">${escapeHtml(obj.category)}</span>
+      ${rating ? `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${rating.color}22;color:${rating.color};margin-left:6px">${rating.icon} ${rating.label}</span>` : ''}
+    </div>
+
+    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📋 Objective Description</h3>
+    <div style="white-space:pre-wrap;color:#475569;font-size:13px;line-height:1.7;background:#f8fafc;padding:12px;border-radius:8px">${escapeHtml(obj.description || 'No description provided')}</div>
+
+    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📊 Progress: ${obj.progress || 0}%</h3>
+    <div style="background:#e2e8f0;border-radius:8px;height:12px;overflow:hidden;margin-bottom:8px">
+      <div style="background:${st.color};height:100%;width:${obj.progress || 0}%;border-radius:8px;transition:width 0.3s"></div>
+    </div>`;
+
+  if (apTotal > 0) {
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">✅ Action Points (${apDone}/${apTotal} completed)</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <tr style="background:#f1f5f9"><th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">Action</th><th style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;width:80px">Status</th></tr>
+      ${(obj.actionPoints || []).map(ap => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${escapeHtml(ap.text)}</td><td style="padding:8px;text-align:center;border-bottom:1px solid #f1f5f9;color:${ap.status === 'done' ? '#10b981' : '#f59e0b'}">${ap.status === 'done' ? '✅ Done' : '⏳ Pending'}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  if ((obj.comments || []).length > 0) {
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">💬 Comments & Review Notes</h3>`;
+    (obj.comments || []).forEach(c => {
+      html += `<div style="background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:6px;border-left:3px solid ${c.type === 'review' ? '#f59e0b' : c.type === 'observation' ? '#6366f1' : '#94a3b8'}">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${c.type || 'comment'} — ${c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</div>
+        <div style="font-size:13px;color:#334155">${escapeHtml(c.text)}</div>
+      </div>`;
+    });
+  }
+
+  if (obj.reviewNotes) {
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📝 Review Notes</h3>
+    <div style="white-space:pre-wrap;color:#475569;font-size:13px;background:#fffbeb;padding:12px;border-radius:8px;border-left:3px solid #f59e0b">${escapeHtml(obj.reviewNotes)}</div>`;
+  }
+
+  html += `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center">
+    Generated on ${new Date().toLocaleDateString('en-IN')} | APF Resource Person Dashboard
+  </div></div>`;
+
+  if (typeof openPdfEditor === 'function') {
+    openPdfEditor(html, 'Performance Review - ' + obj.title);
+  }
+}
+
+// ---- Excel Export ----
+function exportObjectivesExcel() {
+  const objectives = DB.get('yearlyObjectives') || [];
+  if (!objectives.length) { showToast('No objectives to export', 'warning'); return; }
+
+  const rows = objectives.map(o => ({
+    'Year': o.year,
+    'Category': o.category,
+    'Title': o.title,
+    'Description': o.description,
+    'Status': (OBJ_STATUS_MAP[o.status] || {}).label || o.status,
+    'Progress (%)': o.progress || 0,
+    'Action Points Total': (o.actionPoints || []).length,
+    'Action Points Done': (o.actionPoints || []).filter(a => a.status === 'done').length,
+    'Performance Rating': o.performanceRating ? (OBJ_RATING_MAP[o.performanceRating] || {}).label || o.performanceRating : '',
+    'Review Notes': o.reviewNotes || '',
+    'Comments': (o.comments || []).map(c => `[${c.type}] ${c.text}`).join(' | '),
+    'Created': o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : '',
+    'Updated': o.updatedAt ? new Date(o.updatedAt).toLocaleDateString('en-IN') : ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Objectives');
+  XLSX.writeFile(wb, `Objectives_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('Objectives exported to Excel!', 'success');
+}
+
+// ===== AI Features for Objectives =====
+
+// AI Action Pointers for a single objective
+async function generateAIActionPointers(objId) {
+  if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+    showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+  }
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj) { showToast('Objective not found', 'error'); return; }
+
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
+
+  // Gather context from app data
+  const visits = DB.get('visits') || [];
+  const trainings = DB.get('trainings') || [];
+  const observations = DB.get('observations') || [];
+  const apDone = (obj.actionPoints || []).filter(a => a.status === 'done').map(a => a.text);
+  const apPending = (obj.actionPoints || []).filter(a => a.status !== 'done').map(a => a.text);
+
+  const prompt = `You are an expert pedagogical coach at Azim Premji Foundation. Based on the following yearly objective for a Resource Person, generate 5-8 SPECIFIC, ACTIONABLE steps they should take to achieve this objective.
+
+OBJECTIVE TITLE: ${obj.title}
+CATEGORY: ${obj.category}
+YEAR: ${obj.year}
+CURRENT PROGRESS: ${obj.progress || 0}%
+STATUS: ${obj.status}
+
+OBJECTIVE DESCRIPTION:
+${obj.description || 'No detailed description provided'}
+
+${apDone.length ? 'ALREADY COMPLETED ACTIONS:\n' + apDone.map((a,i) => `${i+1}. ${a}`).join('\n') : ''}
+${apPending.length ? 'PENDING ACTIONS:\n' + apPending.map((a,i) => `${i+1}. ${a}`).join('\n') : ''}
+
+CONTEXT FROM APP DATA:
+- Total school visits this year: ${visits.length}
+- Total trainings conducted: ${trainings.length}
+- Total classroom observations: ${observations.length}
+
+Generate practical, specific action pointers that:
+1. Are immediately actionable (not vague)
+2. Include timelines where relevant (this week, this month, this quarter)
+3. Are aligned with the specific targets mentioned in the description
+4. Consider what has already been done and what's pending
+5. Include both field-level actions and documentation/reporting actions
+
+Format each action point as a numbered list. Keep language simple and practical.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are an experienced pedagogical coach at Azim Premji Foundation. Provide practical, actionable guidance for Resource Persons working in government schools in India. Be specific, use simple language, and include concrete steps.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.6, max_tokens: 2000 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate action pointers.';
+    if (typeof showAIOutputModal === 'function') {
+      showAIOutputModal('AI Action Pointers: ' + (obj.title || '').substring(0, 50), reply, objId);
+    } else {
+      showToast('AI response generated - check console', 'info');
+      console.log(reply);
+    }
+  } catch (err) {
+    showToast('AI Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-robot"></i> AI Actions'; }
+}
+
+// AI Review Comments
+async function generateAIReviewComments(objId) {
+  if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+    showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+  }
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj) { showToast('Objective not found', 'error'); return; }
+
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Writing...'; }
+
+  const apTotal = (obj.actionPoints || []).length;
+  const apDone = (obj.actionPoints || []).filter(a => a.status === 'done').length;
+  const existingComments = (obj.comments || []).map(c => c.text).join('\n');
+
+  const prompt = `Write a professional performance review comment for this objective of an Azim Premji Foundation Resource Person:
+
+OBJECTIVE: ${obj.title}
+CATEGORY: ${obj.category}
+YEAR: ${obj.year}
+PROGRESS: ${obj.progress || 0}%
+STATUS: ${obj.status}
+ACTION POINTS: ${apDone}/${apTotal} completed
+PERFORMANCE RATING: ${obj.performanceRating || 'Not yet rated'}
+
+DESCRIPTION:
+${obj.description || 'No description'}
+
+${obj.reviewNotes ? 'EXISTING REVIEW NOTES:\n' + obj.reviewNotes : ''}
+${existingComments ? 'EXISTING COMMENTS:\n' + existingComments : ''}
+
+Write a performance review comment that:
+1. Acknowledges specific achievements and progress made
+2. Highlights areas of strength
+3. Identifies gaps or areas needing improvement
+4. Provides constructive suggestions for the remaining period
+5. Is professional and encouraging in tone
+6. Is 150-250 words
+
+Also suggest a performance rating (Exceeds/Meets/Below Expectations) with justification.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are a senior education professional writing performance reviews for Resource Persons at Azim Premji Foundation. Be professional, constructive, specific, and balanced in your assessment.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.5, max_tokens: 1500 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate review.';
+    if (typeof showAIOutputModal === 'function') {
+      showAIOutputModal('AI Performance Review: ' + (obj.title || '').substring(0, 50), reply, objId);
+    }
+  } catch (err) {
+    showToast('AI Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen-fancy"></i> AI Review'; }
+}
+
+// AI Smart Suggestions (cross-reference with app data)
+async function generateAISmartSuggestions(objId) {
+  if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+    showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+  }
+  const objectives = DB.get('yearlyObjectives') || [];
+  const obj = objectives.find(o => o.id === objId);
+  if (!obj) { showToast('Objective not found', 'error'); return; }
+
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...'; }
+
+  // Gather comprehensive app data
+  const visits = DB.get('visits') || [];
+  const trainings = DB.get('trainings') || [];
+  const observations = DB.get('observations') || [];
+  const worklog = DB.get('worklog') || [];
+  const teacherRecords = DB.get('teacherRecords') || [];
+
+  const uniqueSchools = new Set(visits.map(v => v.school).filter(Boolean)).size;
+  const uniqueTeachers = new Set(observations.map(o => o.teacher).filter(Boolean)).size;
+  const engagedTeachers = new Set(observations.filter(o => (o.engagementLevel || '').includes('More Engaged')).map(o => o.teacher)).size;
+  const completedVisits = visits.filter(v => v.status === 'completed').length;
+  const completedTrainings = trainings.filter(t => t.status === 'completed').length;
+
+  const prompt = `Analyze this Resource Person's objective against their actual field data and provide smart insights:
+
+OBJECTIVE: ${obj.title}
+CATEGORY: ${obj.category}
+PROGRESS: ${obj.progress || 0}%
+DESCRIPTION: ${(obj.description || '').substring(0, 500)}
+
+ACTUAL FIELD DATA:
+- School visits: ${visits.length} total (${completedVisits} completed)
+- Unique schools visited: ${uniqueSchools}
+- Trainings: ${trainings.length} (${completedTrainings} completed)
+- Observations: ${observations.length}
+- Unique teachers observed: ${uniqueTeachers}
+- More Engaged teachers: ${engagedTeachers}
+- Teacher records: ${teacherRecords.length}
+- Work log entries: ${worklog.length}
+
+Provide:
+1. **What's Going Well** — 3-4 points based on the data showing positive progress
+2. **What Needs Attention** — 3-4 areas where the data suggests gaps vs objective targets
+3. **Recommendations** — 4-5 specific actions to accelerate progress this quarter
+4. **Risk Areas** — Any objective targets that seem at risk based on current data
+5. **Quick Wins** — 2-3 things that can be done immediately for visible impact
+
+Be data-driven and specific. Reference actual numbers from the data provided.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are a data-driven education consultant at Azim Premji Foundation. Analyze field data to provide actionable insights. Reference specific numbers and trends. Be constructive and solution-oriented.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.5, max_tokens: 2000 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate suggestions.';
+    if (typeof showAIOutputModal === 'function') {
+      showAIOutputModal('AI Smart Insights: ' + (obj.title || '').substring(0, 50), reply, objId);
+    }
+  } catch (err) {
+    showToast('AI Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-lightbulb"></i> AI Insights'; }
+}
+
+// AI Suggestions for all objectives (header button)
+async function generateAIActionPointersAll() {
+  const objectives = DB.get('yearlyObjectives') || [];
+  if (!objectives.length) { showToast('No objectives to analyze', 'warning'); return; }
+  if (objectives.length === 1) { generateAIActionPointers(objectives[0].id); return; }
+  // For multiple objectives, generate a summary
+  if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+    showToast('Configure Sarvam AI API key in Settings first', 'warning'); return;
+  }
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...'; }
+
+  const summary = objectives.map((o, i) => `${i+1}. [${o.category}] ${o.title} — ${o.progress || 0}% done, ${(o.actionPoints || []).filter(a => a.status === 'done').length}/${(o.actionPoints || []).length} actions complete`).join('\n');
+
+  const prompt = `Review all yearly objectives for this Resource Person and provide a prioritized action plan:
+
+OBJECTIVES:
+${summary}
+
+Provide:
+1. **Priority Ranking** — Which objectives need most attention right now and why
+2. **This Week's Top 5 Actions** — Specific things to do this week across all objectives
+3. **Quick Wins** — Easy actions that can show immediate progress
+4. **Dependencies** — How progress in one objective can support others
+5. **Overall Assessment** — Brief assessment of overall performance direction`;
+
+  try {
+    const res = await SarvamAI.chat([
+      { role: 'system', content: 'You are a strategic planning coach at Azim Premji Foundation. Help Resource Persons prioritize across multiple objectives. Be practical and actionable.' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.5, max_tokens: 2000 });
+    const reply = res.choices?.[0]?.message?.content || 'Could not generate plan.';
+    if (typeof showAIOutputModal === 'function') {
+      showAIOutputModal('AI Overall Action Plan', reply);
+    }
+  } catch (err) {
+    showToast('AI Error: ' + err.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-robot"></i> AI Suggestions'; }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const iconEl = document.getElementById('lockIconTap');
   if (iconEl) iconEl.addEventListener('click', handleLockIconTap);
@@ -1800,6 +2595,7 @@ function refreshSection(section) {
     case 'capacitybuilding': renderCapacityBuilding(); break;
     case 'importguide': renderImportGuide(); break;
     case 'ai': renderAIAssistant(); break;
+    case 'objectives': renderObjectives(); break;
   }
 }
 

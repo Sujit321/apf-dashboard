@@ -358,6 +358,10 @@
  data-tooltip="Self Capacity Building">
  <i class="fas fa-graduation-cap"></i><span>Capacity Building</span>
  </a>
+ <a href="#" class="nav-item" data-section="objectives" id="nav-objectives"
+ data-tooltip="Objective Setting & Review">
+ <i class="fas fa-flag-checkered"></i><span>Objective Setting</span>
+ </a>
  </div>
  </div>
 
@@ -8011,7 +8015,165 @@ function getOrCreateFolder() {
 
  </section>
 
+ <!-- ==================== OBJECTIVE SETTING & PERFORMANCE REVIEW ==================== -->
+ <section class="content-section" id="section-objectives">
+ <div class="section-header">
+ <div>
+ <h1><i class="fas fa-flag-checkered"></i> Objective Setting & Performance Review</h1>
+ <p class="section-subtitle">Set yearly objectives, track action points, add comments, and generate performance reviews</p>
+ </div>
+ <div class="header-actions">
+ <button class="btn btn-outline ai-action-btn" id="aiObjActionBtn" onclick="generateAIActionPointersAll()" style="display:none">
+ <i class="fas fa-robot"></i> AI Suggestions
+ </button>
+ <button class="btn btn-outline" onclick="exportObjectivesExcel()">
+ <i class="fas fa-file-excel"></i> Export Excel
+ </button>
+ <button class="btn btn-primary" onclick="openObjectiveModal()">
+ <i class="fas fa-plus"></i> New Objective
+ </button>
+ </div>
+ </div>
+
+ <!-- Stats Summary -->
+ <div class="obj-stats-bar" id="objStatsBar"></div>
+
+ <!-- Filters -->
+ <div class="filter-bar obj-filter-bar">
+ <div class="filter-group">
+ <select id="objYearFilter" onchange="_pageState.objectives=1;renderObjectives()">
+ <option value="all">All Years</option>
+ <option value="2025-26" selected>2025-26</option>
+ <option value="2024-25">2024-25</option>
+ <option value="2026-27">2026-27</option>
+ </select>
+ <select id="objCategoryFilter" onchange="_pageState.objectives=1;renderObjectives()">
+ <option value="all">All Categories</option>
+ <option value="FLN & GLL">FLN & GLL Achievement</option>
+ <option value="ECE">ECE Contribution</option>
+ <option value="Cluster Development">Cluster Development</option>
+ <option value="Self-Capacity">Self-Capacity Enhancement</option>
+ <option value="TLC">TLC & Block Office</option>
+ <option value="Other">Other</option>
+ </select>
+ <select id="objStatusFilter" onchange="_pageState.objectives=1;renderObjectives()">
+ <option value="all">All Status</option>
+ <option value="not-started">Not Started</option>
+ <option value="in-progress">In Progress</option>
+ <option value="completed">Completed</option>
+ </select>
+ <input type="text" id="objSearchInput" placeholder="Search objectives..." oninput="_pageState.objectives=1;renderObjectives()">
+ </div>
+ </div>
+
+ <!-- Objectives Container -->
+ <div id="objectivesContainer" class="objectives-grid">
+ <div class="empty-state">
+ <i class="fas fa-flag-checkered"></i>
+ <h3>No objectives set yet</h3>
+ <p>Click "New Objective" to set your yearly objectives</p>
+ </div>
+ </div>
+ </section>
+
  </main>
+
+ <!-- ===== Objective Setting Modal ===== -->
+ <div class="modal-overlay" id="objectiveModal">
+ <div class="modal" style="max-width:720px">
+ <div class="modal-header">
+ <h2 id="objModalTitle"><i class="fas fa-flag-checkered"></i> New Objective</h2>
+ <button class="modal-close" onclick="closeModal('objectiveModal')"><i class="fas fa-times"></i></button>
+ </div>
+ <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+ <!-- Template Quick-Fill Buttons -->
+ <div class="obj-template-section">
+ <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">
+ <i class="fas fa-magic"></i> Quick Templates (pre-fill from standard objectives)
+ </label>
+ <div class="obj-template-pills">
+ <button type="button" class="obj-tpl-pill" onclick="fillObjTemplate('fln')"><i class="fas fa-book-reader"></i> FLN & GLL</button>
+ <button type="button" class="obj-tpl-pill" onclick="fillObjTemplate('ece')"><i class="fas fa-child"></i> ECE</button>
+ <button type="button" class="obj-tpl-pill" onclick="fillObjTemplate('cluster')"><i class="fas fa-project-diagram"></i> Cluster Dev</button>
+ <button type="button" class="obj-tpl-pill" onclick="fillObjTemplate('self')"><i class="fas fa-user-graduate"></i> Self-Capacity</button>
+ <button type="button" class="obj-tpl-pill" onclick="fillObjTemplate('tlc')"><i class="fas fa-building"></i> TLC & Block</button>
+ <button type="button" class="obj-tpl-pill" onclick="fillObjTemplate('other')"><i class="fas fa-ellipsis-h"></i> Other</button>
+ </div>
+ </div>
+
+ <input type="hidden" id="objEditId">
+
+ <div class="form-row">
+ <div class="form-group" style="flex:1">
+ <label for="objYear"><i class="fas fa-calendar"></i> Academic Year</label>
+ <select id="objYear">
+ <option value="2024-25">2024-25</option>
+ <option value="2025-26" selected>2025-26</option>
+ <option value="2026-27">2026-27</option>
+ </select>
+ </div>
+ <div class="form-group" style="flex:1">
+ <label for="objCategory"><i class="fas fa-tag"></i> Category</label>
+ <select id="objCategory">
+ <option value="FLN & GLL">FLN & GLL Achievement</option>
+ <option value="ECE">ECE Contribution</option>
+ <option value="Cluster Development">Cluster Development</option>
+ <option value="Self-Capacity">Self-Capacity Enhancement</option>
+ <option value="TLC">TLC & Block Office</option>
+ <option value="Other">Other</option>
+ </select>
+ </div>
+ </div>
+
+ <div class="form-group">
+ <label for="objTitle"><i class="fas fa-heading"></i> Objective Title</label>
+ <input type="text" id="objTitle" placeholder="e.g., Teacher Professional Development: FLN and GLL Achievement">
+ </div>
+
+ <div class="form-group">
+ <label for="objDescription"><i class="fas fa-align-left"></i> Description & Targets</label>
+ <textarea id="objDescription" rows="6" placeholder="Describe the objective in detail with specific targets and numbers..."></textarea>
+ </div>
+
+ <div class="form-row">
+ <div class="form-group" style="flex:1">
+ <label for="objStatus"><i class="fas fa-info-circle"></i> Status</label>
+ <select id="objStatus">
+ <option value="not-started">Not Started</option>
+ <option value="in-progress">In Progress</option>
+ <option value="completed">Completed</option>
+ </select>
+ </div>
+ <div class="form-group" style="flex:1">
+ <label for="objProgress"><i class="fas fa-tasks"></i> Progress (%)</label>
+ <input type="range" id="objProgress" min="0" max="100" value="0" oninput="document.getElementById('objProgressVal').textContent=this.value+'%'">
+ <span id="objProgressVal" style="font-size:13px;font-weight:600;color:var(--accent)">0%</span>
+ </div>
+ </div>
+
+ <div class="form-group">
+ <label for="objRating"><i class="fas fa-star"></i> Performance Rating</label>
+ <select id="objRating">
+ <option value="">Not Rated</option>
+ <option value="exceeds">⭐ Exceeds Expectations</option>
+ <option value="meets">✅ Meets Expectations</option>
+ <option value="below">⚠️ Below Expectations</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label for="objReviewNotes"><i class="fas fa-pen-fancy"></i> Review Notes</label>
+ <textarea id="objReviewNotes" rows="3" placeholder="Supervisor/self-review notes..."></textarea>
+ </div>
+
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-ghost" onclick="closeModal('objectiveModal')">Cancel</button>
+ <button class="btn btn-primary" onclick="saveObjective()"><i class="fas fa-save"></i> Save Objective</button>
+ </div>
+ </div>
+ </div>
 
  <!-- Command Palette (Ctrl+K) -->
  <div class="cmd-palette-overlay" id="cmdPalette">
