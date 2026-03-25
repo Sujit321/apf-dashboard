@@ -5037,7 +5037,7 @@ function importVisitsExcel(event) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws);
+      const rows = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'dd-mm-yyyy' });
       if (rows.length === 0) {
         showToast('No data found in the file', 'error');
         return;
@@ -6172,6 +6172,18 @@ function exportAttendanceReport() {
   showToast('Attendance report exported to Excel', 'success');
 }
 
+// Date parser for DMT Excel - DD-MM-YYYY format only.
+function parseDMTDate(raw) {
+  if (!raw) return '';
+  const s = String(raw).trim();
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (m) {
+    const day = parseInt(m[1]), month = parseInt(m[2]), year = parseInt(m[3]);
+    return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+  return s;
+}
+
 // ===== OBSERVATIONS =====
 let observationRatings = { engagement: 0, methodology: 0, tlm: 0 };
 let obsActiveCharts = {};
@@ -6340,6 +6352,39 @@ function saveObservation(e) {
   e.preventDefault();
   const observations = DB.get('observations');
   const id = document.getElementById('observationId').value;
+
+  // --- Duplicate detection: phone + practice serial + observation status ---
+  if (!id) {
+    const newPhone = (document.getElementById('observationTeacherPhone').value || '').trim().replace(/\D/g, '');
+    const newSerial = (document.getElementById('observationPracticeSerial').value || '').trim().toLowerCase();
+    const newStatus = document.getElementById('observationStatus').value || '';
+
+    if (newPhone && newSerial) {
+      const dup = observations.find(o => {
+        const oPhone = (o.teacherPhone || '').trim().replace(/\D/g, '');
+        const oSerial = (o.practiceSerial || '').trim().toLowerCase();
+        const oStatus = o.observationStatus || '';
+        return oPhone === newPhone && oSerial === newSerial && oStatus === newStatus;
+      });
+
+      if (dup) {
+        const dupDate = dup.date ? new Date(dup.date).toLocaleDateString('en-IN') : 'N/A';
+        const proceed = confirm(
+          `⚠️ Possible duplicate found!\n\n` +
+          `An observation already exists with:\n` +
+          `• Phone: ${dup.teacherPhone}\n` +
+          `• Practice Serial: ${dup.practiceSerial}\n` +
+          `• Observation: ${dup.observationStatus}\n` +
+          `• School: ${dup.school || 'N/A'}\n` +
+          `• Teacher: ${dup.teacher || 'N/A'}\n` +
+          `• Date: ${dupDate}\n\n` +
+          `Do you still want to save this entry?`
+        );
+        if (!proceed) return;
+      }
+    }
+  }
+
   const data = {
     school: document.getElementById('observationSchool').value.trim(),
     teacher: document.getElementById('observationTeacher').value.trim(),
@@ -6685,12 +6730,12 @@ async function loadFilteredImportPreview(event) {
 
   try {
     const data = await file.arrayBuffer();
-    const wb = XLSX.read(data, { type: 'array', cellDates: true });
+    const wb = XLSX.read(data, { type: 'array' });
 
     let rows = [];
     for (const sheetName of wb.SheetNames) {
       const ws = wb.Sheets[sheetName];
-      const sheetRows = XLSX.utils.sheet_to_json(ws);
+      const sheetRows = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'dd-mm-yyyy' });
       if (sheetRows.length > 0) rows = rows.concat(sheetRows);
     }
 
@@ -6815,19 +6860,20 @@ async function executeFilteredImport() {
 
   let observations = DB.get('observations');
   let imported = 0;
-  const buildKey = (o) => `${o.nid || ''}|${o.date || ''}|${o.practiceSerial || ''}`;
+  const buildKey = (o) => `${o.nid || ''}|${o.date || ''}|${o.practiceSerial || ''}|${o.observationStatus || ''}`;
   const existingKeys = new Set(observations.filter(o => o.source === 'DMT Import').map(buildKey));
+  // Phone-based dedup key (catches cross-source duplicates)
+  const buildPhoneKey = (o) => {
+    const ph = (o.teacherPhone || '').replace(/\D/g, '');
+    const sr = (o.practiceSerial || '').trim().toLowerCase();
+    const st = (o.observationStatus || '');
+    return (ph && sr) ? `${ph}|${sr}|${st}` : null;
+  };
+  const existingPhoneKeys = new Set(observations.map(buildPhoneKey).filter(Boolean));
 
   rows.forEach(row => {
     const nid = String(row['NID'] || '').trim();
-    let dateStr = '';
-    const rawDate = row['Response Date'];
-    if (rawDate instanceof Date) {
-      dateStr = rawDate.toISOString().split('T')[0];
-    } else if (typeof rawDate === 'string' && rawDate) {
-      const parsed = new Date(rawDate);
-      if (!isNaN(parsed)) dateStr = parsed.toISOString().split('T')[0];
-    }
+    const dateStr = parseDMTDate(row['Response Date']);
 
     const obs = {
       id: DB.generateId(),
@@ -6860,9 +6906,12 @@ async function executeFilteredImport() {
 
     const key = buildKey(obs);
     if (existingKeys.has(key)) return;
+    const phoneKey = buildPhoneKey(obs);
+    if (phoneKey && existingPhoneKeys.has(phoneKey)) return;
 
     observations.push(obs);
     existingKeys.add(key);
+    if (phoneKey) existingPhoneKeys.add(phoneKey);
     imported++;
   });
 
@@ -6969,14 +7018,25 @@ function previewUnload() {
   if (f.block !== 'all') pool = pool.filter(o => o.block === f.block);
 
   const cascadeClusters = [...new Set(pool.map(o => o.cluster).filter(Boolean))].sort();
-  const clusterSel = document.getElementById('unloadCluster');
-  const curCluster = clusterSel?.value || 'all';
-  if (clusterSel) {
-    clusterSel.innerHTML = `<option value="all">All Clusters (${cascadeClusters.length})</option>` +
-      cascadeClusters.map(v => `<option value="${escapeHtml(v)}"${v === curCluster ? ' selected' : ''}>${escapeHtml(v)}</option>`).join('');
+  const prevSelected = getSelectedClusters('unloadClusterList');
+  populateClusterCheckboxes('unloadClusterList', cascadeClusters, 'previewUnload()');
+  if (prevSelected) {
+    const listEl = document.getElementById('unloadClusterList');
+    if (listEl) {
+      listEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = prevSelected.has(cb.value);
+      });
+      const selAll = listEl.closest('.cluster-checkbox-wrap')?.querySelector('.cluster-select-all input');
+      if (selAll) {
+        const allCbs = listEl.querySelectorAll('input[type="checkbox"]');
+        const checkedCbs = listEl.querySelectorAll('input[type="checkbox"]:checked');
+        selAll.checked = allCbs.length > 0 && checkedCbs.length === allCbs.length;
+      }
+    }
   }
+  updateClusterCount('unloadCluster', 'unloadClusterCount');
 
-  if (f.cluster !== 'all') pool = pool.filter(o => o.cluster === f.cluster);
+  if (f.clusters !== null) pool = pool.filter(o => f.clusters.has(o.cluster));
 
   const cascadeObservers = [...new Set(pool.map(o => o.observer).filter(Boolean))].sort();
   const obsSel = document.getElementById('unloadObserver');
@@ -7072,13 +7132,13 @@ async function importDMTExcel(event) {
 
   try {
     const data = await file.arrayBuffer();
-    const wb = XLSX.read(data, { type: 'array', cellDates: true });
+    const wb = XLSX.read(data, { type: 'array' });
 
     // Read ALL sheets and combine rows (in case data spans multiple sheets)
     let rows = [];
     for (const sheetName of wb.SheetNames) {
       const ws = wb.Sheets[sheetName];
-      const sheetRows = XLSX.utils.sheet_to_json(ws);
+      const sheetRows = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'dd-mm-yyyy' });
       if (sheetRows.length > 0) rows = rows.concat(sheetRows);
     }
 
@@ -7107,23 +7167,21 @@ async function importDMTExcel(event) {
       observations = manualOnly;
     }
     let imported = 0;
-    // Build dedup key: NID + date + practice serial (NID is teacher ID, not unique per row)
-    const buildKey = (o) => `${o.nid || ''}|${o.date || ''}|${o.practiceSerial || ''}`;
+    // Build dedup key: NID + date + practice serial + observation status
+    const buildKey = (o) => `${o.nid || ''}|${o.date || ''}|${o.practiceSerial || ''}|${o.observationStatus || ''}`;
     const existingKeys = new Set(observations.filter(o => o.source === 'DMT Import').map(buildKey));
+    // Phone-based dedup key (catches cross-source duplicates)
+    const buildPhoneKey = (o) => {
+      const ph = (o.teacherPhone || '').replace(/\D/g, '');
+      const sr = (o.practiceSerial || '').trim().toLowerCase();
+      const st = (o.observationStatus || '');
+      return (ph && sr) ? `${ph}|${sr}|${st}` : null;
+    };
+    const existingPhoneKeys = new Set(observations.map(buildPhoneKey).filter(Boolean));
 
     rows.forEach(row => {
       const nid = String(row['NID'] || '').trim();
-
-      // Parse date
-      let dateStr = '';
-      const rawDate = row['Response Date'];
-      if (rawDate instanceof Date) {
-        dateStr = rawDate.toISOString().split('T')[0];
-      } else if (typeof rawDate === 'string' && rawDate) {
-        // Try parsing "9/28/2020, 8:45 AM" format
-        const parsed = new Date(rawDate);
-        if (!isNaN(parsed)) dateStr = parsed.toISOString().split('T')[0];
-      }
+      const dateStr = parseDMTDate(row['Response Date']);
 
       const obs = {
         id: DB.generateId(),
@@ -7154,12 +7212,15 @@ async function importDMTExcel(event) {
         source: 'DMT Import'
       };
 
-      // Skip exact duplicates (same teacher + date + practice)
+      // Skip duplicates (NID + date + practice + observation status)
       const key = buildKey(obs);
       if (existingKeys.has(key)) return;
+      const phoneKey = buildPhoneKey(obs);
+      if (phoneKey && existingPhoneKeys.has(phoneKey)) return;
 
       observations.push(obs);
       existingKeys.add(key);
+      if (phoneKey) existingPhoneKeys.add(phoneKey);
       imported++;
     });
 
@@ -14077,12 +14138,12 @@ async function loadSchoolProfileImportPreview(event) {
 
   try {
     const data = await file.arrayBuffer();
-    const wb = XLSX.read(data, { type: 'array', cellDates: true });
+    const wb = XLSX.read(data, { type: 'array' });
 
     let rows = [];
     for (const sheetName of wb.SheetNames) {
       const ws = wb.Sheets[sheetName];
-      const sheetRows = XLSX.utils.sheet_to_json(ws);
+      const sheetRows = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'dd-mm-yyyy' });
       if (sheetRows.length > 0) rows = rows.concat(sheetRows);
     }
 
@@ -17155,7 +17216,7 @@ function importTeacherRecordsExcel(event) {
   reader.onload = function (e) {
     try {
       const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const wb = XLSX.read(data, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       if (!ws) { showToast('No data found in Excel file', 'error'); return; }
 

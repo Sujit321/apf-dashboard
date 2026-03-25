@@ -7839,20 +7839,26 @@ body.modal-open {
     transition: all 0.3s;
     position: relative;
 }
+
 .excel-ai-ask-bar::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
     background: linear-gradient(90deg, var(--accent), #8b5cf6, #3b82f6, var(--accent));
     background-size: 200% 100%;
     animation: gradientShift 4s ease infinite;
 }
+
 .excel-ai-ask-inner {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px 18px;
 }
+
 .excel-ai-query-input {
     flex: 1;
     background: transparent;
@@ -7863,11 +7869,13 @@ body.modal-open {
     outline: none;
     padding: 4px 0;
 }
+
 .excel-ai-query-input::placeholder {
     color: var(--text-muted);
     font-style: italic;
     font-size: 13px;
 }
+
 .excel-ai-ask-btn {
     border-radius: 10px !important;
     padding: 8px 14px !important;
@@ -7880,6 +7888,7 @@ body.modal-open {
     border-top: 1px solid rgba(245, 158, 11, 0.15);
     animation: fadeSlideUp 0.3s ease;
 }
+
 .excel-ai-answer-header {
     display: flex;
     align-items: center;
@@ -7891,6 +7900,7 @@ body.modal-open {
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
+
 .excel-ai-answer-header i.fa-robot {
     margin-right: 8px;
     font-size: 14px;
@@ -7899,31 +7909,38 @@ body.modal-open {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
 .excel-ai-answer-body {
     padding: 4px 20px 20px;
     font-size: 13.5px;
     line-height: 1.75;
     color: var(--text-primary);
 }
+
 .excel-ai-answer-body p {
     margin: 0 0 10px;
 }
+
 .excel-ai-answer-body ul,
 .excel-ai-answer-body ol {
     margin: 6px 0 14px;
     padding-left: 20px;
 }
+
 .excel-ai-answer-body li {
     margin-bottom: 6px;
     padding-left: 4px;
 }
+
 .excel-ai-answer-body li::marker {
     color: var(--accent);
 }
+
 .excel-ai-answer-body strong {
     color: var(--text-primary);
     font-weight: 700;
 }
+
 .excel-ai-answer-body code {
     background: rgba(245, 158, 11, 0.1);
     color: var(--accent);
@@ -7932,6 +7949,7 @@ body.modal-open {
     font-size: 12px;
     font-family: 'Consolas', 'Monaco', monospace;
 }
+
 .excel-ai-answer-body h1,
 .excel-ai-answer-body h2,
 .excel-ai-answer-body h3,
@@ -7940,9 +7958,19 @@ body.modal-open {
     margin: 16px 0 8px;
     font-weight: 700;
 }
-.excel-ai-answer-body h2 { font-size: 15px; }
-.excel-ai-answer-body h3 { font-size: 14px; }
-.excel-ai-answer-body h4 { font-size: 13px; color: var(--accent); }
+
+.excel-ai-answer-body h2 {
+    font-size: 15px;
+}
+
+.excel-ai-answer-body h3 {
+    font-size: 14px;
+}
+
+.excel-ai-answer-body h4 {
+    font-size: 13px;
+    color: var(--accent);
+}
 
 /* AI Result Modal Body styling */
 .ai-insight-text,
@@ -7951,15 +7979,52 @@ body.modal-open {
     line-height: 1.75;
     color: var(--text-primary);
 }
-.ai-insight-text p { margin: 0 0 10px; }
+
+.ai-insight-text p {
+    margin: 0 0 10px;
+}
+
 .ai-insight-text ul,
-.ai-insight-text ol { margin: 6px 0 14px; padding-left: 20px; }
-.ai-insight-text li { margin-bottom: 6px; padding-left: 4px; }
-.ai-insight-text li::marker { color: var(--accent); }
-.ai-insight-text strong { color: var(--text-primary); font-weight: 700; }
-.ai-insight-text h2 { font-size: 16px; margin: 18px 0 8px; font-weight: 700; color: var(--text-primary); }
-.ai-insight-text h3 { font-size: 14px; margin: 14px 0 6px; font-weight: 700; color: var(--text-primary); }
-.ai-insight-text h4 { font-size: 13px; margin: 12px 0 4px; font-weight: 700; color: var(--accent); }
+.ai-insight-text ol {
+    margin: 6px 0 14px;
+    padding-left: 20px;
+}
+
+.ai-insight-text li {
+    margin-bottom: 6px;
+    padding-left: 4px;
+}
+
+.ai-insight-text li::marker {
+    color: var(--accent);
+}
+
+.ai-insight-text strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.ai-insight-text h2 {
+    font-size: 16px;
+    margin: 18px 0 8px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.ai-insight-text h3 {
+    font-size: 14px;
+    margin: 14px 0 6px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.ai-insight-text h4 {
+    font-size: 13px;
+    margin: 12px 0 4px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
 .ai-insight-text code {
     background: rgba(245, 158, 11, 0.1);
     color: var(--accent);
@@ -32497,7 +32562,8 @@ body.light-mode .lp-weekly-day-left {
 .lpa-table-wrap {
     overflow-x: auto;
     overflow-y: auto;
-    max-height: 520px; /* ~20 rows visible, scrolls after */
+    max-height: 520px;
+    /* ~20 rows visible, scrolls after */
 }
 
 .lpa-table {
