@@ -8588,7 +8588,7 @@ function analyzeObservationData(obs) {
 function buildSmartPlannerHTML(a, obs) {
   const engLabel = v => v >= 2.5 ? ' High' : v >= 1.5 ? ' Medium' : ' Low';
   const engColor = v => v >= 2.5 ? '#10b981' : v >= 1.5 ? '#f59e0b' : '#ef4444';
-  const daysLabel = d => d < 7 ? 'This week' : d < 30 ? `${Math.floor(d / 7)}w ago` : d < 365 ? `${Math.floor(d / 30)}m ago` : `${Math.floor(d / 365)}y ago`;
+  const daysLabel = d => d >= 999 ? 'No data' : d < 7 ? 'This week' : d < 30 ? `${Math.floor(d / 7)}w ago` : d < 365 ? `${Math.floor(d / 30)}m ago` : `${Math.floor(d / 365)}y ago`;
 
   // Existing features data
   const ideas = DB.get('ideas');
@@ -9086,7 +9086,35 @@ function _normText(v) {
 
 function _svsDateMs(dateStr) {
   if (!dateStr) return null;
-  const d = new Date(dateStr);
+  const s = String(dateStr).trim();
+
+  // ISO format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS
+  const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const d = new Date(+isoMatch[1], +isoMatch[2] - 1, +isoMatch[3]);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+
+  // DD/MM/YYYY or DD-MM-YYYY
+  const dmyMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmyMatch) {
+    const d = new Date(+dmyMatch[3], +dmyMatch[2] - 1, +dmyMatch[1]);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+
+  // DD-Mon-YYYY (e.g. 21-Jan-2026)
+  const monNames = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+  const monMatch = s.match(/^(\d{1,2})[\/\-]([A-Za-z]{3})[\/\-](\d{4})$/);
+  if (monMatch) {
+    const mon = monNames[monMatch[2].toLowerCase()];
+    if (mon !== undefined) {
+      const d = new Date(+monMatch[3], mon, +monMatch[1]);
+      return isNaN(d.getTime()) ? null : d.getTime();
+    }
+  }
+
+  // Fallback: try native parsing
+  const d = new Date(s);
   return isNaN(d.getTime()) ? null : d.getTime();
 }
 
@@ -9628,9 +9656,10 @@ function buildSmartVisitSchedulerModel() {
     rec.totalVisits++;
     const status = (v.status || '').toLowerCase();
     if (status === 'completed') rec.completedVisits++;
-    if (status === 'planned' && v.date && v.date >= todayKey) rec.upcomingPlanned++;
-    if (status === 'planned' && v.date && v.date < todayKey) rec.overduePlanned++;
-    if (v.date && (!rec.lastVisit || v.date > rec.lastVisit)) rec.lastVisit = v.date;
+    const vMs = _svsDateMs(v.date);
+    if (status === 'planned' && vMs !== null && vMs >= todayMs) rec.upcomingPlanned++;
+    if (status === 'planned' && vMs !== null && vMs < todayMs) rec.overduePlanned++;
+    if (vMs !== null && (!rec.lastVisit || vMs > (_svsDateMs(rec.lastVisit) || 0))) rec.lastVisit = v.date;
   });
 
   const engagementMap = {
@@ -9644,7 +9673,8 @@ function buildSmartVisitSchedulerModel() {
     const rec = ensureSchool(o.school, o.block, o.cluster, '');
     if (!rec) return;
     rec.totalObservations++;
-    if (o.date && (!rec.lastObservation || o.date > rec.lastObservation)) rec.lastObservation = o.date;
+    const oMs = _svsDateMs(o.date);
+    if (oMs !== null && (!rec.lastObservation || oMs > (_svsDateMs(rec.lastObservation) || 0))) rec.lastObservation = o.date;
     const key = (o.engagementLevel || '').toLowerCase().replace(/_/g, ' ').trim();
     const score = engagementMap[key];
     if (score) rec.engagementScores.push(score);
@@ -9657,7 +9687,8 @@ function buildSmartVisitSchedulerModel() {
     const status = (f.status || '').toLowerCase();
     const done = f.done === true || status === 'done' || status === 'completed' || status === 'closed';
     if (!done) rec.pendingFollowups++;
-    if (!done && f.dueDate && f.dueDate < todayKey) rec.overdueFollowups++;
+    const fDueMs = _svsDateMs(f.dueDate);
+    if (!done && fDueMs !== null && fDueMs < todayMs) rec.overdueFollowups++;
   });
 
   const schools = [...schoolsMap.values()].map(s => {
@@ -9791,8 +9822,8 @@ function renderSmartVisitScheduler() {
  <div class="svs-rec-score">${s.priorityScore}</div>
  </div>
  <div class="svs-rec-stats">
- <span><i class="fas fa-clock"></i> ${s.daysSinceVisit}d since visit</span>
- <span><i class="fas fa-eye"></i> ${s.daysSinceObservation}d since observation</span>
+ <span><i class="fas fa-clock"></i> ${s.daysSinceVisit >= 999 ? "N/A" : s.daysSinceVisit + "d"} since visit</span>
+ <span><i class="fas fa-eye"></i> ${s.daysSinceObservation >= 999 ? "N/A" : s.daysSinceObservation + "d"} since observation</span>
  <span><i class="fas fa-chart-line"></i> ${s.avgEngagement.toFixed(1)}/3 engagement</span>
  </div>
  <div class="svs-rec-actions">
@@ -9919,7 +9950,7 @@ ${topIssues || 'No issues detected'}
 function _buildSchedulerAIContext() {
   const model = _svsModel || buildSmartVisitSchedulerModel();
   const topSchools = (model.recommendations || []).slice(0, 12).map((s, idx) =>
-    `${idx + 1}. ${s.name} | score:${s.priorityScore} | urgency:${s.urgency} | since-visit:${s.daysSinceVisit}d | since-observation:${s.daysSinceObservation}d | pending-followups:${s.pendingFollowups} | overdue-followups:${s.overdueFollowups} | planned-upcoming:${s.upcomingPlanned}`
+    `${idx + 1}. ${s.name} | score:${s.priorityScore} | urgency:${s.urgency} | since-visit:${s.daysSinceVisit >= 999 ? "N/A" : s.daysSinceVisit + "d"} | since-observation:${s.daysSinceObservation >= 999 ? "N/A" : s.daysSinceObservation + "d"} | pending-followups:${s.pendingFollowups} | overdue-followups:${s.overdueFollowups} | planned-upcoming:${s.upcomingPlanned}`
   ).join('\n');
   const weekDraft = (model.weekSlots || []).map(day =>
     `${day.label}: ${(day.items || []).map(i => i.name).join(', ') || 'No suggestion'}`
