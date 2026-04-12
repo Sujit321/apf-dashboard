@@ -22478,8 +22478,10 @@ const SarvamAI = {
     const model = normalizeSarvamModel(options.model || s.sarvamModel || 'sarvam-m');
     // Reasoning models use 60-70% of tokens on chain-of-thought, so scale up aggressively
     let maxTokens = options.max_tokens || 2048;
-    if (model === 'sarvam-105b') maxTokens = Math.max(4096, Math.round(maxTokens * 4));
-    else if (model === 'sarvam-30b') maxTokens = Math.max(4096, Math.round(maxTokens * 3));
+    // Starter tier limits: sarvam-105b/30b = 4096, sarvam-m = 2048
+    if (model === 'sarvam-105b') maxTokens = Math.min(4096, Math.round(maxTokens * 2));
+    else if (model === 'sarvam-30b') maxTokens = Math.min(4096, Math.round(maxTokens * 2));
+    else maxTokens = Math.min(2048, maxTokens);
 
     // Inject user's preferred response language into the system prompt
     const langCode = s.sarvamDefaultLang || 'en-IN';
@@ -22497,16 +22499,51 @@ const SarvamAI = {
       );
     }
 
-    const data = await this.request('/v1/chat/completions', {
+    const reqBody = {
       model,
       messages,
       temperature: options.temperature ?? 0.5,
       max_tokens: maxTokens,
       reasoning_effort: options.reasoning_effort || s.sarvamReasoning || 'medium',
       stream: false
-    });
-    const message = data?.choices?.[0]?.message;
+    };
+
+    // First request
+    let data = await this.request('/v1/chat/completions', reqBody);
+    let message = data?.choices?.[0]?.message;
     if (message) message.content = getSarvamMessageDisplayText(message, '');
+
+    // Auto-continuation: if response was truncated, request more chunks
+    const MAX_CONTINUATIONS = 3;
+    let fullContent = message?.content || '';
+    let finishReason = data?.choices?.[0]?.finish_reason;
+
+    if (finishReason === 'length' && fullContent.length > 0) {
+      for (let i = 0; i < MAX_CONTINUATIONS; i++) {
+        const contMessages = [
+          ...messages,
+          { role: 'assistant', content: fullContent },
+          { role: 'user', content: 'Continue from exactly where you stopped. Do not repeat anything already written. Continue seamlessly.' }
+        ];
+        const contData = await this.request('/v1/chat/completions', {
+          ...reqBody,
+          messages: contMessages
+        });
+        const contMessage = contData?.choices?.[0]?.message;
+        if (contMessage) contMessage.content = getSarvamMessageDisplayText(contMessage, '');
+        const chunk = contMessage?.content || '';
+        if (!chunk) break;
+        fullContent += chunk;
+        finishReason = contData?.choices?.[0]?.finish_reason;
+        if (finishReason !== 'length') break;
+      }
+      // Update the original response with the combined content
+      if (data?.choices?.[0]?.message) {
+        data.choices[0].message.content = fullContent;
+        data.choices[0].finish_reason = finishReason;
+      }
+    }
+
     return data;
   },
   async translate(text, sourceLang, targetLang) {
