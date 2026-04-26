@@ -10129,7 +10129,15 @@ function renderObsAnalytics() {
   const monthCounts = {};
   observations.forEach(o => {
     if (!o.date) return;
-    const m = o.date.substring(0, 7); // YYYY-MM
+    let m = o.date.substring(0, 7); // YYYY-MM
+    if (!/^\d{4}-\d{2}/.test(m)) {
+      const d = new Date(o.date);
+      if (!isNaN(d.getTime())) {
+        m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      } else {
+        return;
+      }
+    }
     monthCounts[m] = (monthCounts[m] || 0) + 1;
   });
   const sortedMonths = Object.keys(monthCounts).sort();
@@ -12373,9 +12381,7 @@ function renderPlanner() {
     trainings.filter(t => t.date === day.dateKey).forEach(t => {
       autoTasks.push({ id: t.id, source: 'training', text: ` ${t.title}`, type: 'training', auto: true, status: t.status });
     });
-    observations.filter(o => o.date === day.dateKey).forEach(o => {
-      autoTasks.push({ id: o.id, source: 'observation', text: ` Observation ${o.school}`, type: 'observation', auto: true });
-    });
+    // observations not added to planner
 
     const allTasks = [...autoTasks, ...dayTasks];
     const taskCount = allTasks.length;
