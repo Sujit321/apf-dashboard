@@ -7667,9 +7667,12 @@ async function executeFilteredImport() {
   };
   const existingPhoneKeys = new Set(observations.map(buildPhoneKey).filter(Boolean));
 
-  rows.forEach(row => {
+  rows.forEach(rawRow => {
+    const row = {};
+    for (const k in rawRow) row[k.trim()] = rawRow[k];
     const nid = String(row['NID'] || '').trim();
-    const dateStr = parseDMTDate(row['Response Date']);
+    const dateRaw = row['Response Date'] || row['Observation Date'] || row['Date'] || row['Timestamp'] || row['date'];
+    const dateStr = parseDMTDate(dateRaw);
 
     const obs = {
       id: DB.generateId(),
@@ -7975,9 +7978,12 @@ async function importDMTExcel(event) {
     };
     const existingPhoneKeys = new Set(observations.map(buildPhoneKey).filter(Boolean));
 
-    rows.forEach(row => {
+    rows.forEach(rawRow => {
+      const row = {};
+      for (const k in rawRow) row[k.trim()] = rawRow[k];
       const nid = String(row['NID'] || '').trim();
-      const dateStr = parseDMTDate(row['Response Date']);
+      const dateRaw = row['Response Date'] || row['Observation Date'] || row['Date'] || row['Timestamp'] || row['date'];
+      const dateStr = parseDMTDate(dateRaw);
 
       const obs = {
         id: DB.generateId(),
@@ -29088,6 +29094,55 @@ function saveQuickCapture() {
 }
 
 // ===== TEACHER GROWTH TRACKER =====
+
+// Parses DD/MM/YYYY, YYYY-MM-DD, or any JS-parseable date string � always returns LOCAL date (no UTC shift)
+function _parseDMTDate(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  if (/^\d{5}$/.test(s)) {
+    const serial = parseInt(s, 10);
+    if (serial > 30000 && serial < 60000) {
+      const d = new Date((serial - 25569) * 86400000);
+      return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    }
+  }
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    let y = parseInt(isoMatch[1], 10), m = parseInt(isoMatch[2], 10), d = parseInt(isoMatch[3], 10);
+    if (m > 12) { let temp = m; m = d; d = temp; }
+    return new Date(y, m - 1, d);
+  }
+  const slashMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slashMatch) {
+    let [, p1, p2, y] = slashMatch;
+    if (y.length === 2) y = parseInt(y, 10) > 50 ? '19' + y : '20' + y;
+    let d = parseInt(p1, 10), m = parseInt(p2, 10);
+    if (m > 12) { m = parseInt(p1, 10); d = parseInt(p2, 10); }
+    return new Date(parseInt(y, 10), m - 1, d);
+  }
+  const dashMatch = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (dashMatch) {
+    let [, p1, p2, y] = dashMatch;
+    let d = parseInt(p1, 10), m = parseInt(p2, 10);
+    if (m > 12) { m = parseInt(p1, 10); d = parseInt(p2, 10); }
+    return new Date(parseInt(y, 10), m - 1, d);
+  }
+  if (s.includes('T')) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function _parseDMTDateMs(str) {
+  const d = _parseDMTDate(str);
+  return d ? d.getTime() : null;
+}
+function _fmtDMTDate(str, opts) {
+  const d = _parseDMTDate(str);
+  if (!d) return '';
+  return d.toLocaleDateString('en-IN', opts || { day: 'numeric', month: 'short', year: 'numeric' });
+}
 function _buildTeacherProfiles() {
   const observations = DB.get('observations');
   const _tgTrainings = DB.get('trainings') || [];
@@ -29120,12 +29175,14 @@ function _buildTeacherProfiles() {
   });
 
   return Object.values(map).map(t => {
-    t.observations.sort((a, b) => new Date(a.date) - new Date(b.date));
+    t.observations.sort((a, b) => (_parseDMTDateMs(a.date) || 0) - (_parseDMTDateMs(b.date) || 0));
     t.totalObs = t.observations.length;
     t.avgEngagement = t.engagementScores.length ? t.engagementScores.reduce((a, b) => a + b, 0) / t.engagementScores.length : 0;
     t.lastDate = t.observations[t.observations.length - 1]?.date || '';
     t.firstDate = t.observations[0]?.date || '';
-    t.daysSinceLast = t.lastDate ? Math.floor((new Date() - new Date(t.lastDate)) / 86400000) : 999;
+    const _lastMs = _parseDMTDateMs(t.lastDate);
+    const _todayMidnight = new Date(); _todayMidnight.setHours(0, 0, 0, 0);
+    t.daysSinceLast = _lastMs ? Math.max(0, Math.floor((_todayMidnight.getTime() - _lastMs) / 86400000)) : 999;
     t.subjectList = [...t.subjects];
     // ====== COMPREHENSIVE MULTI-SIGNAL TREND ALGORITHM ======
     // Produces trendScore (-100 to +100), trend (strong_up/up/stable/down/strong_down), trendLabel, growthScore (0-100)
@@ -29385,7 +29442,7 @@ function renderTeacherGrowth() {
     const subjectPills = t.subjectList.slice(0, 3).map(s => `<span class="tg2-pill">${escapeHtml(s)}</span>`).join('') +
       (t.subjectList.length > 3 ? `<span class="tg2-pill tg2-pill-more">+${t.subjectList.length - 3}</span>` : '');
 
-    const lastDateStr = t.lastDate ? new Date(t.lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    const lastDateStr = t.lastDate ? _fmtDMTDate(t.lastDate, { day: 'numeric', month: 'short' }) : '';
 
     return `<div class="tg2-card" id="tgCard_${gi}">
  <div class="tg2-card-header" onclick="toggleTeacherDetail(${gi})">
@@ -29477,7 +29534,7 @@ function toggleTeacherDetail(idx) {
           ? '<span style="background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 10px;border-radius:8px;font-weight:600;font-size:0.75rem">No</span>'
           : '<span style="color:var(--text-muted);font-size:0.75rem"></span>';
     return `<tr>
- <td style="white-space:nowrap">${new Date(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
+ <td style="white-space:nowrap">${_fmtDMTDate(o.date, { day: '2-digit', month: 'short', year: '2-digit' })}</td>
  <td>${escapeHtml(o.subject || '')}</td>
  <td style="font-family:monospace;font-size:0.78rem;color:#84cc16">${escapeHtml(o.practiceSerial || '')}</td>
  <td style="text-align:center">${obsBadge}</td>
@@ -29509,8 +29566,8 @@ function toggleTeacherDetail(idx) {
   const maraiInitials = { motivation: 'M', awareness: 'A', readiness: 'R', action: 'A', internalization: 'I' };
   const maraiProgress = maraiStage ? maraiStages.map(s => `<span class="tg2-marai-dot ${s === maraiStage ? 'active' : maraiStages.indexOf(s) < maraiStages.indexOf(maraiStage) ? 'done' : ''}">${maraiInitials[s] || ''}</span>`).join('') : '';
 
-  const firstDateStr = t.firstDate ? new Date(t.firstDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-  const lastDateStr = t.lastDate ? new Date(t.lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const firstDateStr = t.firstDate ? _fmtDMTDate(t.firstDate) : '';
+  const lastDateStr = t.lastDate ? _fmtDMTDate(t.lastDate) : '';
 
   const detail = `<div class="tg2-detail">
  <div class="tg2-tabs">
