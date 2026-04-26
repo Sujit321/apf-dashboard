@@ -3706,9 +3706,66 @@ function showToast(message, type = 'success', duration = 3000) {
 }
 
 // ===== Modal Functions =====
+// Attach the built-in VDR calendar (single-date mode) to every input[type="date"] in a container
+function _initVDRDateInputs(container) {
+  if (!window.VDR) return;
+  container.querySelectorAll('input[type="date"]').forEach(input => {
+    if (input._vdrInited) return;
+    input._vdrInited = true;
+
+    // Create a visible trigger button that sits next to the hidden real input
+    const wrap = document.createElement('div');
+    wrap.className = 'vp-date-single-wrap';
+    wrap.style.cssText = 'display:inline-flex;align-items:center;gap:6px;width:100%;';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    input.style.display = 'none'; // hide native picker
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'vdr-trigger-btn';
+    btn.style.cssText = 'flex:1;text-align:left;';
+    // Capture the CURRENT JS value before we override the property
+    const initialVal = input.value || '';
+    btn.textContent = initialVal ? _fmtVDRDate(initialVal) : 'Pick date';
+    btn.classList.toggle('has-value', !!initialVal);
+    wrap.appendChild(btn);
+
+    // Override value property so programmatic sets also update the button
+    let _stored = initialVal;
+    Object.defineProperty(input, 'value', {
+      get() { return _stored; },
+      set(v) {
+        _stored = v || '';
+        btn.textContent = _stored ? _fmtVDRDate(_stored) : 'Pick date';
+        btn.classList.toggle('has-value', !!_stored);
+      },
+      configurable: true
+    });
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      VDR.syncFrom(input.value, '');
+      VDR.open('from', btn, (from) => {
+        input.value = from; // goes through setter, updates button + _stored
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }, { single: true });
+    });
+  });
+}
+function _fmtVDRDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d} ${months[parseInt(m,10)-1]} ${y}`;
+}
+
 function openModal(id) {
-  document.getElementById(id).classList.add('active');
+  const el = document.getElementById(id);
+  el.classList.add('active');
   document.body.classList.add('modal-open');
+  // Init VDR single-date pickers on all date inputs inside this modal
+  setTimeout(() => _initVDRDateInputs(el), 0);
 }
 
 function closeModal(id) {
@@ -7094,7 +7151,9 @@ function autoFillObservationPractice() {
 function openObservationModal(id) {
   document.getElementById('observationForm').reset();
   document.getElementById('observationId').value = '';
-  document.getElementById('observationDate').value = new Date().toISOString().split('T')[0];
+  const dEl = document.getElementById('observationDate');
+  dEl.value = new Date().toISOString().split('T')[0];
+  if (dEl._flatpickr) dEl._flatpickr.setDate(dEl.value);
   document.getElementById('observationModalTitle').innerHTML = '<i class="fas fa-clipboard-check"></i> New Observation';
   observationRatings = { engagement: 0, methodology: 0, tlm: 0 };
   document.querySelectorAll('.star-rating').forEach(g => updateStars(g, 0));
@@ -7112,7 +7171,19 @@ function openObservationModal(id) {
       document.getElementById('observationTeacherStage').value = o.teacherStage || '';
       document.getElementById('observationCluster').value = o.cluster || '';
       document.getElementById('observationBlock').value = o.block || '';
-      document.getElementById('observationDate').value = o.date;
+      const parsedDate = _parseDMTDate(o.date);
+      if (parsedDate) {
+        const y = parsedDate.getFullYear();
+        const m = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const d = String(parsedDate.getDate()).padStart(2, '0');
+        const el = document.getElementById('observationDate');
+        el.value = `${y}-${m}-${d}`;
+        if (el._flatpickr) el._flatpickr.setDate(el.value);
+      } else {
+        const el = document.getElementById('observationDate');
+        el.value = o.date;
+        if (el._flatpickr) el._flatpickr.setDate(el.value);
+      }
       document.getElementById('observationStatus').value = o.observationStatus || 'Yes';
       document.getElementById('observationSubject').value = o.subject || '';
       document.getElementById('observationClass').value = o.class || '';
