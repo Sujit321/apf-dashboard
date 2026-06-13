@@ -35369,7 +35369,6 @@ async function sendTestCloudAlert() {
   const url = document.getElementById('automationScriptURL')?.value?.trim() || CloudAutomation.getUrl();
   if (!url) {
     showToast('Enter your Cloud Automation Script URL first (click Configure)', 'error');
-    // Auto-open setup panel
     const body = document.getElementById('automationSetupBody');
     const chevron = document.getElementById('automationChevron');
     if (body && body.style.display === 'none') { body.style.display = 'block'; if (chevron) chevron.style.transform = 'rotate(180deg)'; }
@@ -35382,28 +35381,50 @@ async function sendTestCloudAlert() {
 
   showToast('Sending test alert to cloud…', 'info');
   try {
-    // Build a minimal test payload
+    // Gather Telegram & email config
+    const tgCfg = (typeof getTelegramConfig === 'function') ? getTelegramConfig() : null;
+    const email = document.getElementById('automationEmail')?.value?.trim() || CloudAutomation.getEmail();
+
     const testPayload = {
-      action: 'test_alert',
-      timestamp: new Date().toISOString(),
-      message: 'APF Dashboard — manual test alert triggered',
-      summary: CloudAutomation.buildSummary()
+      action: 'send_test_alert',
+      config: {
+        telegramToken: tgCfg ? tgCfg.token : '',
+        chatId: tgCfg ? tgCfg.chatId : '',
+        reportEmail: email
+      }
     };
-    const fullUrl = url + (url.includes('?') ? '&' : '?') + 'action=test_alert';
-    const resp = await fetch(fullUrl, {
+
+    const resp = await fetch(url, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(testPayload)
     });
-    // no-cors always returns opaque, so we treat dispatch as success
-    showToast('Test alert sent to cloud script! Check your Telegram / email.', 'success', 5000);
-    CloudAutomation.setLastSync(new Date().toISOString());
-    updateCloudAutomationUI();
+
+    const text = await resp.text();
+    let data = {};
+    try { data = JSON.parse(text); } catch (_) {}
+
+    if (data.success || data.telegramSent || data.emailSent) {
+      const channels = [];
+      if (data.telegramSent) channels.push('Telegram ✅');
+      if (data.emailSent) channels.push('Email ✅');
+      showToast('Test alert sent → ' + (channels.length ? channels.join(' & ') : 'Cloud script reached!'), 'success', 6000);
+      CloudAutomation.setLastSync(new Date().toISOString());
+      updateCloudAutomationUI();
+    } else if (data.errors && data.errors.length) {
+      // Script reached but couldn't send — show specific reason
+      showToast('Script reached but: ' + data.errors[0], 'error', 7000);
+    } else if (data.error) {
+      showToast('Cloud script error: ' + data.error, 'error', 6000);
+    } else {
+      showToast('Unexpected response from cloud script', 'error');
+    }
   } catch (err) {
-    showToast('Failed to send test alert: ' + err.message, 'error');
+    showToast('Failed to reach cloud script: ' + err.message, 'error', 6000);
   }
 }
+
 
 
 function toggleAutomationSetup() {

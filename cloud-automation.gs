@@ -59,11 +59,108 @@ function doPost(e) {
       return send({ success: true, ts: new Date().toISOString() });
     }
 
+    // -------------------------------------------------------
+    // SEND TEST ALERT — fires immediately to Telegram + Email
+    // -------------------------------------------------------
+    if (action === 'send_test_alert') {
+      loadConfig();
+      // Accept inline config overrides from the app (in case config not yet saved)
+      if (content.config) {
+        var tcfg = content.config;
+        if (tcfg.telegramToken) CONFIG.TELEGRAM_BOT_TOKEN = tcfg.telegramToken;
+        if (tcfg.chatId)        CONFIG.TELEGRAM_CHAT_ID  = tcfg.chatId;
+        if (tcfg.reportEmail)   CONFIG.REPORT_EMAIL       = tcfg.reportEmail;
+      }
+
+      var tgSent   = false;
+      var mailSent = false;
+      var errors   = [];
+
+      // --- Telegram ---
+      if (CONFIG.TELEGRAM_BOT_TOKEN && CONFIG.TELEGRAM_CHAT_ID) {
+        try {
+          sendTelegram(
+            '🔔 *APF Dashboard — Test Alert*\n' +
+            formatDate(new Date()) + '\n\n' +
+            '✅ Cloud Automation is working correctly!\n' +
+            'This is a manual test triggered from the app.\n\n' +
+            '• Telegram: ✅ Connected\n' +
+            '• Script URL: ✅ Reachable\n' +
+            '• Time-based alerts: Firing daily at 9 AM'
+          );
+          tgSent = true;
+        } catch (te) { errors.push('Telegram: ' + te.toString()); }
+      } else {
+        errors.push('Telegram not configured (no token/chat ID)');
+      }
+
+      // --- Email ---
+      if (CONFIG.REPORT_EMAIL) {
+        try {
+          MailApp.sendEmail({
+            to: CONFIG.REPORT_EMAIL,
+            subject: '🔔 APF Dashboard — Cloud Automation Test',
+            htmlBody:
+              '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">' +
+              '<div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:28px;border-radius:12px 12px 0 0;color:white;">' +
+              '<h2 style="margin:0;">🔔 Cloud Automation Test</h2>' +
+              '<p style="margin:6px 0 0;opacity:.85;">APF Dashboard · ' + formatDate(new Date()) + '</p>' +
+              '</div>' +
+              '<div style="background:#fff;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">' +
+              '<p style="color:#374151;font-size:15px;">✅ <strong>Cloud Automation is working!</strong></p>' +
+              '<p style="color:#6b7280;">This is a manual test triggered from the APF Dashboard app. Your cloud connection is healthy.</p>' +
+              '<ul style="color:#374151;line-height:1.9;">' +
+              '<li>Script URL: ✅ Reachable</li>' +
+              '<li>Email delivery: ✅ Working</li>' +
+              '<li>Daily alerts: Fire at 9 AM every day</li>' +
+              '<li>Weekly report: Every Monday at 8 AM</li>' +
+              '</ul>' +
+              '</div></div>'
+          });
+          mailSent = true;
+        } catch (me) { errors.push('Email: ' + me.toString()); }
+      } else {
+        errors.push('Email not configured (no report email set)');
+      }
+
+      return send({
+        success: tgSent || mailSent,
+        telegramSent: tgSent,
+        emailSent: mailSent,
+        errors: errors,
+        ts: new Date().toISOString()
+      });
+    }
+
+    // -------------------------------------------------------
+    // RUN CHECK NOW — same as the 9AM trigger, on demand
+    // -------------------------------------------------------
+    if (action === 'run_check_now') {
+      loadConfig();
+      if (content.config) {
+        var rcfg = content.config;
+        if (rcfg.telegramToken) CONFIG.TELEGRAM_BOT_TOKEN = rcfg.telegramToken;
+        if (rcfg.chatId)        CONFIG.TELEGRAM_CHAT_ID  = rcfg.chatId;
+        if (rcfg.reportEmail)   CONFIG.REPORT_EMAIL       = rcfg.reportEmail;
+      }
+      // Save incoming summary if provided, then run check
+      if (content.summary) {
+        var folder2 = getOrCreateFolder();
+        var json2 = JSON.stringify({ ts: new Date().toISOString(), data: content.summary });
+        var files2 = folder2.getFilesByName(CONFIG.SUMMARY_FILE);
+        if (files2.hasNext()) { files2.next().setContent(json2); }
+        else { folder2.createFile(CONFIG.SUMMARY_FILE, json2, 'application/json'); }
+      }
+      checkAndSendAlerts();
+      return send({ success: true, action: 'check_run', ts: new Date().toISOString() });
+    }
+
     return send({ error: 'Unknown action: ' + action });
   } catch (err) {
     return send({ error: err.toString() });
   }
 }
+
 
 function doGet(e) {
   return ContentService.createTextOutput(
