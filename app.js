@@ -2596,6 +2596,7 @@ function refreshSection(section) {
     case 'importguide': renderImportGuide(); break;
     case 'ai': renderAIAssistant(); break;
     case 'objectives': renderObjectives(); break;
+    case 'schoolmap': initSchoolMap(); break;
   }
 }
 
