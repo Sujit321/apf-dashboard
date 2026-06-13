@@ -34921,6 +34921,545 @@ function _runPeriodComparison() {
 // ===== Initialization =====
 let appInitialized = false;
 
+
+// ===== Smart Notifications Manager (Local Browser Push) =====
+const SmartNotifications = {
+  PERM_KEY: 'apf_notif_enabled',
+  CHECK_INTERVAL_MS: 60 * 60 * 1000, // 1 hour
+  _timer: null,
+
+  isEnabled() { return localStorage.getItem(this.PERM_KEY) === '1'; },
+  setEnabled(v) { localStorage.setItem(this.PERM_KEY, v ? '1' : '0'); },
+
+  // Notifications don't work on file:// — need http://localhost
+  isFileProtocol() { return location.protocol === 'file:'; },
+
+  showFileProtocolWarning(show) {
+    const el = document.getElementById('notifFileProtocolWarn');
+    if (el) el.style.display = show ? 'block' : 'none';
+  },
+
+  async requestPermission() {
+    if (!('Notification' in window)) {
+      showToast('Browser notifications not supported', 'error');
+      return false;
+    }
+    // file:// protocol — Notification API silently fails
+    if (this.isFileProtocol()) {
+      this.showFileProtocolWarning(true);
+      showToast('⚠️ Notifications require localhost — run: npm run serve', 'error', 7000);
+      return false;
+    }
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') {
+      showToast('Notifications blocked — click the 🔒 lock icon in the address bar to allow, then retry.', 'error', 6000);
+      return false;
+    }
+    const perm = await Notification.requestPermission();
+    return perm === 'granted';
+  },
+
+  // Build overdue items from DB
+  getOverdueItems() {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    // Planner tasks
+    const tasks = (DB.get('plannerTasks') || []).filter(t =>
+      t.status !== 'done' && t.dueDate && t.dueDate < todayStr
+    );
+
+    // Follow-ups
+    const followups = (DB.get('followupStatus') || []).filter(f =>
+      f.status !== 'done' && f.status !== 'closed' && f.dueDate && f.dueDate < todayStr
+    );
+
+    // Manual follow-ups
+    const manualFollowups = (DB.get('manualFollowups') || []).filter(f =>
+      f.status !== 'done' && f.status !== 'closed' && f.dueDate && f.dueDate < todayStr
+    );
+
+    // Goals behind
+    const goals = (DB.get('goalTargets') || []).filter(g => {
+      if (!g.deadline) return false;
+      const progress = g.actual && g.target ? Math.round((parseFloat(g.actual) / parseFloat(g.target)) * 100) : 0;
+      return g.deadline < todayStr && progress < 100;
+    });
+
+    return { tasks, followups: [...followups, ...manualFollowups], goals };
+  },
+
+  fire(title, body, tag) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      const n = new Notification(title, {
+        body: body,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: tag || 'apf-alert',
+        requireInteraction: false
+      });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) { console.warn('[APF Notif]', e); }
+  },
+
+  check() {
+    if (!this.isEnabled() || Notification.permission !== 'granted') return;
+    const { tasks, followups, goals } = this.getOverdueItems();
+    const total = tasks.length + followups.length + goals.length;
+    if (total === 0) return;
+
+    let body = [];
+    if (tasks.length) body.push(`📋 ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}`);
+    if (followups.length) body.push(`🔁 ${followups.length} pending follow-up${followups.length > 1 ? 's' : ''}`);
+    if (goals.length) body.push(`🎯 ${goals.length} goal${goals.length > 1 ? 's' : ''} behind schedule`);
+
+    this.fire(
+      `⚠️ APF Dashboard — ${total} item${total > 1 ? 's' : ''} need attention`,
+      body.join('\n'),
+      'apf-overdue-' + new Date().toDateString()
+    );
+  },
+
+  start() {
+    if (this._timer) return;
+    this._timer = setInterval(() => this.check(), this.CHECK_INTERVAL_MS);
+    // Also check shortly after app opens
+    setTimeout(() => this.check(), 3000);
+  },
+
+  stop() {
+    if (this._timer) { clearInterval(this._timer); this._timer = null; }
+  },
+
+  async enable() {
+    const ok = await this.requestPermission();
+    if (!ok) {
+      // Permission denied or not supported
+      const deniedByBrowser = 'Notification' in window && Notification.permission === 'denied';
+      if (deniedByBrowser) {
+        showToast('Notifications blocked — please click the 🔒 lock icon in your browser address bar and allow notifications, then try again.', 'error', 6000);
+      } else {
+        showToast('Notification permission denied.', 'error');
+      }
+      this.setEnabled(false);
+      updateNotifUI();
+      return;
+    }
+    this.setEnabled(true);
+    this.start();
+    this.fire('✅ APF Dashboard', 'Smart Notifications enabled! You will be alerted for overdue tasks.', 'apf-enable');
+    showToast('Local notifications enabled ✅', 'success');
+    updateNotifUI();
+  },
+
+
+  disable() {
+    this.setEnabled(false);
+    this.stop();
+    showToast('Local notifications disabled', 'info');
+    updateNotifUI();
+  }
+};
+
+// ===== Cloud Automation Manager =====
+const CloudAutomation = {
+  URL_KEY: 'apf_automation_url',
+  EMAIL_KEY: 'apf_automation_email',
+  SCHEDULE_KEY: 'apf_automation_schedule',
+  ENABLED_KEY: 'apf_automation_enabled',
+  LAST_SYNC_KEY: 'apf_automation_last_sync',
+  _syncTimer: null,
+  SYNC_INTERVAL_MS: 6 * 60 * 60 * 1000, // 6 hours
+
+  getUrl() { return localStorage.getItem(this.URL_KEY) || ''; },
+  setUrl(v) { localStorage.setItem(this.URL_KEY, v); },
+  getEmail() { return localStorage.getItem(this.EMAIL_KEY) || ''; },
+  setEmail(v) { localStorage.setItem(this.EMAIL_KEY, v); },
+  getSchedule() { return localStorage.getItem(this.SCHEDULE_KEY) || 'weekly'; },
+  setSchedule(v) { localStorage.setItem(this.SCHEDULE_KEY, v); },
+  isEnabled() { return localStorage.getItem(this.ENABLED_KEY) === '1'; },
+  setEnabled(v) { localStorage.setItem(this.ENABLED_KEY, v ? '1' : '0'); },
+  getLastSync() { return localStorage.getItem(this.LAST_SYNC_KEY) || ''; },
+  setLastSync(v) { localStorage.setItem(this.LAST_SYNC_KEY, v); },
+
+  isConnected() { return !!this.getUrl() && this.isEnabled(); },
+
+  buildSummary() {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const weekAgo = new Date(now - 7 * 86400000).toISOString().split('T')[0];
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+
+    const profile = DB.get('userProfile') || {};
+    const visits = DB.get('visits') || [];
+    const trainings = DB.get('trainings') || [];
+    const observations = DB.get('observations') || [];
+    const plannerTasks = DB.get('plannerTasks') || [];
+    const followups = DB.get('followupStatus') || [];
+    const manualFollowups = DB.get('manualFollowups') || [];
+    const goals = DB.get('goalTargets') || [];
+    const tgCfg = getTelegramConfig ? getTelegramConfig() : null;
+
+    // Overdue tasks
+    const overduePlannerTasks = plannerTasks.filter(t =>
+      t.status !== 'done' && t.dueDate && t.dueDate < todayStr
+    ).map(t => ({ title: t.task || t.title || 'Task', dueDate: t.dueDate }));
+
+    const allFollowups = [...followups, ...manualFollowups];
+    const overdueFollowups = allFollowups.filter(f =>
+      f.status !== 'done' && f.status !== 'closed' && f.dueDate && f.dueDate < todayStr
+    ).map(f => ({ title: f.action || f.title || 'Follow-up', school: f.school || '', dueDate: f.dueDate }));
+
+    const overdueGoals = goals.filter(g => {
+      if (!g.deadline) return false;
+      const progress = g.actual && g.target ? Math.round((parseFloat(g.actual) / parseFloat(g.target)) * 100) : 0;
+      return g.deadline < todayStr && progress < 100;
+    }).map(g => {
+      const progress = g.actual && g.target ? Math.round((parseFloat(g.actual) / parseFloat(g.target)) * 100) : 0;
+      return { title: g.goal || 'Goal', progress };
+    });
+
+    // Weekly stats
+    const visitsThisWeek = visits.filter(v => v.date >= weekAgo && v.date <= todayStr).length;
+    const trainingsThisWeek = trainings.filter(t => t.date >= weekAgo && t.date <= todayStr).length;
+    const observationsThisWeek = observations.filter(o => o.date >= weekAgo && o.date <= todayStr).length;
+    const followupsClosedThisWeek = allFollowups.filter(f =>
+      (f.status === 'done' || f.status === 'closed') && f.closedAt && f.closedAt.split('T')[0] >= weekAgo
+    ).length;
+
+    const visitsThisMonth = visits.filter(v => v.date >= monthStart).length;
+    const trainingsThisMonth = trainings.filter(t => t.date >= monthStart).length;
+    const schoolsCoveredThisMonth = [...new Set(visits.filter(v => v.date >= monthStart && v.school).map(v => v.school))].length;
+    const teachersThisMonth = trainings.filter(t => t.date >= monthStart).reduce((sum, t) => sum + (parseInt(t.attendees) || 0), 0);
+
+    return {
+      userProfile: { name: profile.name || '', block: profile.block || '', cluster: profile.cluster || '' },
+      overduePlannerTasks,
+      overdueFollowups,
+      overdueGoals,
+      weeklyStats: {
+        visitsThisWeek, trainingsThisWeek, observationsThisWeek, followupsClosedThisWeek,
+        visitsThisMonth, trainingsThisMonth, schoolsCoveredThisMonth, teachersThisMonth
+      },
+      generatedAt: now.toISOString()
+    };
+  },
+
+  async syncSummary(silent) {
+    const url = this.getUrl();
+    if (!url || !this.isEnabled()) return { ok: false, error: 'Cloud Automation not configured' };
+
+    const summary = this.buildSummary();
+    const tgCfg = (typeof getTelegramConfig === 'function') ? getTelegramConfig() : null;
+
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'save_summary',
+          summary: summary,
+          config: {
+            telegramToken: tgCfg ? tgCfg.token : '',
+            chatId: tgCfg ? tgCfg.chatId : '',
+            reportEmail: this.getEmail(),
+            schedule: this.getSchedule()
+          }
+        })
+      });
+      const text = await resp.text();
+      const data = JSON.parse(text);
+      if (data.success || data.status === 'ok') {
+        this.setLastSync(new Date().toISOString());
+        updateCloudAutomationUI();
+        if (!silent) showToast('☁️ Cloud summary synced! Automation data updated.', 'success');
+        return { ok: true };
+      } else {
+        if (!silent) showToast('Cloud sync error: ' + (data.error || 'Unknown'), 'error');
+        return { ok: false, error: data.error };
+      }
+    } catch (err) {
+      if (!silent) showToast('Cloud sync failed: ' + err.message, 'error');
+      return { ok: false, error: err.message };
+    }
+  },
+
+  scheduleSync() {
+    if (this._syncTimer) clearInterval(this._syncTimer);
+    if (!this.isEnabled()) return;
+    this._syncTimer = setInterval(() => this.syncSummary(true), this.SYNC_INTERVAL_MS);
+    // Sync after 5s on startup
+    setTimeout(() => this.syncSummary(true), 5000);
+  },
+
+  stop() {
+    if (this._syncTimer) { clearInterval(this._syncTimer); this._syncTimer = null; }
+  }
+};
+
+// ===== Notification & Automation UI helpers =====
+function updateNotifUI() {
+  const permGranted = ('Notification' in window) && Notification.permission === 'granted';
+  const enabled = SmartNotifications.isEnabled() && permGranted;
+  const toggle = document.getElementById('localNotifToggle');
+  const badge = document.getElementById('localNotifBadge');
+  if (toggle) toggle.checked = enabled;
+  if (badge) {
+    badge.textContent = enabled ? 'Active' : 'Off';
+    badge.className = 'automation-badge ' + (enabled ? 'badge-active' : 'badge-off');
+  }
+}
+
+
+function updateCloudAutomationUI() {
+  const enabled = CloudAutomation.isConnected();
+  const toggle = document.getElementById('cloudAutomationToggle');
+  const badge = document.getElementById('cloudAutomationBadge');
+  const lastSync = document.getElementById('cloudAutomationLastSync');
+  if (toggle) toggle.checked = enabled;
+  if (badge) {
+    badge.textContent = enabled ? 'Active' : 'Off';
+    badge.className = 'automation-badge ' + (enabled ? 'badge-active' : 'badge-off');
+  }
+  if (lastSync) {
+    const ls = CloudAutomation.getLastSync();
+    if (ls) {
+      const d = new Date(ls);
+      lastSync.textContent = 'Last synced: ' + d.toLocaleDateString('en-IN') + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    } else {
+      lastSync.textContent = enabled ? 'Not synced yet' : '';
+    }
+  }
+}
+
+async function toggleLocalNotifications(checked) {
+  const toggle = document.getElementById('localNotifToggle');
+  if (checked) {
+    // Disable the checkbox while waiting for browser prompt
+    if (toggle) toggle.disabled = true;
+    await SmartNotifications.enable();
+    if (toggle) toggle.disabled = false;
+    // Force-sync checkbox to actual permission state (user may have denied)
+    const granted = Notification.permission === 'granted' && SmartNotifications.isEnabled();
+    if (toggle) toggle.checked = granted;
+    updateNotifUI();
+  } else {
+    SmartNotifications.disable();
+    if (toggle) toggle.checked = false;
+    updateNotifUI();
+  }
+}
+
+
+async function toggleCloudAutomation(checked) {
+  if (checked) {
+    const url = document.getElementById('automationScriptURL')?.value?.trim();
+    if (!url) {
+      showToast('Please enter your Cloud Automation Script URL first', 'error');
+      const el = document.getElementById('cloudAutomationToggle');
+      if (el) el.checked = false;
+      return;
+    }
+    if (!url.startsWith('https://script.google.com/')) {
+      showToast('Invalid URL — must start with https://script.google.com/', 'error');
+      const el = document.getElementById('cloudAutomationToggle');
+      if (el) el.checked = false;
+      return;
+    }
+    CloudAutomation.setUrl(url);
+    CloudAutomation.setEnabled(true);
+    const email = document.getElementById('automationEmail')?.value?.trim();
+    if (email) CloudAutomation.setEmail(email);
+    const schedule = document.getElementById('automationSchedule')?.value;
+    if (schedule) CloudAutomation.setSchedule(schedule);
+    CloudAutomation.scheduleSync();
+    updateCloudAutomationUI();
+  } else {
+    CloudAutomation.setEnabled(false);
+    CloudAutomation.stop();
+    updateCloudAutomationUI();
+    showToast('Cloud Automation disabled', 'info');
+  }
+}
+
+async function saveCloudAutomationSettings() {
+  const url = document.getElementById('automationScriptURL')?.value?.trim();
+  const email = document.getElementById('automationEmail')?.value?.trim();
+  const schedule = document.getElementById('automationSchedule')?.value;
+  if (url) CloudAutomation.setUrl(url);
+  if (email) CloudAutomation.setEmail(email);
+  if (schedule) CloudAutomation.setSchedule(schedule);
+  showToast('Automation settings saved', 'success');
+}
+
+async function testCloudAutomationNow() {
+  const url = document.getElementById('automationScriptURL')?.value?.trim() || CloudAutomation.getUrl();
+  if (!url) { showToast('Enter Automation Script URL first', 'error'); return; }
+  CloudAutomation.setUrl(url);
+  CloudAutomation.setEnabled(true);
+  const email = document.getElementById('automationEmail')?.value?.trim();
+  if (email) CloudAutomation.setEmail(email);
+  showToast('Syncing to cloud…', 'info');
+  const r = await CloudAutomation.syncSummary(false);
+  if (r.ok) updateCloudAutomationUI();
+}
+
+async function testLocalNotification() {
+  const ok = await SmartNotifications.requestPermission();
+  if (!ok) return;
+  SmartNotifications.fire(
+    '🔔 APF Dashboard — Test Notification',
+    'Smart Notifications are working! You will receive alerts for overdue tasks.',
+    'apf-test-' + Date.now()
+  );
+  showToast('Test notification sent!', 'success');
+}
+
+// Immediately scan for overdue items and fire real notifications for each one found
+async function checkOverdueNow() {
+  const ok = await SmartNotifications.requestPermission();
+  if (!ok) {
+    showToast('Enable notifications first', 'error');
+    return;
+  }
+  const items = SmartNotifications.getOverdueItems();
+  const total = (items.tasks?.length || 0) + (items.followups?.length || 0) +
+                (items.manualFollowups?.length || 0) + (items.goals?.length || 0);
+
+  if (total === 0) {
+    SmartNotifications.fire(
+      '✅ APF Dashboard — All Clear!',
+      'No overdue tasks, follow-ups, or goals. Great job!',
+      'apf-check-' + Date.now()
+    );
+    showToast('All clear — no overdue items found ✅', 'success');
+    return;
+  }
+
+  // Fire individual notifications for each category
+  if (items.tasks?.length) {
+    SmartNotifications.fire(
+      `⚠️ ${items.tasks.length} Overdue Planner Task${items.tasks.length > 1 ? 's' : ''}`,
+      items.tasks.slice(0, 3).map(t => `• ${t.title || 'Unnamed'} (due ${t.dueDate})`).join('\n'),
+      'apf-overdue-tasks-' + Date.now()
+    );
+  }
+  if (items.followups?.length) {
+    SmartNotifications.fire(
+      `⚠️ ${items.followups.length} Overdue Follow-up${items.followups.length > 1 ? 's' : ''}`,
+      items.followups.slice(0, 3).map(f => `• ${f.name || f.teacherName || 'Unnamed'}`).join('\n'),
+      'apf-overdue-followups-' + Date.now()
+    );
+  }
+  if (items.goals?.length) {
+    SmartNotifications.fire(
+      `⚠️ ${items.goals.length} Goal${items.goals.length > 1 ? 's' : ''} Behind Schedule`,
+      items.goals.slice(0, 3).map(g => `• ${g.title || 'Unnamed'}`).join('\n'),
+      'apf-overdue-goals-' + Date.now()
+    );
+  }
+
+  showToast(`Found ${total} overdue item${total > 1 ? 's' : ''} — notifications sent!`, 'warning');
+}
+
+// Send a live test payload to the cloud automation script
+async function sendTestCloudAlert() {
+  const url = document.getElementById('automationScriptURL')?.value?.trim() || CloudAutomation.getUrl();
+  if (!url) {
+    showToast('Enter your Cloud Automation Script URL first (click Configure)', 'error');
+    // Auto-open setup panel
+    const body = document.getElementById('automationSetupBody');
+    const chevron = document.getElementById('automationChevron');
+    if (body && body.style.display === 'none') { body.style.display = 'block'; if (chevron) chevron.style.transform = 'rotate(180deg)'; }
+    return;
+  }
+  if (!url.startsWith('https://script.google.com/')) {
+    showToast('Invalid URL — must start with https://script.google.com/', 'error');
+    return;
+  }
+
+  showToast('Sending test alert to cloud…', 'info');
+  try {
+    // Build a minimal test payload
+    const testPayload = {
+      action: 'test_alert',
+      timestamp: new Date().toISOString(),
+      message: 'APF Dashboard — manual test alert triggered',
+      summary: CloudAutomation.buildSummary()
+    };
+    const fullUrl = url + (url.includes('?') ? '&' : '?') + 'action=test_alert';
+    const resp = await fetch(fullUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(testPayload)
+    });
+    // no-cors always returns opaque, so we treat dispatch as success
+    showToast('Test alert sent to cloud script! Check your Telegram / email.', 'success', 5000);
+    CloudAutomation.setLastSync(new Date().toISOString());
+    updateCloudAutomationUI();
+  } catch (err) {
+    showToast('Failed to send test alert: ' + err.message, 'error');
+  }
+}
+
+
+function toggleAutomationSetup() {
+  const body = document.getElementById('automationSetupBody');
+  const chevron = document.getElementById('automationChevron');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (!isOpen) {
+    // Populate fields from saved config
+    const urlEl = document.getElementById('automationScriptURL');
+    const emailEl = document.getElementById('automationEmail');
+    const schedEl = document.getElementById('automationSchedule');
+    if (urlEl) urlEl.value = CloudAutomation.getUrl();
+    if (emailEl) emailEl.value = CloudAutomation.getEmail();
+    if (schedEl) schedEl.value = CloudAutomation.getSchedule();
+  }
+}
+
+function copyCloudAutomationCode() {
+  const el = document.getElementById('cloudAutomationScriptCode');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => showToast('Code copied!', 'success'));
+}
+
+function toggleAutomationScriptCode() {
+  const body = document.getElementById('automationScriptCodeBlock');
+  const chevron = document.getElementById('automationCodeChevron');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+
+function initSmartAutomation() {
+  // Init local notifications
+  if (SmartNotifications.isEnabled()) {
+    if (Notification.permission === 'granted') {
+      SmartNotifications.start();
+    } else {
+      SmartNotifications.setEnabled(false);
+    }
+  }
+  // Init cloud automation
+  if (CloudAutomation.isEnabled()) {
+    CloudAutomation.scheduleSync();
+  }
+  // Update UIs once backup section is rendered
+  setTimeout(() => {
+    updateNotifUI();
+    updateCloudAutomationUI();
+  }, 500);
+}
+
 function initApp() {
   if (appInitialized) {
     // Re-unlocking from lock screen — show splash again
@@ -34943,25 +35482,6 @@ function initApp() {
     renderDashboard();
     return;
   }
-
-  // ===== Show splash loading screen after login =====
-  (function showSplash() {
-    const _s = getAppSettings();
-    if (_s.splashEnabled === false) return;
-    const splash = document.getElementById('splashScreen');
-    if (!splash) return;
-    const dur = _s.splashDuration || 2600;
-    applySplashTheme(_s.splashTheme || 'indigo');
-    splash.style.display = 'flex';
-    splash.classList.remove('splash-hide');
-    // Reset ring animation so it replays
-    const ring = splash.querySelector('.splash-ring-fill');
-    if (ring) { ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = ''; }
-    setTimeout(function () {
-      splash.classList.add('splash-hide');
-      setTimeout(function () { splash.style.display = 'none'; }, 500);
-    }, dur);
-  })();
 
   appInitialized = true;
 
@@ -35065,6 +35585,9 @@ function initApp() {
 
   // Auto-reconnect Live Sync (WhatsApp Web-style persistent session)
   setTimeout(() => LiveSync.autoReconnect(), 1500);
+
+  // Smart Notifications & Cloud Automation
+  initSmartAutomation();
 }
 
 // ===== Welcome Screen (File-Only Storage) =====

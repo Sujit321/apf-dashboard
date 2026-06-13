@@ -4010,9 +4010,93 @@ function getOrCreateFolder() {
  <button class="btn btn-outline btn-sm" onclick="bulkCategoryDeselectAll()" style="font-size:12px;"><i class="fas fa-times"></i> Deselect All</button>
  <button class="btn btn-danger btn-sm" id="bulkCategoryDeleteBtn" onclick="executeBulkCategoryDelete()" style="font-size:12px;" disabled><i class="fas fa-trash"></i> Delete Selected (0)</button>
  </div>
- </div>
 
  </div>
+
+
+  <!-- Smart Notifications & Auto Reports Card -->
+  <div class="backup-card automation-card" style="grid-column: 1 / -1;">
+    <div class="enc-card-top">
+      <div class="enc-card-icon automation-icon"><i class="fas fa-bell"></i></div>
+      <div class="enc-card-title">
+        <h3><i class="fas fa-robot"></i> Smart Notifications &amp; Auto Reports</h3>
+        <p>Overdue alerts on your device &bull; Scheduled reports via Telegram &amp; Email &bull; No server needed</p>
+      </div>
+    </div>
+    <div class="automation-panels">
+      <div class="automation-panel">
+        <div class="automation-panel-header">
+          <div class="automation-panel-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-mobile-alt"></i></div>
+          <div style="flex:1;"><h4 style="margin:0 0 2px;font-size:14px;">Local Push Notifications</h4><p style="margin:0;font-size:12px;color:var(--text-secondary);">Native OS alerts when app is open.</p></div>
+          <div class="automation-toggle-wrap">
+            <span class="automation-badge badge-off" id="localNotifBadge">Off</span>
+            <label class="gdrive-toggle-switch" style="margin-left:10px;"><input type="checkbox" id="localNotifToggle" onchange="toggleLocalNotifications(this.checked)"><span class="gdrive-toggle-slider"></span></label>
+          </div>
+        </div>
+        <ul class="automation-feature-list">
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Overdue planner tasks</li>
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Pending follow-ups past due date</li>
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Goals behind schedule</li>
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Checks every hour while app is open</li>
+        </ul>
+        <!-- file:// protocol warning — shown by JS when needed -->
+        <div id="notifFileProtocolWarn" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:8px;font-size:12px;color:#f59e0b;line-height:1.6;">
+          <strong><i class="fas fa-exclamation-triangle"></i> Notifications blocked on file://</strong><br>
+          Browser notifications only work when the app is served over <code style="background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">http://localhost</code>.<br>
+          <strong>Fix:</strong> Open a terminal in the app folder and run:<br>
+          <code style="display:block;margin-top:6px;background:rgba(0,0,0,0.35);padding:6px 10px;border-radius:6px;font-size:11.5px;color:#fbbf24;">npm run serve</code>
+          Then open <a href="http://localhost:3000" target="_blank" style="color:#6366f1;">http://localhost:3000</a> in your browser.
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-outline btn-sm" onclick="testLocalNotification()" style="flex:1;"><i class="fas fa-bell"></i> Test Notification</button>
+          <button class="btn btn-outline btn-sm" onclick="checkOverdueNow()" style="flex:1;border-color:rgba(245,158,11,0.4);color:#f59e0b;"><i class="fas fa-clock"></i> Check Overdue Now</button>
+        </div>
+
+      </div>
+      <div class="automation-panel">
+        <div class="automation-panel-header">
+          <div class="automation-panel-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);"><i class="fas fa-cloud"></i></div>
+          <div style="flex:1;"><h4 style="margin:0 0 2px;font-size:14px;">Cloud Automation (via Apps Script)</h4><p style="margin:0;font-size:12px;color:var(--text-secondary);">Alerts &amp; reports even when browser is closed.</p></div>
+          <div class="automation-toggle-wrap">
+            <span class="automation-badge badge-off" id="cloudAutomationBadge">Off</span>
+            <label class="gdrive-toggle-switch" style="margin-left:10px;"><input type="checkbox" id="cloudAutomationToggle" onchange="toggleCloudAutomation(this.checked)"><span class="gdrive-toggle-slider"></span></label>
+          </div>
+        </div>
+        <ul class="automation-feature-list">
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Daily Telegram alerts for overdue tasks</li>
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Weekly HTML email report with stats</li>
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Works even when browser is closed</li>
+          <li><i class="fas fa-check-circle" style="color:#22c55e"></i> Powered by Google Apps Script (free)</li>
+        </ul>
+        <div id="cloudAutomationLastSync" style="font-size:12px;color:var(--text-secondary);margin-top:6px;"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-outline btn-sm" onclick="testCloudAutomationNow()" style="flex:1;border-color:rgba(99,102,241,0.4);color:#6366f1;"><i class="fas fa-paper-plane"></i> Test Sync Now</button>
+          <button class="btn btn-outline btn-sm" onclick="sendTestCloudAlert()" style="flex:1;border-color:rgba(139,92,246,0.4);color:#8b5cf6;"><i class="fas fa-bolt"></i> Send Test Alert</button>
+        </div>
+        <button class="gdrive-setup-toggle" onclick="toggleAutomationSetup()" style="margin-top:10px;width:100%;display:flex;align-items:center;gap:8px;"><i class="fas fa-cog"></i> Configure Cloud Automation <i class="fas fa-chevron-down" id="automationChevron" style="transition:transform 0.2s;margin-left:auto;"></i></button>
+        <div id="automationSetupBody" style="display:none;margin-top:14px;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;"><i class="fas fa-link"></i> Cloud Automation Script URL</label><input type="url" id="automationScriptURL" placeholder="https://script.google.com/macros/s/..." style="width:100%;padding:9px 12px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:13px;" autocomplete="off"></div>
+            <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;"><i class="fas fa-envelope"></i> Report Email Address</label><input type="email" id="automationEmail" placeholder="you@example.com" style="width:100%;padding:9px 12px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:13px;"></div>
+            <div><label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;"><i class="fas fa-calendar-alt"></i> Report Schedule</label><select id="automationSchedule" style="width:100%;padding:9px 12px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:13px;"><option value="daily">Daily at 9 AM</option><option value="weekly" selected>Weekly (Monday 8 AM)</option><option value="monthly">Monthly (1st of month)</option></select></div>
+            <div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="testCloudAutomationNow()" style="flex:1;background:#6366f1;"><i class="fas fa-paper-plane"></i> Test Sync Now</button><button class="btn btn-outline btn-sm" onclick="saveCloudAutomationSettings()" style="flex:1;"><i class="fas fa-save"></i> Save</button></div>
+          </div>
+          <div style="margin-top:16px;">
+            <button class="gdrive-setup-toggle" onclick="toggleAutomationScriptCode()" style="width:100%;display:flex;align-items:center;justify-content:space-between;"><span><i class="fas fa-code"></i> Setup Steps for cloud-automation.gs</span><i class="fas fa-chevron-down" id="automationCodeChevron" style="transition:transform 0.2s;"></i></button>
+            <div id="automationScriptCodeBlock" style="display:none;margin-top:10px;">
+              <div class="gdrive-setup-steps">
+                <div class="gdrive-step"><div class="gdrive-step-num">1</div><div><strong>Create Script</strong><span>Go to <a href="https://script.google.com" target="_blank" rel="noopener" style="color:#6366f1;">script.google.com</a> &rarr; New Project &rarr; paste full code from <code>cloud-automation.gs</code> in your project folder</span></div></div>
+                <div class="gdrive-step"><div class="gdrive-step-num">2</div><div><strong>Deploy as Web App</strong><span>Deploy &rarr; New deployment &rarr; Web app &rarr; Execute as: <b>Me</b> &rarr; Who has access: <b>Anyone</b> &rarr; Authorize</span></div></div>
+                <div class="gdrive-step"><div class="gdrive-step-num">3</div><div><strong>Set Time Triggers</strong><span>Triggers &rarr; Add trigger &rarr; <b>checkAndSendAlerts</b> &rarr; Time-driven &rarr; Day timer &rarr; 9 AM. Add another: <b>generateWeeklyReport</b> &rarr; Week timer &rarr; Monday 8 AM</span></div></div>
+                <div class="gdrive-step"><div class="gdrive-step-num">4</div><div><strong>Paste URL &amp; Test</strong><span>Copy the Web App URL, paste it above, enter your email, click <b>Test Sync Now</b></span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="automation-footer"><i class="fas fa-shield-alt"></i><span>Only task titles, due dates &amp; count stats are sent to the cloud automation &mdash; <b>never</b> your encrypted APF data or passwords.</span></div>
+  </div>
  </section>
 
  <!-- ==================== SETTINGS SECTION ==================== -->
