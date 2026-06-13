@@ -35441,9 +35441,14 @@ function toggleAutomationScriptCode() {
 
 
 function initSmartAutomation() {
+  // Show file:// warning immediately if needed
+  if (SmartNotifications.isFileProtocol()) {
+    SmartNotifications.showFileProtocolWarning(true);
+  }
+
   // Init local notifications
   if (SmartNotifications.isEnabled()) {
-    if (Notification.permission === 'granted') {
+    if (!SmartNotifications.isFileProtocol() && Notification.permission === 'granted') {
       SmartNotifications.start();
     } else {
       SmartNotifications.setEnabled(false);
@@ -35459,6 +35464,7 @@ function initSmartAutomation() {
     updateCloudAutomationUI();
   }, 500);
 }
+
 
 function initApp() {
   if (appInitialized) {
