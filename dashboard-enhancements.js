@@ -1425,3 +1425,69 @@ function exportParentContactsExcel() {
   }
 
 })(); // end countdown/digest IIFE
+
+// =====================================================================
+// QUICK NOTES — SEARCH · FILTER · VIEW TOGGLE
+// =====================================================================
+(function _initQuickNotesUI() {
+
+  var _activeFilter = 'all';
+  var _activeView   = 'grid';
+
+  // ── Filter by color tag ───────────────────────────────────────────
+  window.qnSetFilter = function (btn) {
+    _activeFilter = btn.dataset.filter;
+    document.querySelectorAll('.qn-filter').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    _applyQNFilter();
+  };
+
+  // ── Switch grid / list view ───────────────────────────────────────
+  window.qnSetView = function (view) {
+    _activeView = view;
+    var grid = document.getElementById('notesContainer');
+    if (!grid) return;
+    grid.classList.toggle('list-view', view === 'list');
+    document.getElementById('qnViewGrid').classList.toggle('active', view === 'grid');
+    document.getElementById('qnViewList').classList.toggle('active', view === 'list');
+  };
+
+  // ── Real-time search + color filter ──────────────────────────────
+  window.qnFilterNotes = function () { _applyQNFilter(); };
+
+  function _applyQNFilter() {
+    var query = (document.getElementById('qnSearchInput') || {}).value || '';
+    query = query.toLowerCase().trim();
+
+    document.querySelectorAll('#notesContainer .note-card').forEach(function (card) {
+      // Color filter
+      var colorMatch = _activeFilter === 'all' ||
+                       card.classList.contains('color-' + _activeFilter);
+
+      // Text search — title + content
+      var title   = (card.querySelector('.note-card-header h4') || {}).textContent || '';
+      var content = (card.querySelector('p') || {}).textContent || '';
+      var textMatch = !query ||
+                      title.toLowerCase().includes(query) ||
+                      content.toLowerCase().includes(query);
+
+      card.style.display = (colorMatch && textMatch) ? '' : 'none';
+    });
+  }
+
+  // ── Re-apply filter whenever notes re-render ─────────────────────
+  var _baseRenderNotes = window.renderNotes;
+  if (typeof _baseRenderNotes === 'function') {
+    window.renderNotes = function () {
+      _baseRenderNotes.apply(this, arguments);
+      setTimeout(_applyQNFilter, 200);
+    };
+  }
+
+  // ── Init on section visible ───────────────────────────────────────
+  document.addEventListener('click', function (e) {
+    var navBtn = e.target.closest('[data-section="notes"]');
+    if (navBtn) setTimeout(_applyQNFilter, 300);
+  });
+
+})();
