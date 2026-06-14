@@ -1432,9 +1432,11 @@ function slmDecodePlusCode() {
     var resultEl = document.getElementById('slmPlusCodeResult');
     if (resultEl) {
       resultEl.style.display = 'block';
-      var precLat = Math.round(decoded.latitudeHeight * 111000);
-      var precLng = Math.round(decoded.longitudeWidth * 111000);
-      resultEl.innerHTML = '\u2705 <b>Decoded:</b> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) +
+      var precLatM = decoded.latitudeHeight  !== undefined ? decoded.latitudeHeight  : (decoded.latitudeHi  - decoded.latitudeLo);
+      var precLngM = decoded.longitudeWidth !== undefined ? decoded.longitudeWidth : (decoded.longitudeHi - decoded.longitudeLo);
+      var precLat = isFinite(precLatM) ? Math.round(precLatM * 111000) : '—';
+      var precLng = isFinite(precLngM) ? Math.round(precLngM * 111000) : '—';
+      resultEl.innerHTML = '✅ <b>Decoded:</b> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) +
         '<br><small style="color:var(--text-secondary)">Precision: ~' + precLat + 'm \xD7 ' + precLng + 'm</small>';
     }
 
@@ -1511,3 +1513,253 @@ function deleteSchoolLocation() {
   if (SchoolMap._map) renderSchoolMap();
   renderSchoolMapTable();
 }
+
+// =====================================================================
+// AI VISIT PLANNER
+// =====================================================================
+
+var _smapAILastPlan = null; // stores last generated plan for copy/highlight
+
+function smapToggleAIPanel() {
+  var panel = document.getElementById('smapAIPanel');
+  var btn   = document.getElementById('smapAIBtn');
+  if (!panel) return;
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (btn) {
+    btn.style.background = isOpen ? '' : 'rgba(52,211,153,0.1)';
+    btn.style.borderColor = isOpen ? '' : 'rgba(52,211,153,0.5)';
+  }
+}
+
+function smapRunAIPlanner() {
+  if (typeof SarvamAI === 'undefined' || !SarvamAI.isConfigured()) {
+    if (typeof showToast === 'function') showToast('Configure Sarvam AI in Settings → Sarvam AI first', 'error');
+    return;
+  }
+
+  var days   = parseInt((document.getElementById('smapAIDays')   || {}).value  || '5');
+  var perDay = parseInt((document.getElementById('smapAIPerDay') || {}).value  || '3');
+
+  // Gather all pinned schools with full context
+  var locs = SchoolMap.getAll();
+  var pinnedSchools = Object.keys(locs).filter(function(n) {
+    return locs[n].lat && locs[n].lng;
+  });
+
+  if (pinnedSchools.length < 2) {
+    if (typeof showToast === 'function') showToast('Pin at least 2 schools on the map first', 'warning');
+    return;
+  }
+
+  var home = (typeof smapGetHome === 'function') ? smapGetHome() : { lat: 21.1793, lng: 81.2833, block: 'Magarlod', district: 'Durg' };
+
+  // Build rich school data list
+  var schoolList = pinnedSchools.map(function(name) {
+    var loc   = locs[name];
+    var stats = SchoolMap.visitStats(name);
+    var color = SchoolMap.pinColor(name);
+
+    // Straight-line distance from home base (km)
+    var dLat = (loc.lat - home.lat) * Math.PI / 180;
+    var dLng = (loc.lng - home.lng) * Math.PI / 180;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(home.lat * Math.PI/180)*Math.cos(loc.lat * Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    var distKm = Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+
+    var priority = color === 'red' ? 'HIGH (never visited)' :
+                   color === 'yellow' ? 'MEDIUM (visited before)' : 'LOW (visited this month)';
+
+    return {
+      name: name,
+      cluster: loc.cluster || stats.cluster || '—',
+      lat: Number(loc.lat).toFixed(4),
+      lng: Number(loc.lng).toFixed(4),
+      totalVisits: stats.total,
+      lastVisit: stats.lastVisitDate || 'Never',
+      thisMonth: stats.thisMonth,
+      distanceFromHomeKm: distKm,
+      priority: priority
+    };
+  });
+
+  // Sort by priority then distance
+  var priorityOrder = { 'HIGH (never visited)': 0, 'MEDIUM (visited before)': 1, 'LOW (visited this month)': 2 };
+  schoolList.sort(function(a, b) {
+    var pa = priorityOrder[a.priority] || 2;
+    var pb = priorityOrder[b.priority] || 2;
+    if (pa !== pb) return pa - pb;
+    return a.distanceFromHomeKm - b.distanceFromHomeKm;
+  });
+
+  var homeStr = [home.block, home.district].filter(Boolean).join(', ') || (home.lat + ', ' + home.lng);
+
+  var schoolContext = schoolList.map(function(s, i) {
+    return (i+1) + '. ' + s.name +
+      ' | Cluster: ' + s.cluster +
+      ' | Coords: (' + s.lat + ', ' + s.lng + ')' +
+      ' | Distance from home: ~' + s.distanceFromHomeKm + 'km' +
+      ' | Total visits: ' + s.totalVisits +
+      ' | Last visit: ' + s.lastVisit +
+      ' | Priority: ' + s.priority;
+  }).join('\n');
+
+  var systemPrompt = 'You are an expert field visit planner for Azim Premji Foundation Resource Persons in India. ' +
+    'You optimize school visit schedules based on geographic proximity, visit frequency, and educational priority. ' +
+    'You create practical, realistic daily visit plans that minimize travel time while maximizing coverage of neglected schools. ' +
+    'CRITICAL: Output ONLY the visit plan using the exact format given. Do NOT include any reasoning, thinking, explanation, or preamble. ' +
+    'Start your response DIRECTLY with ## 📅 Day 1. Never repeat any section twice.';
+
+
+  var userPrompt = 'Create an optimized ' + days + '-day school visit plan for an APF Resource Person.\n\n' +
+    'HOME BASE: ' + homeStr + ' (Lat: ' + home.lat + ', Lng: ' + home.lng + ')\n' +
+    'PLAN: ' + perDay + ' schools per day for ' + days + ' day(s)\n' +
+    'TOTAL schools to plan: ' + Math.min(days * perDay, schoolList.length) + ' (from ' + schoolList.length + ' pinned)\n\n' +
+    'SCHOOLS (sorted by priority then distance from home):\n' + schoolContext + '\n\n' +
+    'RULES:\n' +
+    '1. Prioritize HIGH priority (never visited) schools first\n' +
+    '2. Group geographically close schools on the same day to minimize travel\n' +
+    '3. Start each day from home base and suggest a logical visit sequence\n' +
+    '4. Include estimated travel distance for each day\n' +
+    '5. If a cluster has multiple schools, try to group them together\n' +
+    '6. Suggest the best time of day for each visit (morning/afternoon)\n\n' +
+    'OUTPUT FORMAT (use exactly this structure):\n' +
+    '## 📅 Day 1 — [Date suggestion or "Monday"]\n' +
+    '**Route:** Home → School A → School B → School C → Home\n' +
+    '**Est. distance:** ~XX km\n' +
+    '- 🏫 **[School Name]** (Cluster: X) — [Priority] — [Why visit today: e.g., never visited, closest to School B]\n' +
+    '  - ⏰ Suggested time: 9:30 AM\n' +
+    '  - 💡 Focus: [specific suggestion e.g., check attendance records, observe Math class]\n' +
+    '[repeat for each school]\n\n' +
+    '## 📅 Day 2 — ...\n' +
+    '[continue for all days]\n\n' +
+    '## 🗺️ Coverage Summary\n' +
+    '- Total schools planned: X\n' +
+    '- Never-visited schools covered: X\n' +
+    '- Estimated total travel: ~XX km\n' +
+    '- Schools not yet planned (visit next cycle): [list remaining]';
+
+  // Show loading
+  var loadingEl = document.getElementById('smapAILoading');
+  var outputEl  = document.getElementById('smapAIOutput');
+  var runBtn    = document.getElementById('smapAIRunBtn');
+  if (loadingEl) loadingEl.style.display = 'block';
+  if (outputEl)  outputEl.style.display  = 'none';
+  if (runBtn)    runBtn.disabled = true;
+
+  SarvamAI.chat([
+    { role: 'system', content: systemPrompt },
+    { role: 'user',   content: userPrompt }
+  ], { temperature: 0.4, max_tokens: 3000 }).then(function(res) {
+    var reply = (res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content) || '';
+
+    // Strip <think>...</think> blocks (some models use these)
+    reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+    // Strip ALL text before the first ## heading — removes model reasoning/preamble
+    var firstHeading = reply.indexOf('## ');
+    if (firstHeading > 0) reply = reply.substring(firstHeading);
+
+    // Deduplicate: if the plan section repeats itself, keep only the first occurrence
+    var day1Match = reply.match(/(## 📅 Day 1)/g);
+    if (day1Match && day1Match.length > 1) {
+      // Find second occurrence of Day 1 and cut everything from there
+      var idx = reply.indexOf('## 📅 Day 1');
+      var idx2 = reply.indexOf('## 📅 Day 1', idx + 10);
+      if (idx2 > idx) reply = reply.substring(0, idx2).trim();
+    }
+
+    // Also deduplicate ## Coverage Summary repeated sections
+    var summaryMatch = reply.match(/(## 🗺️)/g);
+    if (summaryMatch && summaryMatch.length > 1) {
+      var s1 = reply.indexOf('## 🗺️');
+      var s2 = reply.indexOf('## 🗺️', s1 + 5);
+      if (s2 > s1) reply = reply.substring(0, s2).trim();
+    }
+
+    if (!reply) reply = 'No plan generated. Please try again.';
+
+    _smapAILastPlan = { text: reply, schools: schoolList };
+    _smapRenderAIPlan(reply);
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (outputEl)  outputEl.style.display  = 'block';
+    if (runBtn)    { runBtn.disabled = false; }
+    if (typeof showToast === 'function') showToast('AI Visit Plan generated! 🗺️', 'success');
+
+  }).catch(function(err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (runBtn)    runBtn.disabled = false;
+    if (typeof showToast === 'function') showToast('AI error: ' + err.message, 'error');
+  });
+}
+
+function _smapRenderAIPlan(mdText) {
+  var el = document.getElementById('smapAIOutputContent');
+  if (!el) return;
+
+  // Convert basic markdown to HTML
+  var html = mdText
+    .replace(/^## (.+)$/gm, '<h3 style="color:#34d399;margin:18px 0 8px;font-size:14px;border-bottom:1px solid rgba(52,211,153,0.2);padding-bottom:6px;">$1</h3>')
+    .replace(/^\*\*(.+?)\*\*/gm, '<strong style="color:#e2e8f0;">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#e2e8f0;">$1</strong>')
+    .replace(/^- 🏫 (.+)$/gm, '<div style="margin:10px 0 4px;padding:10px 12px;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;font-size:13px;color:#cbd5e1;">🏫 $1</div>')
+    .replace(/^  - ⏰ (.+)$/gm, '<div style="margin-left:20px;font-size:12px;color:#94a3b8;">⏰ $1</div>')
+    .replace(/^  - 💡 (.+)$/gm, '<div style="margin-left:20px;font-size:12px;color:#a5b4fc;">💡 $1</div>')
+    .replace(/^- (.+)$/gm, '<div style="font-size:12px;color:#94a3b8;margin:3px 0;padding-left:8px;">• $1</div>')
+    .replace(/\n{2,}/g, '<br>')
+    .replace(/\n/g, '<br>');
+
+  el.innerHTML = '<div style="font-size:13px;line-height:1.7;color:#cbd5e1;">' + html + '</div>';
+}
+
+function smapAICopyPlan() {
+  if (!_smapAILastPlan) {
+    if (typeof showToast === 'function') showToast('Generate a plan first', 'warning');
+    return;
+  }
+  navigator.clipboard.writeText(_smapAILastPlan.text).then(function() {
+    if (typeof showToast === 'function') showToast('Plan copied to clipboard! 📋', 'success');
+  }).catch(function() {
+    if (typeof showToast === 'function') showToast('Could not copy — try manually selecting the text', 'error');
+  });
+}
+
+function smapAIHighlightOnMap() {
+  if (!_smapAILastPlan || !SchoolMap._map) {
+    if (typeof showToast === 'function') showToast('Generate a plan first', 'warning');
+    return;
+  }
+
+  // Pulse/highlight all planned school markers on the map
+  var plannedNames = (_smapAILastPlan.schools || []).map(function(s) { return s.name.toLowerCase(); });
+  var highlightCount = 0;
+
+  SchoolMap._markers.forEach(function(marker) {
+    var popup = marker.getPopup();
+    if (!popup) return;
+    var content = popup.getContent ? popup.getContent() : '';
+    var matched = plannedNames.some(function(n) {
+      return typeof content === 'string' && content.toLowerCase().includes(n);
+    });
+    if (matched) {
+      marker.openPopup();
+      highlightCount++;
+    }
+  });
+
+  // Fly to fit all planned schools
+  var locs = SchoolMap.getAll();
+  var latLngs = plannedNames.map(function(n) {
+    var key = Object.keys(locs).find(function(k) { return k.toLowerCase() === n; });
+    if (key && locs[key].lat) return [locs[key].lat, locs[key].lng];
+    return null;
+  }).filter(Boolean);
+
+  if (latLngs.length > 1) {
+    try { SchoolMap._map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 13 }); } catch(e) {}
+  }
+
+  if (typeof showToast === 'function') showToast(highlightCount + ' planned schools highlighted on map 📍', 'success');
+}
+

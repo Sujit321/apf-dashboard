@@ -1,10 +1,11 @@
-const CACHE_NAME = 'apf-dashboard-v7';
+const CACHE_NAME = 'apf-dashboard-v9';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './app.js',
     './styles.css',
     './excel-analytics.js',
+    './dashboard-enhancements.js',
     './icon-192.png',
     './icon-512.png'
 ];

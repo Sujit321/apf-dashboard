@@ -34031,3 +34031,932 @@ body.light-mode .obj-tpl-pill {
 .smap-drop-item-meta { font-size: 11px; color: var(--text-secondary); }
 .smap-drop-item-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .smap-drop-empty { padding: 16px; text-align: center; font-size: 13px; color: var(--text-secondary); }
+
+/* =====================================================================
+   DASHBOARD ENHANCEMENTS — New Feature Styles
+   Tasks: FAB, Today's Schedule, Motivational Quote, Weather,
+          Report Writing, Parent Contacts
+   ===================================================================== */
+
+/* ── Quick Action FAB ─────────────────────────────────────────────── */
+.fab-container {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.fab-main {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.fab-main:hover {
+    transform: scale(1.08);
+    box-shadow: 0 12px 32px rgba(99,102,241,0.55);
+}
+
+.fab-plus-icon {
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.fab-main--open .fab-plus-icon {
+    transform: rotate(45deg);
+}
+
+.fab-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+    transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.fab-menu.fab-menu--open {
+    pointer-events: all;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.fab-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    justify-content: flex-end;
+}
+
+.fab-label {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    white-space: nowrap;
+    backdrop-filter: blur(12px);
+}
+
+.fab-action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.fab-action-btn:hover { transform: scale(1.1); }
+
+@media (max-width: 768px) {
+    .fab-container { bottom: 80px; right: 16px; }
+}
+
+/* ── Today's Schedule Widget ─────────────────────────────────────── */
+.widget-schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.schedule-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: var(--border-light);
+}
+
+.schedule-time {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 28px;
+    text-align: center;
+    background: rgba(255,255,255,0.04);
+    padding: 3px 4px;
+    border-radius: 6px;
+}
+
+.schedule-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.schedule-icon.visit      { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.schedule-icon.training   { background: rgba(34,197,94,0.15);  color: #22c55e; }
+.schedule-icon.task       { background: rgba(99,102,241,0.15); color: #6366f1; }
+
+.schedule-text {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sched-tag {
+    display: inline;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.06);
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 4px;
+}
+
+/* ── Motivational Quote Widget ───────────────────────────────────── */
+.widget-quote {
+    padding: 8px 4px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quote-icon {
+    font-size: 22px;
+    color: var(--accent);
+    opacity: 0.35;
+    line-height: 1;
+}
+
+.quote-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-style: italic;
+    margin: 0;
+}
+
+.quote-author {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0;
+    opacity: 0.85;
+}
+
+/* ── Weather Widget ─────────────────────────────────────────────── */
+.widget-weather {
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+}
+
+.weather-loading,
+.weather-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 16px;
+}
+
+.weather-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.weather-icon-big {
+    font-size: 36px;
+    color: #f59e0b;
+    text-shadow: 0 4px 12px rgba(245,158,11,0.3);
+    flex-shrink: 0;
+}
+
+.weather-info { flex: 1; }
+
+.weather-temp {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.weather-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin: 2px 0 6px;
+}
+
+.weather-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.weather-coords {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.6;
+    text-align: right;
+}
+
+/* ── Report Writing Section ─────────────────────────────────────── */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.report-stats-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.report-stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.report-stat-pill i { color: var(--accent); font-size: 11px; }
+
+.report-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.report-card:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.report-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 0;
+}
+
+.report-type-bar {
+    width: 4px;
+    height: 28px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.report-card-meta {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.report-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.2px;
+}
+
+.report-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.report-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 8px 12px 4px;
+    line-height: 1.4;
+}
+
+.report-card-school {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 0 12px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.report-card-preview {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 0 12px;
+    line-height: 1.6;
+    flex: 1;
+    margin: 4px 0;
+}
+
+.report-card-footer {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Badge variants for report status */
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.badge-warning { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.badge-success { background: rgba(34,197,94,0.15);  color: #22c55e; }
+.badge-info    { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+/* ── Parent Contacts Section ─────────────────────────────────────── */
+.parent-contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.parent-contact-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: var(--transition);
+}
+
+.parent-contact-card:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.contact-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.contact-body { flex: 1; min-width: 0; }
+
+.contact-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.contact-relation {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.contact-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.contact-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+/* ── Nav icon colors for new items ───────────────────────────────── */
+#nav-reportswriting i {
+    --ni1: #3b82f6;
+    --ni2: #06b6d4;
+}
+
+#nav-parentcontacts i {
+    --ni1: #ec4899;
+    --ni2: #f43f5e;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .reports-grid { grid-template-columns: 1fr; }
+    .parent-contacts-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Quote widget: live fetch shimmer & source badge ─────────────── */
+.quote-loading {
+    min-height: 1.2em;
+    display: block;
+}
+
+.quote-shimmer {
+    display: block;
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.06) 25%,
+        rgba(255,255,255,0.14) 50%,
+        rgba(255,255,255,0.06) 75%);
+    background-size: 200% 100%;
+    animation: quoteShimmer 1.4s infinite;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+@keyframes quoteShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+body.light-mode .quote-shimmer {
+    background: linear-gradient(90deg,
+        rgba(0,0,0,0.06) 25%,
+        rgba(0,0,0,0.12) 50%,
+        rgba(0,0,0,0.06) 75%);
+    background-size: 200% 100%;
+    animation: quoteShimmer 1.4s infinite;
+}
+
+.quote-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(99,102,241,0.15);
+    color: var(--accent);
+    vertical-align: middle;
+    margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.quote-source-badge.offline {
+    background: rgba(107,114,128,0.15);
+    color: #6b7280;
+}
+
+/* ── Sarvam AI Quote Badge & Setup Hint ──────────────────────────── */
+.quote-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+    color: #8b5cf6;
+    border: 1px solid rgba(139,92,246,0.25);
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+.quote-setup-hint {
+    margin-top: 10px;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+}
+
+.quote-setup-hint i { color: var(--accent); margin-right: 4px; }
+.quote-setup-hint a { color: var(--accent); text-decoration: underline; }
+.quote-setup-hint code {
+    background: rgba(255,255,255,0.07);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: #10b981;
+}
+
+/* =====================================================================
+   NOTE REMINDER ENGINE — UI Styles
+   ===================================================================== */
+
+/* ── Reminder row injected into editing note cards ─────────────────── */
+.note-reminder-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.note-reminder-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.note-reminder-label i { color: #f59e0b; }
+
+.note-remind-dt {
+    flex: 1;
+    min-width: 160px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--text-primary);
+    color-scheme: dark;
+}
+
+body.light-mode .note-remind-dt {
+    background: rgba(0,0,0,0.04);
+    color-scheme: light;
+}
+
+.note-reminder-channels {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rem-ch-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    user-select: none;
+}
+
+.rem-ch-label:has(input:checked) {
+    background: rgba(99,102,241,0.12);
+    border-color: rgba(99,102,241,0.4);
+    color: #6366f1;
+}
+
+.rem-ch-label input { display: none; }
+
+/* Telegram channel icon */
+.rem-ch-label .fa-telegram-plane { color: #26A5E4; }
+/* Email channel icon */
+.rem-ch-label .fa-envelope { color: #f59e0b; }
+/* Bell stays default */
+
+/* ── Reminder Settings Modal Blocks ──────────────────────────────── */
+.reminder-settings-block {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+}
+
+.rsb-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.rsb-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.rsb-icon.push     { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.rsb-icon.telegram { background: rgba(38,165,228,0.15); color: #26A5E4; }
+.rsb-icon.email    { background: rgba(99,102,241,0.15); color: #6366f1; }
+
+.rsb-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.rsb-desc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.rsb-status {
+    margin-top: 8px;
+    min-height: 16px;
+}
+
+/* ── GAS code block in Reminder Settings ─────────────────────────── */
+.gas-code-block {
+    display: block;
+    margin-top: 10px;
+    background: #0d1117;
+    color: #7ee787;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+    white-space: pre;
+    user-select: all;
+}
+
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+
+/* ── Telegram auto-connect status badge ─────────────────────────── */
+.rsb-auto { border-color: rgba(38,165,228,0.2); }
+.rsb-auto-status { font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.rsb-connected    { color: #10b981; display:flex; align-items:center; gap:5px; }
+.rsb-disconnected { color: #f59e0b; display:flex; align-items:center; gap:5px; }
+
+/* ── Flatpickr overrides inside note-remind-dt ──────────────────── */
+/* Hide the hidden ISO input Flatpickr generates; show only altInput */
+.note-remind-dt { display: none !important; }
+
+/* The visible altInput that Flatpickr creates */
+.note-card .flatpickr-input.flatpickr-alt-input,
+.note-card input.flatpickr-input[readonly] {
+    flex: 1;
+    min-width: 160px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 11px;
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.note-card .flatpickr-input.flatpickr-alt-input:hover,
+.note-card input.flatpickr-input[readonly]:hover {
+    border-color: var(--accent);
+    background: rgba(99,102,241,0.08);
+}
+
+/* ── Note reminder: date + time input pair ───────────────────────── */
+/* Remove old Flatpickr override (no longer used in note cards) */
+
+.note-reminder-row--stacked {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.note-remind-dt-wrap {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.note-remind-date,
+.note-remind-time {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--text-primary);
+    color-scheme: dark;
+    font-family: inherit;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.note-remind-date { flex: 1.6; }
+.note-remind-time { flex: 1; }
+
+.note-remind-date:hover,
+.note-remind-time:hover,
+.note-remind-date:focus,
+.note-remind-time:focus {
+    border-color: var(--accent);
+    outline: none;
+    background: rgba(99,102,241,0.08);
+}
+
+body.light-mode .note-remind-date,
+body.light-mode .note-remind-time {
+    background: rgba(0,0,0,0.04);
+    color-scheme: light;
+}
+
+/* =====================================================================
+   NOTE COUNTDOWN BADGE · DONE BUTTON
+   ===================================================================== */
+
+.note-cd-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+/* Pending (future) */
+.note-cd-badge.pending {
+    background: rgba(99,102,241,0.08);
+    border-color: rgba(99,102,241,0.2);
+    color: #6366f1;
+}
+
+/* Overdue */
+.note-cd-badge.overdue {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.25);
+    color: #ef4444;
+    animation: pulseOverdue 2s ease-in-out infinite;
+}
+
+@keyframes pulseOverdue {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.65; }
+}
+
+/* Done */
+.note-cd-badge.done {
+    background: rgba(16,185,129,0.08);
+    border-color: rgba(16,185,129,0.2);
+    color: #10b981;
+}
+
+.done-text { display: flex; align-items: center; gap: 6px; }
+
+.note-cd-text { display: flex; align-items: center; gap: 5px; flex: 1; }
+
+/* Mini channel icons */
+.note-ch-mini {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+/* Done button */
+.btn-note-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid currentColor;
+    background: transparent;
+    color: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: var(--transition);
+    font-family: inherit;
+    margin-left: auto;
+}
+
+.btn-note-done:hover {
+    opacity: 1;
+    background: rgba(255,255,255,0.1);
+}
+
+/* ── Note reminder: VDR date button ─────────────────────────────── */
+.note-remind-date-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1.6;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.note-remind-date-btn:hover {
+    border-color: var(--accent);
+    background: rgba(99,102,241,0.1);
+    color: var(--accent);
+}
+
+/* When a date is picked — icon becomes green */
+.note-remind-date-btn .fa-calendar-check { color: #10b981; }
+.note-remind-date-btn .fa-calendar-alt   { color: var(--text-muted); }
+
+body.light-mode .note-remind-date-btn {
+    background: rgba(0,0,0,0.04);
+}

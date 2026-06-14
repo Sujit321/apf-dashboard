@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -398,6 +398,12 @@
  </a>
  <a href="#" class="nav-item" data-section="meetings" id="nav-meetings" data-tooltip="Meetings">
  <i class="fas fa-handshake"></i><span>Meetings</span>
+  <a href="#" class="nav-item" data-section="reportswriting" id="nav-reportswriting" data-tooltip="Report Writing">
+  <i class="fas fa-file-alt"></i><span>Report Writing</span>
+  </a>
+  <a href="#" class="nav-item" data-section="parentcontacts" id="nav-parentcontacts" data-tooltip="Parent Contacts">
+  <i class="fas fa-address-card"></i><span>Parent Contacts</span>
+  </a>
  </a>
  </div>
  </div>
@@ -508,6 +514,35 @@
 
  <!-- Dynamic Widget Grid (rendered by WidgetBuilder) -->
  <div class="widget-grid" id="dashboardWidgetGrid"></div>
+
+  <!-- ========== Quick Action FAB ========== -->
+  <div class="fab-container" id="fabContainer">
+  <div class="fab-menu" id="fabMenu">
+  <div class="fab-item" onclick="closeQuickFab();navigateTo('visits');openVisitModal();">
+  <span class="fab-label">New Visit</span>
+  <button class="fab-action-btn" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><i class="fas fa-school"></i></button>
+  </div>
+  <div class="fab-item" onclick="closeQuickFab();navigateTo('training');openTrainingModal();">
+  <span class="fab-label">New Training</span>
+  <button class="fab-action-btn" style="background:linear-gradient(135deg,#22c55e,#16a34a)"><i class="fas fa-chalkboard-teacher"></i></button>
+  </div>
+  <div class="fab-item" onclick="closeQuickFab();navigateTo('observations');openObservationModal();">
+  <span class="fab-label">New Observation</span>
+  <button class="fab-action-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"><i class="fas fa-clipboard-check"></i></button>
+  </div>
+  <div class="fab-item" onclick="closeQuickFab();navigateTo('reportswriting');openReportModal();">
+  <span class="fab-label">New Report</span>
+  <button class="fab-action-btn" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)"><i class="fas fa-file-alt"></i></button>
+  </div>
+  <div class="fab-item" onclick="closeQuickFab();navigateTo('notes');">
+  <span class="fab-label">Quick Note</span>
+  <button class="fab-action-btn" style="background:linear-gradient(135deg,#eab308,#f59e0b)"><i class="fas fa-sticky-note"></i></button>
+  </div>
+  </div>
+  <button class="fab-main" id="fabMainBtn" onclick="openQuickFab()" title="Quick Actions">
+  <i class="fas fa-plus fab-plus-icon"></i>
+  </button>
+  </div>
  </section>
 
  <!-- ==================== SCHOOL VISITS SECTION ==================== -->
@@ -1483,6 +1518,9 @@
  <p class="section-subtitle">Jot down ideas, reminders, and to-do items</p>
  </div>
  <div class="header-actions">
+  <button class="btn btn-outline" onclick="openReminderSettings()" id="reminderSettingsBtn">
+  <i class="fas fa-bell"></i> Reminder Settings
+  </button>
  <button class="btn btn-primary" onclick="addNewNote()">
  <i class="fas fa-plus"></i> New Note
  </button>
@@ -2055,6 +2093,9 @@
     <button class="btn btn-outline" onclick="smapShowAllRoutes()" title="Show routes to all schools from home base" style="color:#a5b4fc;border-color:rgba(99,102,241,0.4);">
      <i class="fas fa-network-wired"></i> Route All
     </button>
+    <button class="btn btn-outline" onclick="smapToggleAIPanel()" title="AI visit route suggestions" style="color:#34d399;border-color:rgba(52,211,153,0.4);" id="smapAIBtn">
+     <i class="fas fa-robot"></i> AI Planner
+    </button>
     <button class="btn btn-outline" onclick="exportSchoolMapImage()" title="Export map as PNG image">
      <i class="fas fa-image"></i> Export Image
     </button>
@@ -2118,6 +2159,78 @@
     <i class="fas fa-info-circle"></i>
     Short Plus Codes (like <code style="background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;">XM2P+HX</code>) will be decoded relative to this location.
     The map will open centered here.
+   </div>
+  </div>
+
+
+  <!-- AI Visit Planner Panel -->
+  <div id="smapAIPanel" style="display:none;margin-bottom:12px;">
+   <div style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(99,102,241,0.08));border:1px solid rgba(52,211,153,0.25);border-radius:14px;padding:20px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+     <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10b981,#6366f1);display:flex;align-items:center;justify-content:center;">
+       <i class="fas fa-robot" style="color:#fff;font-size:16px;"></i>
+      </div>
+      <div>
+       <div style="font-size:14px;font-weight:700;color:var(--text-primary);">AI Visit Planner</div>
+       <div style="font-size:11px;color:var(--text-secondary);">Smart route suggestions based on school locations, visit history &amp; priority</div>
+      </div>
+     </div>
+     <button onclick="smapToggleAIPanel()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:4px;">✕</button>
+    </div>
+
+    <!-- Config row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:14px;align-items:end;">
+     <div>
+      <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;"><i class="fas fa-calendar-day"></i> Plan for</label>
+      <select id="smapAIDays" class="smap-dark-input" style="height:32px;padding:0 10px;">
+       <option value="1">Today (1 day)</option>
+       <option value="2">2 Days</option>
+       <option value="3">3 Days</option>
+       <option value="5" selected>This Week (5 days)</option>
+      </select>
+     </div>
+     <div>
+      <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;"><i class="fas fa-school"></i> Schools per day</label>
+      <select id="smapAIPerDay" class="smap-dark-input" style="height:32px;padding:0 10px;">
+       <option value="2">2 schools/day</option>
+       <option value="3" selected>3 schools/day</option>
+       <option value="4">4 schools/day</option>
+       <option value="5">5 schools/day</option>
+      </select>
+     </div>
+     <button onclick="smapRunAIPlanner()" id="smapAIRunBtn" style="height:32px;display:inline-flex;align-items:center;gap:8px;padding:0 18px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;">
+      <i class="fas fa-magic"></i> Generate Plan
+     </button>
+    </div>
+
+    <!-- Priority legend -->
+    <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+     <span style="font-size:11px;color:var(--text-secondary);"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:4px;"></span>Never visited (highest priority)</span>
+     <span style="font-size:11px;color:var(--text-secondary);"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:4px;"></span>Visited before (medium)</span>
+     <span style="font-size:11px;color:var(--text-secondary);"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;margin-right:4px;"></span>This month (low priority)</span>
+    </div>
+
+    <!-- Output area -->
+    <div id="smapAIOutput" style="display:none;">
+     <div style="height:1px;background:rgba(52,211,153,0.2);margin-bottom:16px;"></div>
+     <div id="smapAIOutputContent"></div>
+     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+      <button onclick="smapAICopyPlan()" style="height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:7px;color:#a5b4fc;font-size:12px;font-weight:600;cursor:pointer;">
+       <i class="fas fa-copy"></i> Copy Plan
+      </button>
+      <button onclick="smapAIHighlightOnMap()" style="height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);border-radius:7px;color:#34d399;font-size:12px;font-weight:600;cursor:pointer;">
+       <i class="fas fa-map-marker-alt"></i> Highlight on Map
+      </button>
+     </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="smapAILoading" style="display:none;text-align:center;padding:24px 0;">
+     <style>@keyframes smapSpin { to { transform: rotate(360deg); } }</style>
+     <div style="width:40px;height:40px;border:3px solid rgba(52,211,153,0.2);border-top-color:#10b981;border-radius:50%;animation:smapSpin 0.8s linear infinite;margin:0 auto 12px;"></div>
+     <div style="color:#34d399;font-size:13px;font-weight:500;">AI is analyzing your school locations and visit patterns…</div>
+    </div>
    </div>
   </div>
 
@@ -8462,7 +8575,288 @@ function getOrCreateFolder() {
  </div>
  </section>
 
+  <!-- ==================== REPORT WRITING SECTION ==================== -->
+  <section class="content-section" id="section-reportswriting">
+  <div class="section-header">
+  <div>
+  <h1><i class="fas fa-file-alt"></i> Report Writing</h1>
+  <p class="section-subtitle">Draft, manage and export field reports &amp; documentation</p>
+  </div>
+  <div class="header-actions">
+  <button class="btn btn-outline" onclick="exportParentContactsExcel()" id="exportReportsBtn">
+  <i class="fas fa-file-excel"></i> Export All
+  </button>
+  <button class="btn btn-primary" onclick="openReportModal()">
+  <i class="fas fa-plus"></i> New Report
+  </button>
+  </div>
+  </div>
+  <div class="report-stats-bar">
+  <div class="report-stat-pill"><i class="fas fa-file-alt"></i> <span id="reportStatTotal">0</span> Total</div>
+  <div class="report-stat-pill"><i class="fas fa-pencil-alt"></i> <span id="reportStatDraft">0</span> Drafts</div>
+  <div class="report-stat-pill"><i class="fas fa-check-circle"></i> <span id="reportStatFinal">0</span> Final</div>
+  </div>
+  <div class="filter-bar">
+  <div class="filter-group">
+  <select id="reportTypeFilter" onchange="renderReports()">
+  <option value="all">All Types</option>
+  <option value="Visit Report">Visit Report</option>
+  <option value="Training Report">Training Report</option>
+  <option value="Monthly Report">Monthly Report</option>
+  <option value="Observation Report">Observation Report</option>
+  <option value="Field Note">Field Note</option>
+  <option value="Other">Other</option>
+  </select>
+  <select id="reportStatusFilter" onchange="renderReports()">
+  <option value="all">All Status</option>
+  <option value="draft">Draft</option>
+  <option value="final">Final</option>
+  <option value="submitted">Submitted</option>
+  </select>
+  <input type="text" id="reportSearchInput" placeholder="Search reports..." oninput="renderReports()">
+  </div>
+  </div>
+  <div id="reportsContainer" class="reports-grid">
+  <div class="empty-state">
+  <i class="fas fa-file-alt"></i>
+  <h3>No reports yet</h3>
+  <p>Click "New Report" to create your first report draft</p>
+  </div>
+  </div>
+  </section>
+
+  <!-- ==================== PARENT CONTACTS SECTION ==================== -->
+  <section class="content-section" id="section-parentcontacts">
+  <div class="section-header">
+  <div>
+  <h1><i class="fas fa-address-card"></i> Parent Contacts</h1>
+  <p class="section-subtitle">Maintain a directory of parent/guardian contacts for your schools</p>
+  </div>
+  <div class="header-actions">
+  <button class="btn btn-outline" onclick="exportParentContactsExcel()">
+  <i class="fas fa-file-excel"></i> Export Excel
+  </button>
+  <button class="btn btn-primary" onclick="openParentContactModal()">
+  <i class="fas fa-plus"></i> Add Contact
+  </button>
+  </div>
+  </div>
+  <div class="report-stats-bar">
+  <div class="report-stat-pill"><i class="fas fa-address-card"></i> <span id="pcStatTotal">0</span> Total</div>
+  <div class="report-stat-pill"><i class="fas fa-school"></i> <span id="pcStatSchools">0</span> Schools</div>
+  </div>
+  <div class="filter-bar">
+  <div class="filter-group">
+  <input type="text" id="pcSchoolFilter" placeholder="Filter by school..." oninput="renderParentContacts()">
+  <input type="text" id="pcSearchInput" placeholder="Search contacts..." oninput="renderParentContacts()">
+  </div>
+  </div>
+  <div id="parentContactsContainer" class="parent-contacts-grid">
+  <div class="empty-state">
+  <i class="fas fa-address-card"></i>
+  <h3>No parent contacts yet</h3>
+  <p>Click "Add Contact" to register your first parent contact</p>
+  </div>
+  </div>
+  </section>
+
+  <!-- ===== Reminder Settings Modal ===== -->
+  <div class="modal-overlay" id="reminderSettingsModal">
+  <div class="modal" style="max-width:560px">
+  <div class="modal-header">
+  <h2><i class="fas fa-bell"></i> Reminder Settings</h2>
+  <button class="modal-close" onclick="closeModal('reminderSettingsModal')"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+
+  <!-- Push Notifications -->
+  <div class="reminder-settings-block">
+  <div class="rsb-header">
+  <span class="rsb-icon push"><i class="fas fa-bell"></i></span>
+  <div>
+  <div class="rsb-title">Browser Push Notifications</div>
+  <div class="rsb-desc">Shows a notification popup even when the tab is in background</div>
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="requestPushPermission()" id="pushPermBtn">Enable</button>
+  </div>
+  <div class="rsb-status" id="pushPermStatus"></div>
+  </div>
+
+  <!-- Telegram -->
+   <!-- Telegram — reads from app existing config -->
+   <div class="reminder-settings-block rsb-auto">
+   <div class="rsb-header">
+   <span class="rsb-icon telegram"><i class="fab fa-telegram-plane"></i></span>
+   <div style="flex:1">
+   <div class="rsb-title">Telegram</div>
+   <div class="rsb-desc">Uses your existing bot configuration saved in APF Settings — no re-entry needed.</div>
+   </div>
+   <div id="tgReminderStatus" class="rsb-auto-status"></div>
+   </div>
+   <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="testTelegramReminder()"><i class="fas fa-paper-plane"></i> Send Test Message</button>
+   </div>
+
+   <!-- Email via Google Apps Script -->
+   <div class="reminder-settings-block">
+   <div class="rsb-header">
+   <span class="rsb-icon email"><i class="fab fa-google"></i></span>
+   <div>
+   <div class="rsb-title">Email (via Google Apps Script)</div>
+   <div class="rsb-desc">Deploy the GAS script below as a Web App, paste the URL here. Sends email directly via your Google account — no third-party service needed.</div>
+   </div>
+   </div>
+   <div class="form-group" style="margin-top:10px">
+   <label for="rsGasUrl"><i class="fas fa-link"></i> GAS Web App URL</label>
+   <input type="url" id="rsGasUrl" placeholder="https://script.google.com/macros/s/.../exec">
+   </div>
+   <div class="form-group">
+   <label for="rsEmailTo"><i class="fas fa-envelope"></i> Send Reminders To (email address)</label>
+   <input type="email" id="rsEmailTo" placeholder="you@gmail.com">
+   </div>
+   <button class="btn btn-outline btn-sm" onclick="testEmailReminder()"><i class="fas fa-envelope"></i> Send Test Email</button>
+   <details style="margin-top:12px">
+   <summary style="cursor:pointer;font-size:11.5px;color:var(--text-muted);font-weight:600"><i class="fas fa-code"></i>&nbsp; GAS Script — paste into script.google.com (click to expand)</summary>
+   <pre class="gas-code-block">function doPost(e) {
+  try {
+    var d = JSON.parse(e.postData.contents);
+    GmailApp.sendEmail(d.to, d.subject, d.body);
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:false,error:err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+// Deploy: Extensions > Apps Script > Deploy > New deployment
+// Execute as: Me | Who has access: Anyone</pre>
+   </details>
+   </div>
+  </div>
+  <div class="modal-footer">
+  <button class="btn btn-ghost" onclick="closeModal('reminderSettingsModal')">Cancel</button>
+  <button class="btn btn-primary" onclick="saveReminderSettings()"><i class="fas fa-save"></i> Save Settings</button>
+  </div>
+  </div>
+  </div>
  </main>
+  <!-- ===== Report Writing Modal ===== -->
+  <div class="modal-overlay" id="reportWritingModal">
+  <div class="modal" style="max-width:720px">
+  <div class="modal-header">
+  <h2 id="reportModalTitle"><i class="fas fa-file-alt"></i> New Report</h2>
+  <button class="modal-close" onclick="closeModal('reportWritingModal')"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+  <input type="hidden" id="reportEditId">
+  <div class="form-row">
+  <div class="form-group" style="flex:1">
+  <label for="reportType"><i class="fas fa-tag"></i> Report Type</label>
+  <select id="reportType">
+  <option>Visit Report</option>
+  <option>Training Report</option>
+  <option>Monthly Report</option>
+  <option>Observation Report</option>
+  <option>Field Note</option>
+  <option>Other</option>
+  </select>
+  </div>
+  <div class="form-group" style="flex:1">
+  <label for="reportStatus"><i class="fas fa-info-circle"></i> Status</label>
+  <select id="reportStatus">
+  <option value="draft">Draft</option>
+  <option value="final">Final</option>
+  <option value="submitted">Submitted</option>
+  </select>
+  </div>
+  </div>
+  <div class="form-group">
+  <label for="reportTitle"><i class="fas fa-heading"></i> Title *</label>
+  <input type="text" id="reportTitle" placeholder="e.g., Monthly Visit Report - June 2026">
+  </div>
+  <div class="form-row">
+  <div class="form-group" style="flex:1">
+  <label for="reportSchool"><i class="fas fa-school"></i> School / Location</label>
+  <input type="text" id="reportSchool" placeholder="School name (optional)">
+  </div>
+  <div class="form-group" style="flex:1">
+  <label for="reportDate"><i class="fas fa-calendar"></i> Date</label>
+  <input type="date" id="reportDate">
+  </div>
+  </div>
+  <div class="form-group">
+  <label for="reportContent"><i class="fas fa-pen-fancy"></i> Report Content *</label>
+  <textarea id="reportContent" rows="12" placeholder="Write your report here..."></textarea>
+  </div>
+  </div>
+  <div class="modal-footer">
+  <button class="btn btn-ghost" onclick="closeModal('reportWritingModal')">Cancel</button>
+  <button class="btn btn-primary" onclick="saveReport()"><i class="fas fa-save"></i> Save Report</button>
+  </div>
+  </div>
+  </div>
+
+  <!-- ===== Parent Contact Modal ===== -->
+  <div class="modal-overlay" id="parentContactModal">
+  <div class="modal" style="max-width:600px">
+  <div class="modal-header">
+  <h2 id="pcModalTitle"><i class="fas fa-address-card"></i> New Parent Contact</h2>
+  <button class="modal-close" onclick="closeModal('parentContactModal')"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+  <input type="hidden" id="pcEditId">
+  <div class="form-row">
+  <div class="form-group" style="flex:2">
+  <label for="pcParentName"><i class="fas fa-user"></i> Parent / Guardian Name *</label>
+  <input type="text" id="pcParentName" placeholder="Full name">
+  </div>
+  <div class="form-group" style="flex:1">
+  <label for="pcRelation"><i class="fas fa-sitemap"></i> Relation</label>
+  <select id="pcRelation">
+  <option>Father</option>
+  <option>Mother</option>
+  <option>Guardian</option>
+  <option>Other</option>
+  </select>
+  </div>
+  </div>
+  <div class="form-row">
+  <div class="form-group" style="flex:1">
+  <label for="pcPhone"><i class="fas fa-phone"></i> Phone *</label>
+  <input type="tel" id="pcPhone" placeholder="+91 XXXXX XXXXX">
+  </div>
+  <div class="form-group" style="flex:1">
+  <label for="pcEmail"><i class="fas fa-envelope"></i> Email</label>
+  <input type="email" id="pcEmail" placeholder="email@example.com">
+  </div>
+  </div>
+  <div class="form-row">
+  <div class="form-group" style="flex:2">
+  <label for="pcStudentName"><i class="fas fa-child"></i> Student Name</label>
+  <input type="text" id="pcStudentName" placeholder="Child's name">
+  </div>
+  <div class="form-group" style="flex:1">
+  <label for="pcClass"><i class="fas fa-graduation-cap"></i> Class</label>
+  <input type="text" id="pcClass" placeholder="e.g., 5">
+  </div>
+  </div>
+  <div class="form-group">
+  <label for="pcSchool"><i class="fas fa-school"></i> School</label>
+  <input type="text" id="pcSchool" placeholder="School name">
+  </div>
+  <div class="form-group">
+  <label for="pcNotes"><i class="fas fa-sticky-note"></i> Notes</label>
+  <textarea id="pcNotes" rows="3" placeholder="Any relevant notes about this contact..."></textarea>
+  </div>
+  </div>
+  <div class="modal-footer">
+  <button class="btn btn-ghost" onclick="closeModal('parentContactModal')">Cancel</button>
+  <button class="btn btn-primary" onclick="saveParentContact()"><i class="fas fa-save"></i> Save Contact</button>
+  </div>
+  </div>
+  </div>
+
 
  <!-- ===== Objective Setting Modal ===== -->
  <div class="modal-overlay" id="objectiveModal">
@@ -8591,5 +8985,6 @@ function getOrCreateFolder() {
  <script src="app.js"></script>
  <script src="excel-analytics.js"></script>
  <script src="school-map.js"></script>
+  <script src="dashboard-enhancements.js"></script>
 </body>
 </html>
