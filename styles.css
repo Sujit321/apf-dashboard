@@ -34968,6 +34968,9 @@ body.light-mode .note-remind-date-btn {
 /* ── Section wrapper ─────────────────────────────────────────────── */
 #section-notes {
     padding: 0 !important;
+}
+
+#section-notes.content-section.active {
     display: flex;
     flex-direction: column;
     gap: 0;

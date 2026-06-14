@@ -35489,29 +35489,32 @@ function initSmartAutomation() {
 
 
 function initApp() {
+  const showSplashScreen = () => {
+    const _s = getAppSettings();
+    if (_s.splashEnabled === false) return;
+    const splash = document.getElementById('splashScreen');
+    if (!splash) return;
+    const dur = _s.splashDuration || 2600;
+    applySplashTheme(_s.splashTheme || 'indigo');
+    splash.style.display = 'flex';
+    splash.classList.remove('splash-hide');
+    const ring = splash.querySelector('.splash-ring-fill');
+    if (ring) { ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = ''; }
+    setTimeout(function () {
+      splash.classList.add('splash-hide');
+      setTimeout(function () { splash.style.display = 'none'; }, 500);
+    }, dur);
+  };
+
   if (appInitialized) {
     // Re-unlocking from lock screen — show splash again
-    (function showSplashAgain() {
-      const _s = getAppSettings();
-      if (_s.splashEnabled === false) return;
-      const splash = document.getElementById('splashScreen');
-      if (!splash) return;
-      const dur = _s.splashDuration || 2600;
-      applySplashTheme(_s.splashTheme || 'indigo');
-      splash.style.display = 'flex';
-      splash.classList.remove('splash-hide');
-      const ring = splash.querySelector('.splash-ring-fill');
-      if (ring) { ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = ''; }
-      setTimeout(function () {
-        splash.classList.add('splash-hide');
-        setTimeout(function () { splash.style.display = 'none'; }, 500);
-      }, dur);
-    })();
+    showSplashScreen();
     renderDashboard();
     return;
   }
 
   appInitialized = true;
+  showSplashScreen();
 
   // Nav clicks
   document.querySelectorAll('.nav-item').forEach(item => {
