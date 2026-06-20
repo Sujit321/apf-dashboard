@@ -15546,6 +15546,7 @@ function getSchoolData() {
 
   visits.forEach(v => {
     const key = (v.school || '').trim().toLowerCase();
+    if (!key) return;
     ensureSchool(key, (v.school || '').trim(), v.block);
     if (v.block && !schoolMap[key].block) schoolMap[key].block = v.block;
     if (v.cluster && !schoolMap[key].cluster) schoolMap[key].cluster = v.cluster.trim();
@@ -15555,6 +15556,7 @@ function getSchoolData() {
 
   observations.forEach(o => {
     const key = (o.school || '').trim().toLowerCase();
+    if (!key) return;
     ensureSchool(key, (o.school || '').trim(), o.block);
     if (o.block && !schoolMap[key].block) schoolMap[key].block = o.block;
     if (o.cluster && !schoolMap[key].cluster) schoolMap[key].cluster = o.cluster.trim();
@@ -15562,6 +15564,20 @@ function getSchoolData() {
     if (o.date) schoolMap[key]._dates.add(o.date);
     const teacher = (o.teacher || '').trim();
     if (teacher) schoolMap[key]._teachers.add(teacher);
+  });
+
+  // Also include schools that only have student records (profiles never disappear)
+  let allStudentRecs = DB.get('schoolStudentRecords') || {};
+  if (Array.isArray(allStudentRecs)) allStudentRecs = {};
+  Object.entries(allStudentRecs).forEach(([key, sr]) => {
+    if (!key) return;
+    if (!schoolMap[key]) {
+      // Restore school name from stored record, or capitalise the key as fallback
+      const savedName = (sr && sr.schoolName) ||
+        key.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      ensureSchool(key, savedName, (sr && sr.block) || '');
+      if (sr && sr.cluster) schoolMap[key].cluster = sr.cluster;
+    }
   });
 
   // Convert sets to counts for easy access
@@ -16567,6 +16583,46 @@ function _buildSchoolStudentSection(schoolKey) {
     }
   }
 
+  // Build history panel (all past snapshots)
+  const history = (sr && Array.isArray(sr.history) && sr.history.length > 0) ? sr.history : [];
+  let historyHtml = '';
+  if (history.length > 0) {
+    const histEntries = [...history].reverse().map(snap => {
+      const snapTotals = _ssrTotals({ classes: snap.classes });
+      const snapDate = snap.savedAt
+        ? new Date(snap.savedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'Unknown date';
+      const activeSnapClasses = Object.keys(snap.classes || {})
+        .filter(k => { const c = snap.classes[k]; return c && (c.lig || c.fln || c.pgl || c.gl); })
+        .sort((a, b) => parseInt(a) - parseInt(b));
+      const levelSummary = STUDENT_LEVELS
+        .map(l => snapTotals[l.key] > 0
+          ? `<span style="color:${l.color};font-size:11px;font-weight:600;">${l.icon} ${l.label}: ${snapTotals[l.key]}</span>`
+          : '')
+        .filter(Boolean).join(' · ');
+      return `<div class="ssr-history-entry">
+ <div class="ssr-history-meta">
+  <span class="ssr-history-date"><i class="fas fa-calendar-alt" style="margin-right:4px;"></i>${snapDate}</span>
+  <span class="ssr-history-total" style="font-weight:700;color:var(--text-primary);">${snapTotals.total} students</span>
+  ${activeSnapClasses.length > 0 ? `<span style="font-size:11px;color:var(--text-muted);">Classes: ${activeSnapClasses.map(c => 'Cl.' + c).join(', ')}</span>` : ''}
+ </div>
+ ${levelSummary ? `<div class="ssr-history-levels" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">${levelSummary}</div>` : ''}
+ ${snap.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;"><i class="fas fa-sticky-note" style="margin-right:4px;"></i>${escapeHtml(snap.notes)}</div>` : ''}
+</div>`;
+    }).join('');
+
+    historyHtml = `
+ <div class="ssr-history" id="ssrHistoryWrap_${safeKey}">
+  <div class="ssr-history-header" onclick="var l=this.parentElement.querySelector('.ssr-history-list');l.style.display=l.style.display==='none'?'block':'none';this.querySelector('.ssr-hist-chevron').style.transform=l.style.display==='none'?'':'rotate(180deg)';" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(99,102,241,0.07);border-radius:8px;margin-top:14px;user-select:none;">
+   <i class="fas fa-history" style="color:var(--accent);font-size:13px;"></i>
+   <span style="font-size:13px;font-weight:600;color:var(--text-secondary);">Record History</span>
+   <span style="font-size:11px;background:rgba(99,102,241,0.15);color:var(--accent);padding:1px 8px;border-radius:10px;">${history.length} ${history.length === 1 ? 'snapshot' : 'snapshots'}</span>
+   <i class="fas fa-chevron-down ssr-hist-chevron" style="margin-left:auto;font-size:11px;color:var(--text-muted);transition:transform 0.25s;"></i>
+  </div>
+  <div class="ssr-history-list" style="display:none;">${histEntries}</div>
+ </div>`;
+  }
+
   return `
  <div class="ssr-section" id="ssrSection">
  <div class="ssr-header">
@@ -16585,6 +16641,7 @@ function _buildSchoolStudentSection(schoolKey) {
  <p>No student records added yet. Click "Add Students" to record class-wise learning levels.</p>
  </div>
  `}
+ ${historyHtml}
  </div>
  `;
 }
@@ -16724,11 +16781,36 @@ function saveSchoolStudentRecords(encodedKey) {
   }
 
   let allRecords = DB.get('schoolStudentRecords') || {};
-  if (Array.isArray(allRecords)) allRecords = { ...allRecords };
-  allRecords[schoolKey] = { classes, notes, updatedAt: new Date().toISOString() };
+  if (Array.isArray(allRecords)) allRecords = {};
+
+  // Preserve history: archive old record before overwriting
+  const existing = allRecords[schoolKey];
+  let history = [];
+  if (existing) {
+    history = Array.isArray(existing.history) ? [...existing.history] : [];
+    // Snapshot the current (old) record before replacing it
+    const snapshot = {
+      classes: existing.classes || {},
+      notes: existing.notes || '',
+      savedAt: existing.updatedAt || new Date().toISOString(),
+      total: _ssrTotals(existing).total
+    };
+    history.push(snapshot);
+    // Cap at 50 entries to prevent unbounded growth
+    if (history.length > 50) history = history.slice(history.length - 50);
+  }
+
+  // Store school metadata so profile survives even if all visits are deleted
+  const schoolMap = getSchoolData();
+  const schoolInfo = schoolMap[schoolKey];
+  const schoolName = (schoolInfo && schoolInfo.name) || (existing && existing.schoolName) || '';
+  const block = (schoolInfo && schoolInfo.block) || (existing && existing.block) || '';
+  const cluster = (schoolInfo && schoolInfo.cluster) || (existing && existing.cluster) || '';
+
+  allRecords[schoolKey] = { classes, notes, updatedAt: new Date().toISOString(), schoolName, block, cluster, history };
   DB.set('schoolStudentRecords', allRecords);
   if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
-  showToast(` Student records saved (${grandTotal} students)`);
+  showToast(`\u2705 Student records saved (${grandTotal} students, ${history.length} history entries)`);
   showSchoolDetail(encodeURIComponent(schoolKey));
 }
 
@@ -28986,6 +29068,8 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+// Alias: renderCapacityBuilding uses escapeHTML (capital H)
+const escapeHTML = escapeHtml;
 
 function getTimeAgo(dateStr) {
   const now = new Date();
