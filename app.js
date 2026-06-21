@@ -830,11 +830,11 @@ const GoogleDriveSync = {
         if (r.ok) {
           if (r.changed !== 0) {
             const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-            showToast(`☁ï¸ Auto-backup saved to Google Drive · ${now}`, 'success');
+            showToast(`☁️ Auto-backup saved to Google Drive · ${now}`, 'success');
           }
         } else {
           console.warn('Auto-backup failed:', r.error);
-          showToast(`☁ï¸ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
+          showToast(`☁️ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
         }
       });
     }, 10000); // 10 seconds debounce
@@ -27224,11 +27224,11 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, ðŸ«, ⚠ï¸, 📊, ðŸ’ª, ✅, ðŸ””).`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- ðŸ« Your point here".' },
+      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- 🏫 Your point here".' },
       { role: 'user', content: prompt }
     ], { temperature: 0.7, max_tokens: 1500 });
     const reply = res.choices?.[0]?.message?.content || 'No digest available.';
