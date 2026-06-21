@@ -4395,7 +4395,93 @@ function getOrCreateFolder() {
  </div>
  </div>
 
- <!-- Bulk Delete by Category -->
+  <!-- Browser Cache & Memory Health Card -->
+  <div class="backup-card bch-card" style="grid-column:1 / -1;" id="bchCard">
+  <div class="bch-header">
+  <div class="bch-header-left">
+  <div class="bch-icon"><i class="fas fa-heartbeat"></i></div>
+  <div>
+  <h3><i class="fas fa-memory"></i> Browser Cache &amp; Memory Health</h3>
+  <p>Live memory usage, cache status, and complete system health overview</p>
+  </div>
+  </div>
+  <div class="bch-health-badge" id="bchHealthBadge">
+  <span class="bch-health-dot" id="bchHealthDot"></span>
+  <span id="bchHealthLabel">Checking…</span>
+  </div>
+  </div>
+
+  <!-- Health Score Bar -->
+  <div class="bch-score-row">
+  <div class="bch-score-label">Overall Health Score</div>
+  <div class="bch-score-bar-wrap">
+  <div class="bch-score-bar" id="bchScoreBar"></div>
+  </div>
+  <div class="bch-score-val" id="bchScoreVal">—</div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="bch-stats-grid" id="bchStatsGrid">
+  <div class="bch-stat-card" id="bchStatMemory">
+  <div class="bch-stat-icon" style="background:rgba(99,102,241,0.15)"><i class="fas fa-memory" style="color:#6366f1"></i></div>
+  <div class="bch-stat-body">
+  <div class="bch-stat-val" id="bchMemUsed">—</div>
+  <div class="bch-stat-label">JS Heap Used</div>
+  <div class="bch-stat-sub" id="bchMemLimit">of — limit</div>
+  </div>
+  <div class="bch-stat-gauge-wrap"><div class="bch-stat-gauge" id="bchMemGauge"></div></div>
+  </div>
+  <div class="bch-stat-card" id="bchStatStorage">
+  <div class="bch-stat-icon" style="background:rgba(16,185,129,0.15)"><i class="fas fa-database" style="color:#10b981"></i></div>
+  <div class="bch-stat-body">
+  <div class="bch-stat-val" id="bchStorageUsed">—</div>
+  <div class="bch-stat-label">App Data Size</div>
+  <div class="bch-stat-sub" id="bchStorageSub">encrypted in app</div>
+  </div>
+  </div>
+  <div class="bch-stat-card" id="bchStatCache">
+  <div class="bch-stat-icon" style="background:rgba(245,158,11,0.15)"><i class="fas fa-layer-group" style="color:#f59e0b"></i></div>
+  <div class="bch-stat-body">
+  <div class="bch-stat-val" id="bchCacheSize">—</div>
+  <div class="bch-stat-label">Browser Cache</div>
+  <div class="bch-stat-sub" id="bchCacheSub">Service Worker + Assets</div>
+  </div>
+  </div>
+  <div class="bch-stat-card" id="bchStatEnc">
+  <div class="bch-stat-icon" style="background:rgba(139,92,246,0.15)"><i class="fas fa-shield-alt" style="color:#8b5cf6"></i></div>
+  <div class="bch-stat-body">
+  <div class="bch-stat-val" style="font-size:0.85rem;color:#8b5cf6">AES-256-GCM</div>
+  <div class="bch-stat-label">Encryption</div>
+  <div class="bch-stat-sub">PBKDF2 · 100K iterations</div>
+  </div>
+  </div>
+  </div>
+
+  <!-- Health Checks -->
+  <div class="bch-checks" id="bchChecks">
+  <div class="bch-check" id="bchCheckSW"><i class="fas fa-circle-notch fa-spin" style="font-size:11px"></i><span>Service Worker</span><span class="bch-check-val">—</span></div>
+  <div class="bch-check" id="bchCheckIDB"><i class="fas fa-circle-notch fa-spin" style="font-size:11px"></i><span>IndexedDB</span><span class="bch-check-val">—</span></div>
+  <div class="bch-check" id="bchCheckMem"><i class="fas fa-circle-notch fa-spin" style="font-size:11px"></i><span>Memory Pressure</span><span class="bch-check-val">—</span></div>
+  <div class="bch-check" id="bchCheckEnc"><i class="fas fa-circle-notch fa-spin" style="font-size:11px"></i><span>Encryption Active</span><span class="bch-check-val">—</span></div>
+  <div class="bch-check" id="bchCheckOnline"><i class="fas fa-circle-notch fa-spin" style="font-size:11px"></i><span>Network</span><span class="bch-check-val">—</span></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="bch-actions">
+  <button class="btn btn-outline bch-btn-cache" onclick="bchClearCache()" id="bchClearCacheBtn">
+  <i class="fas fa-broom"></i> Clear Browser Cache
+  </button>
+  <button class="btn btn-outline bch-btn-refresh" onclick="bchRefreshHealth()">
+  <i class="fas fa-sync-alt"></i> Refresh Health
+  </button>
+  <span class="bch-last-checked" id="bchLastChecked"></span>
+  </div>
+
+  <!-- Cache Clear Result -->
+  <div class="bch-cache-result" id="bchCacheResult" style="display:none"></div>
+  </div>
+
+  <!-- Bulk Delete by Category -->
  <div style="grid-column:1 / -1; background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid rgba(239,68,68,0.25); padding:24px;">
  <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
  <div class="backup-icon" style="background:linear-gradient(135deg,#f97316,#ea580c);margin:0;flex-shrink:0;">

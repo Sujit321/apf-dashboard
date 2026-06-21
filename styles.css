@@ -18801,6 +18801,312 @@ body.compact-mode .settings-card-header {
     line-height: 1.5;
 }
 
+
+/* ===== Browser Cache & Memory Health (BCH) Card ===== */
+.bch-card {
+    padding: 24px 28px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.bch-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.bch-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.bch-icon {
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fff;
+    flex-shrink: 0;
+    animation: bchPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bchPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+    50%       { box-shadow: 0 0 0 10px rgba(99,102,241,0); }
+}
+
+.bch-header-left h3 {
+    margin: 0 0 3px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.bch-header-left p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.bch-health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.bch-health-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6b7280;
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* Score Bar */
+.bch-score-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.bch-score-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    min-width: 130px;
+}
+
+.bch-score-bar-wrap {
+    flex: 1;
+    height: 10px;
+    background: var(--bg-main);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.bch-score-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1), background 0.4s;
+    width: 0%;
+}
+
+.bch-score-val {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    min-width: 42px;
+    text-align: right;
+}
+
+/* Stats Grid */
+.bch-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.bch-stat-card {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bch-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.bch-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.bch-stat-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.bch-stat-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.bch-stat-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.bch-stat-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Memory gauge bar inside stat card */
+.bch-stat-gauge-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border);
+}
+
+.bch-stat-gauge {
+    height: 100%;
+    border-radius: 0 0 14px 14px;
+    transition: width 0.8s ease, background 0.4s;
+    width: 0%;
+}
+
+/* Health Checks */
+.bch-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.bch-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.bch-check-val {
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* Actions Row */
+.bch-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.bch-btn-cache {
+    border-color: rgba(239,68,68,0.35) !important;
+    color: #ef4444 !important;
+}
+
+.bch-btn-cache:hover {
+    background: rgba(239,68,68,0.08) !important;
+    border-color: #ef4444 !important;
+}
+
+.bch-btn-refresh {
+    border-color: rgba(99,102,241,0.35) !important;
+    color: #6366f1 !important;
+}
+
+.bch-btn-refresh:hover {
+    background: rgba(99,102,241,0.08) !important;
+    border-color: #6366f1 !important;
+}
+
+.bch-last-checked {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* Cache Clear Result */
+.bch-cache-result {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    animation: bchSlideIn 0.3s ease;
+}
+
+@keyframes bchSlideIn {
+    from { opacity:0; transform:translateY(-8px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+.bch-result-ok {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.25);
+    color: #10b981;
+}
+
+.bch-result-err {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    color: #ef4444;
+}
+
+.bch-cache-result i { flex-shrink: 0; margin-top: 2px; }
+
+/* Light mode */
+body.light-mode .bch-stat-card,
+body.light-mode .bch-check {
+    background: #f8fafc;
+}
+
+body.light-mode .bch-health-badge {
+    background: #f1f5f9;
+}
+
+@media (max-width: 600px) {
+    .bch-stats-grid { grid-template-columns: 1fr 1fr; }
+    .bch-score-label { min-width: 90px; font-size: 0.7rem; }
+    .bch-header { flex-direction: column; align-items: flex-start; }
+}
 .backup-bottom-row {
     grid-column: 1 / -1;
     display: grid;
@@ -18895,7 +19201,8 @@ body.compact-mode .settings-card-header {
         grid-template-columns: 1fr;
     }
 
-    .backup-bottom-row {
+    
+.backup-bottom-row {
         grid-template-columns: 1fr;
     }
 

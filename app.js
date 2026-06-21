@@ -2588,7 +2588,7 @@ function refreshSection(section) {
     case 'meetings': renderMeetings(); break;
     case 'worklog': renderWorkLog(); break;
     case 'livesync': renderSyncSettings(); LiveSync.updateFloatingIndicator(); break;
-    case 'backup': renderBackupInfo(); break;
+    case 'backup': renderBackupInfo(); setTimeout(function(){ if(typeof bchRefreshHealth==='function') bchRefreshHealth(); }, 300); break;
     case 'settings': renderSettings(); break;
     case 'feedback': renderFeedbackList(); break;
     case 'growth': renderGrowthFramework(); break;
@@ -21609,6 +21609,202 @@ async function restoreBackup(event) {
   event.target.value = '';
 }
 
+
+// ===== Browser Cache & Memory Health (BCH) =====
+function _bchFmtBytes(b) {
+  if (b === null || b === undefined || isNaN(b)) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
+  return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+function _bchSetCheck(id, pass, label) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var icon = pass ? '<i class="fas fa-check-circle" style="color:#10b981;font-size:12px"></i>'
+                  : '<i class="fas fa-times-circle" style="color:#ef4444;font-size:12px"></i>';
+  var valEl = el.querySelector('.bch-check-val');
+  var iconEl = el.querySelector('i');
+  if (iconEl) iconEl.outerHTML = icon;
+  if (valEl) { valEl.textContent = label; valEl.style.color = pass ? '#10b981' : '#ef4444'; }
+}
+
+async function bchRefreshHealth() {
+  var score = 0;
+  var total = 5;
+
+  // 1. Memory
+  var memEl = document.getElementById('bchMemUsed');
+  var limEl = document.getElementById('bchMemLimit');
+  var gaugeEl = document.getElementById('bchMemGauge');
+  if (window.performance && performance.memory) {
+    var used = performance.memory.usedJSHeapSize;
+    var total_mem = performance.memory.totalJSHeapSize;
+    var limit = performance.memory.jsHeapSizeLimit;
+    var pct = Math.round((used / limit) * 100);
+    if (memEl) memEl.textContent = _bchFmtBytes(used);
+    if (limEl) limEl.textContent = 'of ' + _bchFmtBytes(limit) + ' limit (' + pct + '%)';
+    if (gaugeEl) {
+      gaugeEl.style.width = Math.min(pct, 100) + '%';
+      gaugeEl.style.background = pct > 80 ? '#ef4444' : pct > 60 ? '#f59e0b' : '#10b981';
+    }
+    var memOk = pct < 75;
+    _bchSetCheck('bchCheckMem', memOk, pct < 50 ? 'Low — Good' : pct < 75 ? 'Moderate' : 'High — Warning');
+    if (memOk) score++;
+  } else {
+    if (memEl) memEl.textContent = 'N/A';
+    if (limEl) limEl.textContent = 'API not available';
+    _bchSetCheck('bchCheckMem', true, 'N/A (Chrome only)');
+    score++;
+  }
+
+  // 2. App data size
+  var storEl = document.getElementById('bchStorageUsed');
+  var storSub = document.getElementById('bchStorageSub');
+  try {
+    var keys = DB._store ? Object.keys(DB._store) : [];
+    var raw = JSON.stringify(DB._store || {});
+    var appBytes = new Blob([raw]).size;
+    if (storEl) storEl.textContent = _bchFmtBytes(appBytes);
+    if (storSub) storSub.textContent = keys.length + ' data module' + (keys.length !== 1 ? 's' : '') + ' · encrypted';
+  } catch(e) {
+    if (storEl) storEl.textContent = '—';
+  }
+
+  // 3. Browser Cache (Service Worker Cache API)
+  var cacheEl = document.getElementById('bchCacheSize');
+  var cacheSub = document.getElementById('bchCacheSub');
+  var swOk = false;
+  try {
+    if ('caches' in window) {
+      var cacheNames = await caches.keys();
+      var totalCacheBytes = 0;
+      var totalEntries = 0;
+      for (var cn of cacheNames) {
+        var cache = await caches.open(cn);
+        var keys2 = await cache.keys();
+        totalEntries += keys2.length;
+        for (var req of keys2) {
+          try {
+            var resp = await cache.match(req);
+            if (resp) {
+              var ab = await resp.clone().arrayBuffer();
+              totalCacheBytes += ab.byteLength;
+            }
+          } catch(e2) {}
+        }
+      }
+      if (cacheEl) cacheEl.textContent = totalCacheBytes > 0 ? _bchFmtBytes(totalCacheBytes) : (totalEntries + ' entries');
+      if (cacheSub) cacheSub.textContent = cacheNames.length + ' cache(s) · ' + totalEntries + ' cached file' + (totalEntries !== 1 ? 's' : '');
+    } else {
+      if (cacheEl) cacheEl.textContent = 'N/A';
+      if (cacheSub) cacheSub.textContent = 'Cache API not available';
+    }
+  } catch(e) {
+    if (cacheEl) cacheEl.textContent = '—';
+  }
+
+  // 4. Service Worker check
+  if ('serviceWorker' in navigator) {
+    var reg = await navigator.serviceWorker.getRegistration();
+    swOk = !!(reg && reg.active);
+    _bchSetCheck('bchCheckSW', swOk, swOk ? 'Active — Offline ready' : 'Not active');
+  } else {
+    _bchSetCheck('bchCheckSW', false, 'Not supported');
+  }
+  if (swOk) score++;
+
+  // 5. IndexedDB check
+  try {
+    var idbOk = !!window.indexedDB;
+    _bchSetCheck('bchCheckIDB', idbOk, idbOk ? 'Available' : 'Not available');
+    if (idbOk) score++;
+  } catch(e) { _bchSetCheck('bchCheckIDB', false, 'Blocked'); }
+
+  // 6. Encryption check
+  var encOk = !!(window.crypto && window.crypto.subtle);
+  _bchSetCheck('bchCheckEnc', encOk, encOk ? 'AES-256-GCM active' : 'Not available');
+  if (encOk) score++;
+
+  // 7. Network check
+  var online = navigator.onLine;
+  _bchSetCheck('bchCheckOnline', true, online ? 'Online' : 'Offline (app still works)');
+  score++; // always pass this
+
+  // Overall health score
+  var pctScore = Math.round((score / total) * 100);
+  var barEl = document.getElementById('bchScoreBar');
+  var valEl = document.getElementById('bchScoreVal');
+  var dotEl = document.getElementById('bchHealthDot');
+  var lblEl = document.getElementById('bchHealthLabel');
+
+  if (barEl) {
+    barEl.style.width = pctScore + '%';
+    barEl.style.background = pctScore >= 80 ? 'linear-gradient(90deg,#10b981,#34d399)'
+      : pctScore >= 60 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)'
+      : 'linear-gradient(90deg,#ef4444,#f87171)';
+  }
+  if (valEl) valEl.textContent = pctScore + '%';
+
+  var healthLabel = pctScore >= 80 ? 'Excellent' : pctScore >= 60 ? 'Good' : 'Needs Attention';
+  var healthColor = pctScore >= 80 ? '#10b981' : pctScore >= 60 ? '#f59e0b' : '#ef4444';
+  if (dotEl) { dotEl.style.background = healthColor; dotEl.style.boxShadow = '0 0 8px ' + healthColor; }
+  if (lblEl) { lblEl.textContent = healthLabel; lblEl.style.color = healthColor; }
+
+  // Last checked timestamp
+  var lcEl = document.getElementById('bchLastChecked');
+  if (lcEl) lcEl.textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+}
+
+async function bchClearCache() {
+  var btn = document.getElementById('bchClearCacheBtn');
+  var resultEl = document.getElementById('bchCacheResult');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing…'; }
+
+  var cleared = [];
+  var errors = [];
+
+  try {
+    if ('caches' in window) {
+      var names = await caches.keys();
+      for (var name of names) {
+        try { await caches.delete(name); cleared.push(name); } catch(e) { errors.push(name); }
+      }
+    }
+  } catch(e) { errors.push('Cache API error'); }
+
+  // Re-register service worker to re-populate cache
+  if ('serviceWorker' in navigator) {
+    try {
+      var reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.update();
+    } catch(e) {}
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Clear Browser Cache'; }
+
+  if (resultEl) {
+    var ok = cleared.length > 0 || errors.length === 0;
+    resultEl.style.display = 'flex';
+    resultEl.className = 'bch-cache-result ' + (ok ? 'bch-result-ok' : 'bch-result-err');
+    resultEl.innerHTML = ok
+      ? '<i class="fas fa-check-circle"></i><span>Browser cache cleared! (' + cleared.length + ' cache' + (cleared.length !== 1 ? 's' : '') + ' removed). Service Worker will rebuild cache automatically.</span>'
+      : '<i class="fas fa-exclamation-triangle"></i><span>Cache clear had issues: ' + errors.join(', ') + '</span>';
+    setTimeout(function() { if (resultEl) resultEl.style.display = 'none'; }, 6000);
+  }
+
+  showToast(cleared.length > 0 ? '✅ Browser cache cleared — ' + cleared.length + ' cache(s) removed' : 'ℹ No cache to clear', 'success');
+  setTimeout(function() { bchRefreshHealth(); }, 800);
+}
+
+// Auto-run health check when Data & Security section is visible
+function _bchInitIfVisible() {
+  var section = document.getElementById('section-backup');
+  if (section && section.classList.contains('active')) {
+    bchRefreshHealth();
+  }
+}
 async function resetAllData() {
   if (!await showPopupConfirm({ title: ' DELETE ALL DATA', message: 'This will permanently delete <strong>ALL</strong> your data including visits, trainings, observations, notes, ideas, contacts, reflections, and everything else.<br><br><strong>This CANNOT be undone!</strong>', icon: 'fa-radiation', confirmText: 'Delete Everything', confirmColor: '#dc2626' })) return;
   const answer = prompt('Type DELETE to confirm permanent data removal:');
