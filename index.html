@@ -3318,12 +3318,42 @@ style="font-size:13px;color:var(--text-secondary);white-space:nowrap;min-width:a
  <button class="btn btn-primary" onclick="openVisitModal()">
  <i class="fas fa-plus"></i> Add Entry
  </button>
- <button class="btn btn-outline vp-link-btn" onclick="vpLinkExcel()" id="vpLinkBtn">
+ <!-- Excel Split Button Group -->
+ <div class="vp-excel-split-group" id="vpExcelSplitGroup">
+ <button class="btn btn-outline vp-link-btn vp-split-main" onclick="vpLinkExcel()" id="vpLinkBtn">
  <i class="fas fa-link"></i> Link Excel
  </button>
- <button class="btn btn-outline" onclick="exportVisitPlanExcel()" title="Download as Excel">
- <i class="fas fa-download"></i>
+ <button class="btn btn-outline vp-split-arrow" onclick="toggleVpExcelMenu(event)" title="More Excel options" id="vpExcelArrowBtn">
+ <i class="fas fa-chevron-down" style="font-size:10px;margin:0;pointer-events:none"></i>
  </button>
+ <div class="vp-excel-dropdown-menu" id="vpExcelDropdownMenu" style="display:none">
+ <div class="vp-excel-menu-header">
+ <i class="fas fa-file-excel" style="color:#10b981;margin-right:6px"></i> Excel Options
+ </div>
+ <button class="vp-excel-menu-item" onclick="vpLinkExcel();hideVpExcelMenu()">
+ <div class="vp-menu-item-icon" style="background:rgba(16,185,129,0.15)"><i class="fas fa-link" style="color:#10b981"></i></div>
+ <div class="vp-menu-item-text">
+ <strong>Link Excel (.xlsx / .xlsm)</strong>
+ <span>Import data & auto-sync to file</span>
+ </div>
+ </button>
+ <button class="vp-excel-menu-item" onclick="vpDownloadMacroExcel();hideVpExcelMenu()">
+ <div class="vp-menu-item-icon" style="background:rgba(139,92,246,0.15)"><i class="fas fa-magic" style="color:#8b5cf6"></i></div>
+ <div class="vp-menu-item-text">
+ <strong>Download Macro Excel (.xlsm)</strong>
+ <span>Get VBA template — one-click sync</span>
+ </div>
+ </button>
+ <div class="vp-excel-menu-divider"></div>
+ <button class="vp-excel-menu-item" onclick="exportVisitPlanExcel();hideVpExcelMenu()">
+ <div class="vp-menu-item-icon" style="background:rgba(99,102,241,0.15)"><i class="fas fa-download" style="color:#6366f1"></i></div>
+ <div class="vp-menu-item-text">
+ <strong>Export Current Data (.xlsx)</strong>
+ <span>Download all entries as spreadsheet</span>
+ </div>
+ </button>
+ </div>
+ </div>
  </div>
  <div class="vp-linked-status" id="vpLinkedStatus" style="display:none">
  <i class="fas fa-plug"></i>

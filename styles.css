@@ -1,6 +1,6 @@
-/* ===== CSS Variables & Design System ===== */
+﻿/* ===== CSS Variables & Design System ===== */
 :root {
-    /* Colors — Dark mode with warm amber/orange accent */
+    /* Colors â€” Dark mode with warm amber/orange accent */
     --bg-primary: #0f1117;
     --bg-secondary: #1a1d27;
     --bg-tertiary: #252a3a;
@@ -1735,7 +1735,7 @@ body.light-mode .howto-icon {
 }
 
 .visit-detail-field .vdf-value:empty::after {
-    content: '—';
+    content: 'â€”';
     color: var(--text-muted);
 }
 
@@ -2308,7 +2308,7 @@ body.light-mode .howto-icon {
     box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
 }
 
-/* View toggles pushed to end — override base .view-toggles */
+/* View toggles pushed to end â€” override base .view-toggles */
 .visit-filter-bar .view-toggles {
     margin-left: auto;
     border-radius: 10px;
@@ -4672,7 +4672,7 @@ body.light-mode .sp-activity-chip {
     }
 }
 
-/* ===== Smart Planner — Toolbar ===== */
+/* ===== Smart Planner â€” Toolbar ===== */
 .sp-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -7565,7 +7565,7 @@ body.modal-open {
 }
 
 /* ===== Excel Upload Zone ===== */
-/* ===== Excel Upload Zone — Redesigned ===== */
+/* ===== Excel Upload Zone â€” Redesigned ===== */
 .excel-upload-zone {
     background: var(--bg-card);
     border: 2px dashed rgba(245, 158, 11, 0.25);
@@ -9237,7 +9237,7 @@ body.modal-open {
     }
 }
 
-/* ===== Excel Insights Panel — Redesigned ===== */
+/* ===== Excel Insights Panel â€” Redesigned ===== */
 .excel-insights-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -9313,7 +9313,7 @@ body.modal-open {
     border-left-color: var(--purple);
 }
 
-/* ===== Excel Charts Grid — Redesigned ===== */
+/* ===== Excel Charts Grid â€” Redesigned ===== */
 .excel-charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
@@ -9492,7 +9492,7 @@ body.modal-open {
     gap: 8px;
 }
 
-/* ===== Excel Data Table — Redesigned ===== */
+/* ===== Excel Data Table â€” Redesigned ===== */
 .excel-table-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -13518,7 +13518,7 @@ body.modal-open {
 }
 
 .color-dot.active::after {
-    content: '✓';
+    content: 'âœ“';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -14255,7 +14255,7 @@ body.modal-open {
     margin-bottom: 10px;
 }
 
-/* Settings — SSR Class Toggle Grid */
+/* Settings â€” SSR Class Toggle Grid */
 .ssr-class-toggle-grid {
     display: flex;
     flex-wrap: wrap;
@@ -15370,7 +15370,7 @@ body.reduce-motion *::after {
 }
 
 /* ==================== MONTHLY WORK LOG ==================== */
-/* ===== WORK LOG — Clean Timeline Layout ===== */
+/* ===== WORK LOG â€” Clean Timeline Layout ===== */
 .worklog-stat-grid {
     display: flex;
     gap: 10px;
@@ -18864,7 +18864,7 @@ body.compact-mode .settings-card-header {
     cursor: pointer;
 }
 
-/* ==================== RESPONSIVE — NEW SECTIONS ==================== */
+/* ==================== RESPONSIVE â€” NEW SECTIONS ==================== */
 
 @media (max-width: 768px) {
     .school-cards-grid {
@@ -22858,7 +22858,7 @@ body.light-mode .sw-card-outcome {
 }
 
 /* ===== Period Comparison Panel ===== */
-/* ===== PERIOD COMPARISON — modern redesign ===== */
+/* ===== PERIOD COMPARISON â€” modern redesign ===== */
 @keyframes pcCardIn {
     from {
         opacity: 0;
@@ -23656,6 +23656,128 @@ button.vp-half-badge:hover {
     gap: 6px;
 }
 
+/* ===== VP Excel Split Button Group & Dropdown ===== */
+.vp-excel-split-group {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+}
+
+.vp-split-main {
+    border-radius: 10px 0 0 10px !important;
+    border-right: none !important;
+}
+
+.vp-split-arrow {
+    border-radius: 0 10px 10px 0 !important;
+    padding: 0 10px !important;
+    min-width: 32px;
+    border-left: 1px solid rgba(99,102,241,0.25) !important;
+}
+
+.vp-split-arrow:hover,
+.vp-split-arrow:focus {
+    background: rgba(99,102,241,0.12) !important;
+    border-color: var(--accent) !important;
+}
+
+.vp-excel-split-group:focus-within .vp-split-main,
+.vp-excel-split-group:focus-within .vp-split-arrow {
+    border-color: var(--accent);
+}
+
+.vp-excel-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 260px;
+    background: var(--bg-card, #1e2235);
+    border: 1px solid var(--border, rgba(255,255,255,0.1));
+    border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 9999;
+    overflow: hidden;
+    animation: vpMenuIn 0.18s ease;
+}
+
+@keyframes vpMenuIn {
+    from { opacity:0; transform:translateY(-8px) scale(0.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+.vp-excel-menu-header {
+    padding: 10px 16px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.07));
+    display: flex;
+    align-items: center;
+}
+
+.vp-excel-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: background 0.15s;
+    color: var(--text-primary, #f0f1f5);
+}
+
+.vp-excel-menu-item:hover {
+    background: rgba(99,102,241,0.08);
+}
+
+.vp-menu-item-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.vp-menu-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.vp-menu-item-text strong {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--text-primary, #f0f1f5);
+}
+
+.vp-menu-item-text span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.vp-excel-menu-divider {
+    height: 1px;
+    background: var(--border, rgba(255,255,255,0.07));
+    margin: 4px 0;
+}
+
+body.light-mode .vp-excel-dropdown-menu {
+    background: #ffffff;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+}
+
+body.light-mode .vp-menu-item-text strong {
+    color: #1e293b;
+}
 /* Linked Excel Status */
 .vp-linked-status {
     display: flex;
@@ -25305,7 +25427,7 @@ body.light-mode .guide-modal {
     justify-content: flex-end;
 }
 
-/* Stat cards — full-width equal-column grid */
+/* Stat cards â€” full-width equal-column grid */
 .tr-stats-bar {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -28661,7 +28783,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     grid-column: span 4;
 }
 
-/* ── Widget Card Header (Drag Handle) ── */
+/* â”€â”€ Widget Card Header (Drag Handle) â”€â”€ */
 .widget-card-header {
     display: flex;
     align-items: center;
@@ -28718,14 +28840,14 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     text-decoration: underline;
 }
 
-/* ── Widget Card Body ── */
+/* â”€â”€ Widget Card Body â”€â”€ */
 .widget-card-body {
     padding: 0 18px 18px;
     flex: 1;
     min-height: 0;
 }
 
-/* ── KPI Widget ── */
+/* â”€â”€ KPI Widget â”€â”€ */
 .widget-kpi {
     display: flex;
     align-items: center;
@@ -28871,7 +28993,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     background: linear-gradient(90deg, #eab308, #facc15);
 }
 
-/* ── Drag & Drop States ── */
+/* â”€â”€ Drag & Drop States â”€â”€ */
 .widget-card.dragging {
     opacity: 0.45;
     transform: scale(0.97);
@@ -28898,19 +29020,19 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     opacity: 1;
 }
 
-/* ── List widgets (upcoming visits, recent activity, follow-ups) ── */
+/* â”€â”€ List widgets (upcoming visits, recent activity, follow-ups) â”€â”€ */
 .widget-card-body .widget-list-container {
     max-height: 280px;
     overflow-y: auto;
 }
 
-/* ── Chart widgets ── */
+/* â”€â”€ Chart widgets â”€â”€ */
 .widget-card-body canvas {
     max-height: 240px;
     width: 100%;
 }
 
-/* ── Week at a Glance ── */
+/* â”€â”€ Week at a Glance â”€â”€ */
 .week-glance-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -28966,7 +29088,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     font-size: 8px;
 }
 
-/* ── Top Schools ── */
+/* â”€â”€ Top Schools â”€â”€ */
 .top-schools-list {
     display: flex;
     flex-direction: column;
@@ -29011,7 +29133,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     white-space: nowrap;
 }
 
-/* ── Insights: Generic Callouts & Bars ── */
+/* â”€â”€ Insights: Generic Callouts & Bars â”€â”€ */
 .widget-insight-container {
     display: flex;
     flex-direction: column;
@@ -29117,7 +29239,7 @@ body.light-mode .wi-meta {
     background: rgba(0, 0, 0, 0.03);
 }
 
-/* ═══ Widget Customizer Modal ═══ */
+/* â•â•â• Widget Customizer Modal â•â•â• */
 .wc-category {
     margin-bottom: 20px;
 }
@@ -29221,7 +29343,7 @@ body.light-mode .wi-meta {
     border-top: 2px solid var(--accent);
 }
 
-/* ═══ Widget Grid Responsive ═══ */
+/* â•â•â• Widget Grid Responsive â•â•â• */
 @media (max-width: 1200px) {
     .widget-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -30146,9 +30268,9 @@ body.light-mode .wi-meta {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LESSON PLANNER
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .lp-container {
     padding: 20px;
@@ -30576,7 +30698,7 @@ body.light-mode .wi-meta {
     }
 }
 
-/* Section wrap — unified card for header + filter + list */
+/* Section wrap â€” unified card for header + filter + list */
 .lp-section-wrap {
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -30864,7 +30986,7 @@ body.light-mode .wi-meta {
 }
 
 /* Generate row */
-/* ── Auto-Suggest from Observations ── */
+/* â”€â”€ Auto-Suggest from Observations â”€â”€ */
 .lp-autosuggest-panel {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -31301,7 +31423,7 @@ body.light-mode .wi-meta {
     transform: none;
 }
 
-/* ── Weekly Plan Grid ─────────────────────────────────── */
+/* â”€â”€ Weekly Plan Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-weekly-grid {
     display: flex;
     flex-direction: column;
@@ -31324,7 +31446,7 @@ body.light-mode .wi-meta {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
 }
 
-/* Left panel — day identity */
+/* Left panel â€” day identity */
 .lp-weekly-day-left {
     background: color-mix(in srgb, var(--day-accent, #6366f1) 9%, var(--card-bg));
     border-right: 1px solid var(--border);
@@ -31377,7 +31499,7 @@ body.light-mode .lp-weekly-day-left {
     flex: 1;
 }
 
-/* Right panel — activities & details */
+/* Right panel â€” activities & details */
 .lp-weekly-day-right {
     display: flex;
     flex-direction: column;
@@ -31610,7 +31732,7 @@ body.light-mode .lp-weekly-day-left {
 }
 
 
-/* ── Refine Section ────────────────────────── */
+/* â”€â”€ Refine Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-refine-section {
     position: relative;
     border-radius: 8px;
@@ -31870,7 +31992,7 @@ body.light-mode .lp-weekly-day-left {
     background: rgba(16, 185, 129, 0.4) !important;
 }
 
-/* ── Saved Plans History Panel ── */
+/* â”€â”€ Saved Plans History Panel â”€â”€ */
 .lp-history-panel {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -32110,7 +32232,7 @@ body.light-mode .lp-weekly-day-left {
     padding: 24px 28px;
 }
 
-/* ── Plan: header / meta ── */
+/* â”€â”€ Plan: header / meta â”€â”€ */
 .lp-plan-header {
     margin-bottom: 20px;
     padding-bottom: 16px;
@@ -32223,7 +32345,7 @@ body.light-mode .lp-weekly-day-left {
     margin-bottom: 3px;
 }
 
-/* ── 4-Block NCERT model ── */
+/* â”€â”€ 4-Block NCERT model â”€â”€ */
 .lp-blocks {
     display: flex;
     flex-direction: column;
@@ -32386,7 +32508,7 @@ body.light-mode .lp-weekly-day-left {
     gap: 6px;
 }
 
-/* ── LP Analytics Panel ── */
+/* â”€â”€ LP Analytics Panel â”€â”€ */
 .lp-analytics-panel {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -34112,12 +34234,12 @@ body.light-mode .obj-tpl-pill {
 .smap-drop-empty { padding: 16px; text-align: center; font-size: 13px; color: var(--text-secondary); }
 
 /* =====================================================================
-   DASHBOARD ENHANCEMENTS — New Feature Styles
+   DASHBOARD ENHANCEMENTS â€” New Feature Styles
    Tasks: FAB, Today's Schedule, Motivational Quote, Weather,
           Report Writing, Parent Contacts
    ===================================================================== */
 
-/* ── Quick Action FAB ─────────────────────────────────────────────── */
+/* â”€â”€ Quick Action FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .fab-container {
     position: fixed;
     bottom: 32px;
@@ -34221,7 +34343,7 @@ body.light-mode .obj-tpl-pill {
     .fab-container { bottom: 80px; right: 16px; }
 }
 
-/* ── Today's Schedule Widget ─────────────────────────────────────── */
+/* â”€â”€ Today's Schedule Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .widget-schedule-list {
     display: flex;
     flex-direction: column;
@@ -34293,7 +34415,7 @@ body.light-mode .obj-tpl-pill {
     margin-left: 4px;
 }
 
-/* ── Motivational Quote Widget ───────────────────────────────────── */
+/* â”€â”€ Motivational Quote Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .widget-quote {
     padding: 8px 4px;
     position: relative;
@@ -34326,7 +34448,7 @@ body.light-mode .obj-tpl-pill {
     opacity: 0.85;
 }
 
-/* ── Weather Widget ─────────────────────────────────────────────── */
+/* â”€â”€ Weather Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .widget-weather {
     min-height: 80px;
     display: flex;
@@ -34391,7 +34513,7 @@ body.light-mode .obj-tpl-pill {
     text-align: right;
 }
 
-/* ── Report Writing Section ─────────────────────────────────────── */
+/* â”€â”€ Report Writing Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .reports-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -34518,7 +34640,7 @@ body.light-mode .obj-tpl-pill {
 .badge-success { background: rgba(34,197,94,0.15);  color: #22c55e; }
 .badge-info    { background: rgba(59,130,246,0.15); color: #3b82f6; }
 
-/* ── Parent Contacts Section ─────────────────────────────────────── */
+/* â”€â”€ Parent Contacts Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .parent-contacts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -34592,7 +34714,7 @@ body.light-mode .obj-tpl-pill {
     margin-top: 8px;
 }
 
-/* ── Nav icon colors for new items ───────────────────────────────── */
+/* â”€â”€ Nav icon colors for new items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #nav-reportswriting i {
     --ni1: #3b82f6;
     --ni2: #06b6d4;
@@ -34603,13 +34725,13 @@ body.light-mode .obj-tpl-pill {
     --ni2: #f43f5e;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────── */
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 768px) {
     .reports-grid { grid-template-columns: 1fr; }
     .parent-contacts-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Quote widget: live fetch shimmer & source badge ─────────────── */
+/* â”€â”€ Quote widget: live fetch shimmer & source badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .quote-loading {
     min-height: 1.2em;
     display: block;
@@ -34664,7 +34786,7 @@ body.light-mode .quote-shimmer {
     color: #6b7280;
 }
 
-/* ── Sarvam AI Quote Badge & Setup Hint ──────────────────────────── */
+/* â”€â”€ Sarvam AI Quote Badge & Setup Hint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .quote-ai-badge {
     display: inline-flex;
     align-items: center;
@@ -34703,10 +34825,10 @@ body.light-mode .quote-shimmer {
 }
 
 /* =====================================================================
-   NOTE REMINDER ENGINE — UI Styles
+   NOTE REMINDER ENGINE â€” UI Styles
    ===================================================================== */
 
-/* ── Reminder row injected into editing note cards ─────────────────── */
+/* â”€â”€ Reminder row injected into editing note cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .note-reminder-row {
     display: flex;
     align-items: center;
@@ -34781,7 +34903,7 @@ body.light-mode .note-remind-dt {
 .rem-ch-label .fa-envelope { color: #f59e0b; }
 /* Bell stays default */
 
-/* ── Reminder Settings Modal Blocks ──────────────────────────────── */
+/* â”€â”€ Reminder Settings Modal Blocks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .reminder-settings-block {
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
@@ -34829,7 +34951,7 @@ body.light-mode .note-remind-dt {
     min-height: 16px;
 }
 
-/* ── GAS code block in Reminder Settings ─────────────────────────── */
+/* â”€â”€ GAS code block in Reminder Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .gas-code-block {
     display: block;
     margin-top: 10px;
@@ -34849,13 +34971,13 @@ body.light-mode .note-remind-dt {
 details > summary { list-style: none; }
 details > summary::-webkit-details-marker { display: none; }
 
-/* ── Telegram auto-connect status badge ─────────────────────────── */
+/* â”€â”€ Telegram auto-connect status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rsb-auto { border-color: rgba(38,165,228,0.2); }
 .rsb-auto-status { font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .rsb-connected    { color: #10b981; display:flex; align-items:center; gap:5px; }
 .rsb-disconnected { color: #f59e0b; display:flex; align-items:center; gap:5px; }
 
-/* ── Flatpickr overrides inside note-remind-dt ──────────────────── */
+/* â”€â”€ Flatpickr overrides inside note-remind-dt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Hide the hidden ISO input Flatpickr generates; show only altInput */
 .note-remind-dt { display: none !important; }
 
@@ -34881,7 +35003,7 @@ details > summary::-webkit-details-marker { display: none; }
     background: rgba(99,102,241,0.08);
 }
 
-/* ── Note reminder: date + time input pair ───────────────────────── */
+/* â”€â”€ Note reminder: date + time input pair â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Remove old Flatpickr override (no longer used in note cards) */
 
 .note-reminder-row--stacked {
@@ -34929,7 +35051,7 @@ body.light-mode .note-remind-time {
 }
 
 /* =====================================================================
-   NOTE COUNTDOWN BADGE · DONE BUTTON
+   NOTE COUNTDOWN BADGE Â· DONE BUTTON
    ===================================================================== */
 
 .note-cd-badge {
@@ -35006,7 +35128,7 @@ body.light-mode .note-remind-time {
     background: rgba(255,255,255,0.1);
 }
 
-/* ── Note reminder: VDR date button ─────────────────────────────── */
+/* â”€â”€ Note reminder: VDR date button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .note-remind-date-btn {
     display: inline-flex;
     align-items: center;
@@ -35032,7 +35154,7 @@ body.light-mode .note-remind-time {
     color: var(--accent);
 }
 
-/* When a date is picked — icon becomes green */
+/* When a date is picked â€” icon becomes green */
 .note-remind-date-btn .fa-calendar-check { color: #10b981; }
 .note-remind-date-btn .fa-calendar-alt   { color: var(--text-muted); }
 
@@ -35041,10 +35163,10 @@ body.light-mode .note-remind-date-btn {
 }
 
 /* =====================================================================
-   QUICK NOTES — PREMIUM REDESIGN
+   QUICK NOTES â€” PREMIUM REDESIGN
    ===================================================================== */
 
-/* ── Section wrapper ─────────────────────────────────────────────── */
+/* â”€â”€ Section wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #section-notes {
     padding: 0 !important;
 }
@@ -35055,7 +35177,7 @@ body.light-mode .note-remind-date-btn {
     gap: 0;
 }
 
-/* ── Header ─────────────────────────────────────────────────────── */
+/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-header {
     display: flex;
     align-items: center;
@@ -35174,7 +35296,7 @@ body.light-mode .qn-title {
     background: linear-gradient(135deg, #818cf8, #6366f1);
 }
 
-/* ── Toolbar ─────────────────────────────────────────────────────── */
+/* â”€â”€ Toolbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-toolbar {
     display: flex;
     align-items: center;
@@ -35217,7 +35339,7 @@ body.light-mode .qn-title {
     box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
 }
 
-/* ── Color filters ───────────────────────────────────────────────── */
+/* â”€â”€ Color filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-filters {
     display: flex;
     gap: 6px;
@@ -35264,7 +35386,7 @@ body.light-mode .qn-title {
 .qn-dot.purple { background: #8b5cf6; }
 .qn-dot.red    { background: #ef4444; }
 
-/* ── View toggle ─────────────────────────────────────────────────── */
+/* â”€â”€ View toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-view-toggle {
     display: flex;
     background: var(--bg-input);
@@ -35288,7 +35410,7 @@ body.light-mode .qn-title {
     color: #fff;
 }
 
-/* ── Notes grid ─────────────────────────────────────────────────── */
+/* â”€â”€ Notes grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-grid {
     padding: 24px 32px;
     display: grid;
@@ -35302,7 +35424,7 @@ body.light-mode .qn-title {
     max-width: 780px;
 }
 
-/* ── Note card redesign ─────────────────────────────────────────── */
+/* â”€â”€ Note card redesign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #section-notes .note-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -35436,7 +35558,7 @@ body.light-mode .qn-title {
     transform: scale(1.15);
 }
 
-/* ── Empty state redesign ───────────────────────────────────────── */
+/* â”€â”€ Empty state redesign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-empty-state {
     grid-column: 1 / -1;
     text-align: center;
@@ -35470,7 +35592,7 @@ body.light-mode .qn-title {
     color: var(--text-muted);
 }
 
-/* ── List view card ─────────────────────────────────────────────── */
+/* â”€â”€ List view card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .qn-grid.list-view .note-card {
     display: flex;
     flex-direction: row;
@@ -35489,14 +35611,14 @@ body.light-mode .qn-title {
     padding-left: 14px;
 }
 
-/* ── Countdown badge inside new design ─────────────────────────── */
+/* â”€â”€ Countdown badge inside new design â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #section-notes .note-cd-badge {
     border-radius: 8px;
     margin-bottom: 8px;
     font-size: 12px;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────── */
+/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 768px) {
     .qn-header, .qn-toolbar { padding: 16px 18px; }
     .qn-grid { padding: 16px 18px; }

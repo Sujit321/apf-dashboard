@@ -1,4 +1,4 @@
-// ===== APF Resource Person Dashboard App Logic =====
+﻿// ===== APF Resource Person Dashboard App Logic =====
 
 // ===== Security: HTTPS Check for Crypto API =====
 if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -830,11 +830,11 @@ const GoogleDriveSync = {
         if (r.ok) {
           if (r.changed !== 0) {
             const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-            showToast(`☁️ Auto-backup saved to Google Drive · ${now}`, 'success');
+            showToast(`â˜ï¸ Auto-backup saved to Google Drive Â· ${now}`, 'success');
           }
         } else {
           console.warn('Auto-backup failed:', r.error);
-          showToast(`☁️ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
+          showToast(`â˜ï¸ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
         }
       });
     }, 10000); // 10 seconds debounce
@@ -1609,16 +1609,16 @@ const OBJ_TEMPLATES = {
     description: `Working in ___ schools with ___ focused teachers at primary level and ___ focused teachers at upper primary level.
 
 Targets:
-• Increase in number of more engaged teachers as per annual plan and cover all teachers of assigned cluster
-• Ensuring updation on Field App for all more engaged teachers
-• ___ More Engaged teachers whose practice would have converted to some effect and ___ teachers in Significant effect
-• ___ More Engaged teachers whose students shall attain Foundation Literacy and Numeracy (___ Some Effect and ___ in Significant Effect)
-• ___ More Engaged teachers whose students shall attain grade appropriate Learning Outcomes (___ Some Effect and ___ in Significant Effect)
-• Working with Head Teachers (With xx number of teachers/schools)
-• ___ schools of these HTs where students have attained FLN, grade appropriate LOs
-• ___ schools in which various practices happen continuously which directly influence learning processes
-• ___ school Reading corner, ___ Print rich classroom, ___ Creative writing, ___ Story Fest
-• ___ teachers whose articles will be published in Pathshala, Right Angles, Learning Curve etc.`
+â€¢ Increase in number of more engaged teachers as per annual plan and cover all teachers of assigned cluster
+â€¢ Ensuring updation on Field App for all more engaged teachers
+â€¢ ___ More Engaged teachers whose practice would have converted to some effect and ___ teachers in Significant effect
+â€¢ ___ More Engaged teachers whose students shall attain Foundation Literacy and Numeracy (___ Some Effect and ___ in Significant Effect)
+â€¢ ___ More Engaged teachers whose students shall attain grade appropriate Learning Outcomes (___ Some Effect and ___ in Significant Effect)
+â€¢ Working with Head Teachers (With xx number of teachers/schools)
+â€¢ ___ schools of these HTs where students have attained FLN, grade appropriate LOs
+â€¢ ___ schools in which various practices happen continuously which directly influence learning processes
+â€¢ ___ school Reading corner, ___ Print rich classroom, ___ Creative writing, ___ Story Fest
+â€¢ ___ teachers whose articles will be published in Pathshala, Right Angles, Learning Curve etc.`
   },
   ece: {
     category: 'ECE',
@@ -1626,50 +1626,50 @@ Targets:
     description: `Significant Effect in Children Development.
 
 Targets:
-• Working with ___ number of Anganwadi and actively involve in bringing out children development
-• Working with ___ number of Anganwadi teachers - observing better practices in their centres
-• Developing ___ number of Anganwadi centres as functional Anganwadis
-• Developing ___ number of Anganwadi centres as Demonstrable Anganwadis
-• Working with ___ number of Sector Supervisors in grooming them for providing better support in each of their 20-25 centres`
+â€¢ Working with ___ number of Anganwadi and actively involve in bringing out children development
+â€¢ Working with ___ number of Anganwadi teachers - observing better practices in their centres
+â€¢ Developing ___ number of Anganwadi centres as functional Anganwadis
+â€¢ Developing ___ number of Anganwadi centres as Demonstrable Anganwadis
+â€¢ Working with ___ number of Sector Supervisors in grooming them for providing better support in each of their 20-25 centres`
   },
   cluster: {
     category: 'Cluster Development',
     title: 'Contribution in Cluster Level Development Plan through CACs and PLC heads',
     description: `Targets:
-• ___ CACs, cluster heads and PLC/MTs/FLN mentors consulted in beginning of academic year to prepare cluster development plan with focus on FLN and GLL achievement
-• All CACs, cluster heads, and PLCs/MTs/FLN mentors will practice suggested pedagogies in their school
-• Weekly consultation with CACs, cluster heads and PLC/MT/FLN mentors before making weekly plans
-• Zone level monthly review of CACs, cluster heads, and PLCs/MT/FLN mentors
-• All CACs, cluster heads, PLCs/MTs/FLN mentors encouraged to document impact of their work
-• Field engagement details shared with CACs, cluster heads, PLCs/MTs/FLN mentors over WhatsApp
-• PLCs/MTs/FLN mentors encouraged to practice content of upcoming cluster meetings in advance
-• CACs, cluster heads, PLCs/MTs/FLN mentors encouraged to document annual engagement`
+â€¢ ___ CACs, cluster heads and PLC/MTs/FLN mentors consulted in beginning of academic year to prepare cluster development plan with focus on FLN and GLL achievement
+â€¢ All CACs, cluster heads, and PLCs/MTs/FLN mentors will practice suggested pedagogies in their school
+â€¢ Weekly consultation with CACs, cluster heads and PLC/MT/FLN mentors before making weekly plans
+â€¢ Zone level monthly review of CACs, cluster heads, and PLCs/MT/FLN mentors
+â€¢ All CACs, cluster heads, PLCs/MTs/FLN mentors encouraged to document impact of their work
+â€¢ Field engagement details shared with CACs, cluster heads, PLCs/MTs/FLN mentors over WhatsApp
+â€¢ PLCs/MTs/FLN mentors encouraged to practice content of upcoming cluster meetings in advance
+â€¢ CACs, cluster heads, PLCs/MTs/FLN mentors encouraged to document annual engagement`
   },
   self: {
     category: 'Self-Capacity',
     title: 'Self-Capacity Enhancement to Support Teachers Better',
     description: `Targets:
-• Attaining clear and concrete knowledge in primary level subjects (math and language)
-• Develop capacity to work in at least 1 subject of MS level content
-• Understanding policies and their perspective - NEP, NCF FS and SE
-• Attaining in-depth understanding on assessment and curriculum
-• Reading books, articles, reference material related to subject domain and education
-• Writing 2 articles for Pathshala, Right Angle, Learning Curve etc.`
+â€¢ Attaining clear and concrete knowledge in primary level subjects (math and language)
+â€¢ Develop capacity to work in at least 1 subject of MS level content
+â€¢ Understanding policies and their perspective - NEP, NCF FS and SE
+â€¢ Attaining in-depth understanding on assessment and curriculum
+â€¢ Reading books, articles, reference material related to subject domain and education
+â€¢ Writing 2 articles for Pathshala, Right Angle, Learning Curve etc.`
   },
   tlc: {
     category: 'TLC',
     title: 'Contribution in Smooth Functioning of TLC, Block Office',
     description: `Targets:
-• Working with team members for better functioning of the TLC
-• Support in regular functioning of TLCs; regular opening; maintaining good environment
-• Contribute in contacting and inviting teachers for engagements at TLC or Block level
-• Supporting team for organizing engagements with teachers
-• Support in increasing library membership and usage of library and TLC resources
-• Support team for making healthy and welcoming team building culture
-• Any other specific work as per roles and responsibilities
-• Content development - Module/Content development, Charcha Patra content writing
-• Support to SCERT – Textbook writing, workbook, worksheet etc.
-• Cluster meeting module development`
+â€¢ Working with team members for better functioning of the TLC
+â€¢ Support in regular functioning of TLCs; regular opening; maintaining good environment
+â€¢ Contribute in contacting and inviting teachers for engagements at TLC or Block level
+â€¢ Supporting team for organizing engagements with teachers
+â€¢ Support in increasing library membership and usage of library and TLC resources
+â€¢ Support team for making healthy and welcoming team building culture
+â€¢ Any other specific work as per roles and responsibilities
+â€¢ Content development - Module/Content development, Charcha Patra content writing
+â€¢ Support to SCERT â€“ Textbook writing, workbook, worksheet etc.
+â€¢ Cluster meeting module development`
   },
   other: {
     category: 'Other',
@@ -1695,9 +1695,9 @@ const OBJ_STATUS_MAP = {
 };
 
 const OBJ_RATING_MAP = {
-  'exceeds': { label: 'Exceeds Expectations', icon: '⭐', color: '#f59e0b' },
-  'meets': { label: 'Meets Expectations', icon: '✅', color: '#10b981' },
-  'below': { label: 'Below Expectations', icon: '⚠️', color: '#ef4444' }
+  'exceeds': { label: 'Exceeds Expectations', icon: 'â­', color: '#f59e0b' },
+  'meets': { label: 'Meets Expectations', icon: 'âœ…', color: '#10b981' },
+  'below': { label: 'Below Expectations', icon: 'âš ï¸', color: '#ef4444' }
 };
 
 // ---- Render Objectives ----
@@ -1794,7 +1794,7 @@ function renderObjectives() {
         </div>
       </div>
       <h3 class="obj-card-title">${escapeHtml(obj.title)}</h3>
-      <p class="obj-card-desc">${escapeHtml((obj.description || '').substring(0, 200))}${(obj.description || '').length > 200 ? '…' : ''}</p>
+      <p class="obj-card-desc">${escapeHtml((obj.description || '').substring(0, 200))}${(obj.description || '').length > 200 ? 'â€¦' : ''}</p>
 
       <!-- Progress Bar -->
       <div class="obj-progress-wrap">
@@ -1858,9 +1858,9 @@ function renderObjectives() {
             <textarea id="cmInput-${obj.id}" rows="2" placeholder="Add a comment or observation..."></textarea>
             <div class="obj-comment-add-row">
               <select id="cmType-${obj.id}">
-                <option value="comment">💬 Comment</option>
-                <option value="review">⭐ Review Note</option>
-                <option value="observation">👁️ Observation</option>
+                <option value="comment">ðŸ’¬ Comment</option>
+                <option value="review">â­ Review Note</option>
+                <option value="observation">ðŸ‘ï¸ Observation</option>
               </select>
               <button onclick="addComment('${obj.id}')" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Add</button>
             </div>
@@ -2094,34 +2094,34 @@ function generatePerformanceReview(objId) {
       ${rating ? `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${rating.color}22;color:${rating.color};margin-left:6px">${rating.icon} ${rating.label}</span>` : ''}
     </div>
 
-    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📋 Objective Description</h3>
+    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">ðŸ“‹ Objective Description</h3>
     <div style="white-space:pre-wrap;color:#475569;font-size:13px;line-height:1.7;background:#f8fafc;padding:12px;border-radius:8px">${escapeHtml(obj.description || 'No description provided')}</div>
 
-    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📊 Progress: ${obj.progress || 0}%</h3>
+    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">ðŸ“Š Progress: ${obj.progress || 0}%</h3>
     <div style="background:#e2e8f0;border-radius:8px;height:12px;overflow:hidden;margin-bottom:8px">
       <div style="background:${st.color};height:100%;width:${obj.progress || 0}%;border-radius:8px;transition:width 0.3s"></div>
     </div>`;
 
   if (apTotal > 0) {
-    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">✅ Action Points (${apDone}/${apTotal} completed)</h3>
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">âœ… Action Points (${apDone}/${apTotal} completed)</h3>
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <tr style="background:#f1f5f9"><th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">Action</th><th style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;width:80px">Status</th></tr>
-      ${(obj.actionPoints || []).map(ap => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${escapeHtml(ap.text)}</td><td style="padding:8px;text-align:center;border-bottom:1px solid #f1f5f9;color:${ap.status === 'done' ? '#10b981' : '#f59e0b'}">${ap.status === 'done' ? '✅ Done' : '⏳ Pending'}</td></tr>`).join('')}
+      ${(obj.actionPoints || []).map(ap => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${escapeHtml(ap.text)}</td><td style="padding:8px;text-align:center;border-bottom:1px solid #f1f5f9;color:${ap.status === 'done' ? '#10b981' : '#f59e0b'}">${ap.status === 'done' ? 'âœ… Done' : 'â³ Pending'}</td></tr>`).join('')}
     </table>`;
   }
 
   if ((obj.comments || []).length > 0) {
-    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">💬 Comments & Review Notes</h3>`;
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">ðŸ’¬ Comments & Review Notes</h3>`;
     (obj.comments || []).forEach(c => {
       html += `<div style="background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:6px;border-left:3px solid ${c.type === 'review' ? '#f59e0b' : c.type === 'observation' ? '#6366f1' : '#94a3b8'}">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${c.type || 'comment'} — ${c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${c.type || 'comment'} â€” ${c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</div>
         <div style="font-size:13px;color:#334155">${escapeHtml(c.text)}</div>
       </div>`;
     });
   }
 
   if (obj.reviewNotes) {
-    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📝 Review Notes</h3>
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">ðŸ“ Review Notes</h3>
     <div style="white-space:pre-wrap;color:#475569;font-size:13px;background:#fffbeb;padding:12px;border-radius:8px;border-left:3px solid #f59e0b">${escapeHtml(obj.reviewNotes)}</div>`;
   }
 
@@ -2329,11 +2329,11 @@ ACTUAL FIELD DATA:
 - Work log entries: ${worklog.length}
 
 Provide:
-1. **What's Going Well** — 3-4 points based on the data showing positive progress
-2. **What Needs Attention** — 3-4 areas where the data suggests gaps vs objective targets
-3. **Recommendations** — 4-5 specific actions to accelerate progress this quarter
-4. **Risk Areas** — Any objective targets that seem at risk based on current data
-5. **Quick Wins** — 2-3 things that can be done immediately for visible impact
+1. **What's Going Well** â€” 3-4 points based on the data showing positive progress
+2. **What Needs Attention** â€” 3-4 areas where the data suggests gaps vs objective targets
+3. **Recommendations** â€” 4-5 specific actions to accelerate progress this quarter
+4. **Risk Areas** â€” Any objective targets that seem at risk based on current data
+5. **Quick Wins** â€” 2-3 things that can be done immediately for visible impact
 
 Be data-driven and specific. Reference actual numbers from the data provided.`;
 
@@ -2364,7 +2364,7 @@ async function generateAIActionPointersAll() {
   const btn = event?.target?.closest('button');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...'; }
 
-  const summary = objectives.map((o, i) => `${i+1}. [${o.category}] ${o.title} — ${o.progress || 0}% done, ${(o.actionPoints || []).filter(a => a.status === 'done').length}/${(o.actionPoints || []).length} actions complete`).join('\n');
+  const summary = objectives.map((o, i) => `${i+1}. [${o.category}] ${o.title} â€” ${o.progress || 0}% done, ${(o.actionPoints || []).filter(a => a.status === 'done').length}/${(o.actionPoints || []).length} actions complete`).join('\n');
 
   const prompt = `Review all yearly objectives for this Resource Person and provide a prioritized action plan:
 
@@ -2372,11 +2372,11 @@ OBJECTIVES:
 ${summary}
 
 Provide:
-1. **Priority Ranking** — Which objectives need most attention right now and why
-2. **This Week's Top 5 Actions** — Specific things to do this week across all objectives
-3. **Quick Wins** — Easy actions that can show immediate progress
-4. **Dependencies** — How progress in one objective can support others
-5. **Overall Assessment** — Brief assessment of overall performance direction`;
+1. **Priority Ranking** â€” Which objectives need most attention right now and why
+2. **This Week's Top 5 Actions** â€” Specific things to do this week across all objectives
+3. **Quick Wins** â€” Easy actions that can show immediate progress
+4. **Dependencies** â€” How progress in one objective can support others
+5. **Overall Assessment** â€” Brief assessment of overall performance direction`;
 
   try {
     const res = await SarvamAI.chat([
@@ -3205,7 +3205,7 @@ const LiveSync = {
  <div class="sync-device-icon"><i class="fas fa-${/iOS|Android/i.test(name) ? 'mobile-alt' : 'laptop'}"></i></div>
  <div class="sync-device-info">
  <span class="sync-device-name">${escapeHtml(name)}</span>
- <span class="sync-device-id">${escapeHtml(id)}${latency ? ' · ' + escapeHtml(latency) : ''}</span>
+ <span class="sync-device-id">${escapeHtml(id)}${latency ? ' Â· ' + escapeHtml(latency) : ''}</span>
  </div>
  <span class="sync-device-status online"><i class="fas fa-circle"></i> Live</span>
  </div>`;
@@ -4923,7 +4923,7 @@ function renderPaginationControls(key, p, renderFn) {
   }
   buttons += `<button class="pg-btn" ${p.page >= p.totalPages ? 'disabled' : ''} onclick="_pageState['${key}']=${p.page + 1};${renderFn}()"><i class="fas fa-chevron-right"></i></button>`;
 
-  return `<div class="pagination-bar"><span class="pg-info">Showing ${p.start}–${p.end} of ${p.total}</span><div class="pg-buttons">${buttons}</div></div>`;
+  return `<div class="pagination-bar"><span class="pg-info">Showing ${p.start}â€“${p.end} of ${p.total}</span><div class="pg-buttons">${buttons}</div></div>`;
 }
 
 // ===== SCHOOL VISITS =====
@@ -5546,12 +5546,12 @@ function renderVisitCalendar() {
       else if (from && to && dk > from && dk < to) cls.push('in-range');
       cells += `<div class="vdr-cell ${cls.join(' ')}" onclick="VDR._pick('${dk}')">${d}</div>`;
     }
-    const picking = S.singleMode ? '▶ Select a date' : (S.picking === 'from' ? '▶ Select start date' : '▶ Select end date');
+    const picking = S.singleMode ? 'â–¶ Select a date' : (S.picking === 'from' ? 'â–¶ Select start date' : 'â–¶ Select end date');
     const hasRange = S.fromVal && S.toVal;
-    const fromDisp = S.fromVal ? fmt(S.fromVal) : '—';
-    const toDisp = S.toVal ? fmt(S.toVal) : '—';
+    const fromDisp = S.fromVal ? fmt(S.fromVal) : 'â€”';
+    const toDisp = S.toVal ? fmt(S.toVal) : 'â€”';
     const rangeInfo = S.singleMode ? (S.fromVal ? fromDisp : 'Pick a date') :
-      hasRange ? `${fromDisp} → ${toDisp}` : S.fromVal ? `From: ${fromDisp}` : 'Select a date range';
+      hasRange ? `${fromDisp} â†’ ${toDisp}` : S.fromVal ? `From: ${fromDisp}` : 'Select a date range';
     return `
       <div class="vdr-popup-header">
         <div class="vdr-nav-group">
@@ -5622,7 +5622,7 @@ function renderVisitCalendar() {
         <div class="vdr-nav-group">
           <button class="vdr-nav" onclick="VDR._navYearPage(-12)" title="Prev"><i class="fas fa-chevron-left"></i></button>
         </div>
-        <div class="vdr-month-label" style="cursor:default">${base} – ${base + 11}</div>
+        <div class="vdr-month-label" style="cursor:default">${base} â€“ ${base + 11}</div>
         <div class="vdr-nav-group">
           <button class="vdr-nav" onclick="VDR._navYearPage(12)"  title="Next"><i class="fas fa-chevron-right"></i></button>
         </div>
@@ -6576,12 +6576,12 @@ function processAttendanceExcel(event) {
       };
 
       const sample = rows[0];
-      const nameCol = findCol(sample, 'name', 'teachername', 'teacher', 'à¤¶à¤¿à¤•à¥à¤·à¤•');
-      const schoolCol = findCol(sample, 'school', 'schoolname', 'à¤µà¤¿à¤¦à¥à¤¯à¤¾à¤²à¤¯');
-      const phoneCol = findCol(sample, 'phone', 'mobile', 'contact', 'à¤«à¥‹à¤¨');
-      const desigCol = findCol(sample, 'designation', 'post', 'stage', 'à¤ªà¤¦');
-      const clusterCol = findCol(sample, 'cluster', 'à¤¸à¤‚à¤•à¥à¤²');
-      const blockCol = findCol(sample, 'block', 'à¤¬à¥à¤²à¥‰à¤•');
+      const nameCol = findCol(sample, 'name', 'teachername', 'teacher', 'Ã Â¤Â¶Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤â€¢');
+      const schoolCol = findCol(sample, 'school', 'schoolname', 'Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¦Ã Â¥ÂÃ Â¤Â¯Ã Â¤Â¾Ã Â¤Â²Ã Â¤Â¯');
+      const phoneCol = findCol(sample, 'phone', 'mobile', 'contact', 'Ã Â¤Â«Ã Â¥â€¹Ã Â¤Â¨');
+      const desigCol = findCol(sample, 'designation', 'post', 'stage', 'Ã Â¤ÂªÃ Â¤Â¦');
+      const clusterCol = findCol(sample, 'cluster', 'Ã Â¤Â¸Ã Â¤â€šÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â²');
+      const blockCol = findCol(sample, 'block', 'Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â²Ã Â¥â€°Ã Â¤â€¢');
 
       if (!nameCol) { showToast('Could not find "Name" column in Excel. Check header row.', 'error'); return; }
 
@@ -7238,14 +7238,14 @@ function saveObservation(e) {
       if (dup) {
         const dupDate = dup.date ? new Date(dup.date).toLocaleDateString('en-IN') : 'N/A';
         const proceed = confirm(
-          `⚠️ Possible duplicate found!\n\n` +
+          `âš ï¸ Possible duplicate found!\n\n` +
           `An observation already exists with:\n` +
-          `• Phone: ${dup.teacherPhone}\n` +
-          `• Practice Serial: ${dup.practiceSerial}\n` +
-          `• Observation: ${dup.observationStatus}\n` +
-          `• School: ${dup.school || 'N/A'}\n` +
-          `• Teacher: ${dup.teacher || 'N/A'}\n` +
-          `• Date: ${dupDate}\n\n` +
+          `â€¢ Phone: ${dup.teacherPhone}\n` +
+          `â€¢ Practice Serial: ${dup.practiceSerial}\n` +
+          `â€¢ Observation: ${dup.observationStatus}\n` +
+          `â€¢ School: ${dup.school || 'N/A'}\n` +
+          `â€¢ Teacher: ${dup.teacher || 'N/A'}\n` +
+          `â€¢ Date: ${dupDate}\n\n` +
           `Do you still want to save this entry?`
         );
         if (!proceed) return;
@@ -7470,11 +7470,11 @@ function buildObsPaginationBar(currentPage, total, pageSize) {
   }
 
   const pageButtons = pages.map(p =>
-    p === '...' ? `<span class="pg-dots">…</span>` : pageBtn(p, p, p === currentPage, false)
+    p === '...' ? `<span class="pg-dots">â€¦</span>` : pageBtn(p, p, p === currentPage, false)
   ).join('');
 
   return `<div class="pagination-bar">
- <span class="pg-info">Showing ${start.toLocaleString()}–${end.toLocaleString()} of ${total.toLocaleString()}</span>
+ <span class="pg-info">Showing ${start.toLocaleString()}â€“${end.toLocaleString()} of ${total.toLocaleString()}</span>
  <div class="pg-buttons">
  ${pageBtn(currentPage - 1, '<i class="fas fa-chevron-left"></i>', false, currentPage === 1)}
  ${pageButtons}
@@ -8935,7 +8935,7 @@ function buildSmartPlannerHTML(a, obs) {
   quarterlyGoals.push({ goal: `Complete follow-up visits for ${a.needsFollowUp.length} priority teachers`, icon: 'fas fa-walking', metric: `${a.needsFollowUp.length} teachers` });
   quarterlyGoals.push({ goal: `Cover all ${totalClusters} clusters with at least 2 visits each`, icon: 'fas fa-layer-group', metric: `${totalClusters} clusters` });
   if (trainingGroups.length) quarterlyGoals.push({ goal: `Conduct ${trainingGroups.length} training sessions for identified groups`, icon: 'fas fa-chalkboard-teacher', metric: `${trainingGroups.length} trainings` });
-  quarterlyGoals.push({ goal: `Ensure every school receives minimum 1 observation per month`, icon: 'fas fa-school', metric: `${totalSchools} schools × 3 months` });
+  quarterlyGoals.push({ goal: `Ensure every school receives minimum 1 observation per month`, icon: 'fas fa-school', metric: `${totalSchools} schools Ã— 3 months` });
   if (lowEngCount > 0) quarterlyGoals.push({ goal: `Move ${lowEngCount} low-engagement teachers to medium/high through mentoring`, icon: 'fas fa-hands-helping', metric: `${lowEngCount} teachers` });
 
   const quarterlyHTML = quarterlyGoals.map(g => `
@@ -9854,14 +9854,14 @@ function svsRefresh() {
   const total = (model.schools || []).length;
   const PAGE_SIZE = 12;
   if (total <= PAGE_SIZE) {
-    showToast('Showing all ' + total + ' schools — not enough for more pages', 'info');
+    showToast('Showing all ' + total + ' schools â€” not enough for more pages', 'info');
     window._svsOffset = 0;
   } else {
     const prev = typeof window._svsOffset === 'number' ? window._svsOffset : 0;
     window._svsOffset = (prev + PAGE_SIZE) % total;
     const newStart = window._svsOffset + 1;
     const newEnd = Math.min(window._svsOffset + PAGE_SIZE, total);
-    showToast('Showing schools ' + newStart + '–' + newEnd + ' of ' + total, 'info');
+    showToast('Showing schools ' + newStart + 'â€“' + newEnd + ' of ' + total, 'info');
   }
   renderSmartVisitScheduler();
 }
@@ -13352,7 +13352,7 @@ function renderActivityTimeline(visits, trainings, observations) {
 
   const items = [
     ...visits.map(v => ({ type: 'visit', icon: 'fa-school', cls: 'tl-visit', title: v.school, detail: v.purpose || '', status: v.status, date: v.date, time: v.createdAt || v.date })),
-    ...trainings.map(t => ({ type: 'training', icon: 'fa-chalkboard-teacher', cls: 'tl-training', title: t.title, detail: `${t.attendees || 0} attendees · ${t.duration || 0}h`, status: t.status, date: t.date, time: t.createdAt || t.date })),
+    ...trainings.map(t => ({ type: 'training', icon: 'fa-chalkboard-teacher', cls: 'tl-training', title: t.title, detail: `${t.attendees || 0} attendees Â· ${t.duration || 0}h`, status: t.status, date: t.date, time: t.createdAt || t.date })),
     ...observations.map(o => ({ type: 'observation', icon: 'fa-clipboard-check', cls: 'tl-observation', title: `${o.school} ${o.subject}`, detail: o.teacher ? `Teacher: ${o.teacher}` : '', status: '', date: o.date, time: o.createdAt || o.date })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -13699,7 +13699,7 @@ function getActionClosureEvidenceCandidates(item) {
       refId: t.id,
       date: normalizeDateOnly(t.date),
       label: `Training support "${(t.title || 'Training').slice(0, 55)}" on ${new Date(ms).toLocaleDateString('en-IN')}`,
-      summary: `${t.attendees || 0} attendees${t.venue ? ` · ${t.venue}` : ''}`
+      summary: `${t.attendees || 0} attendees${t.venue ? ` Â· ${t.venue}` : ''}`
     });
   });
 
@@ -13824,7 +13824,7 @@ function openFollowupEvidencePicker(id) {
   if (metaEl) {
     const sourceLabel = ACTION_CLOSURE_SOURCE_LABELS[item.source] || 'Action';
     metaEl.innerHTML = `
- <div class="followup-evidence-meta-source"><i class="fas ${item.icon || 'fa-link'}"></i> ${escapeHtml(sourceLabel)} · ${escapeHtml(item.school || 'Unknown')}</div>
+ <div class="followup-evidence-meta-source"><i class="fas ${item.icon || 'fa-link'}"></i> ${escapeHtml(sourceLabel)} Â· ${escapeHtml(item.school || 'Unknown')}</div>
  <div class="followup-evidence-meta-text">${escapeHtml(item.text || '')}</div>
  `;
   }
@@ -14515,7 +14515,7 @@ function renderFollowups() {
   const container = document.getElementById('followupsContainer');
 
   if (filtered.length === 0) {
-    const msgs = { pending: 'No pending follow-ups — great work!', done: 'No completed follow-ups yet', blocked: 'No blocked follow-ups' };
+    const msgs = { pending: 'No pending follow-ups â€” great work!', done: 'No completed follow-ups yet', blocked: 'No blocked follow-ups' };
     const msg = msgs[statusFilter] || (searchQ ? 'No follow-ups match your search' : 'No follow-ups match the selected filters');
     container.innerHTML = `<div class="empty-state"><i class="fas fa-tasks"></i><h3>${msg}</h3><p>Follow-ups are collected from visit notes, observation suggestions, meeting actions, and manual entries.</p></div>`;
     return;
@@ -14609,7 +14609,7 @@ function _renderFollowupCard(f) {
  <span class="followup-date"><i class="fas fa-calendar"></i> ${dateStr}</span>
  ${!f.done && f.daysSinceSource > 0 ? `<span class="followup-age ${f.urgency}">${f.daysSinceSource}d ago</span>` : ''}
  <span class="followup-owner" onclick="setFollowupOwner('${f.id}')" title="Click to reassign" style="cursor:pointer"><i class="fas fa-user-tag"></i> ${escapeHtml(f.owner)}</span>
- <span class="followup-sla ${dueClass}" onclick="setFollowupDueDate('${f.id}')" title="Click to set SLA" style="cursor:pointer"><i class="fas fa-hourglass-half"></i> ${slaText} · ${dueText}</span>
+ <span class="followup-sla ${dueClass}" onclick="setFollowupDueDate('${f.id}')" title="Click to set SLA" style="cursor:pointer"><i class="fas fa-hourglass-half"></i> ${slaText} Â· ${dueText}</span>
  ${f.done && f.closureLabel ? `<span class="followup-closure ${f.closureMode === 'auto' ? 'auto' : ''}"><i class="fas fa-link"></i> ${escapeHtml(f.closureLabel)}</span>` : ''}
  </div>
  ${f.notes && f.notes.length > 0 ? `<div class="fu-notes-section"><div class="fu-notes-title"><i class="fas fa-sticky-note"></i> Notes (${f.notes.length})</div><div class="fu-notes-list">${notesHtml}</div></div>` : ''}
@@ -14670,7 +14670,7 @@ function _renderFollowupKanban(followups) {
  <div class="fu-kc-meta">
  <span style="color:${pc};font-size:10px;font-weight:700">${(f.priority || 'medium').toUpperCase()}</span>
  ${ds ? `<span style="font-size:10px;color:var(--text-muted)">${ds}</span>` : ''}
- ${f.isOverdue ? `<span style="color:#ef4444;font-size:10px;font-weight:700">⚠ Overdue ${Math.abs(f.dueInDays || 0)}d</span>` : (f.dueInDays !== null && f.dueInDays <= 3 && !f.done ? `<span style="color:#f59e0b;font-size:10px">Due ${f.dueInDays}d</span>` : '')}
+ ${f.isOverdue ? `<span style="color:#ef4444;font-size:10px;font-weight:700">âš  Overdue ${Math.abs(f.dueInDays || 0)}d</span>` : (f.dueInDays !== null && f.dueInDays <= 3 && !f.done ? `<span style="color:#f59e0b;font-size:10px">Due ${f.dueInDays}d</span>` : '')}
  </div>
  <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)">
  <option value="pending" ${col.key === 'pending' ? 'selected' : ''}>Pending</option>
@@ -15836,7 +15836,7 @@ function showSchoolDetail(encodedKey) {
           o.practiceType ? { icon: 'fa-tag', label: 'Practice Type', value: o.practiceType } : null,
           o.group ? { icon: 'fa-layer-group', label: 'Group', value: o.group } : null,
           o.engagementLevel ? { icon: 'fa-signal', label: 'Engagement Level', value: o.engagementLevel } : null,
-          hasRatings ? { icon: 'fa-star', label: 'Ratings', value: `Engagement: ${engVal}/5 · Methodology: ${methVal}/5 · TLM: ${tlmVal}/5`, isRating: true, eng: engVal, meth: methVal, tlm: tlmVal } : null,
+          hasRatings ? { icon: 'fa-star', label: 'Ratings', value: `Engagement: ${engVal}/5 Â· Methodology: ${methVal}/5 Â· TLM: ${tlmVal}/5`, isRating: true, eng: engVal, meth: methVal, tlm: tlmVal } : null,
           o.strengths ? { icon: 'fa-check-circle', label: 'Strengths', value: o.strengths } : null,
           o.areas ? { icon: 'fa-exclamation-circle', label: 'Areas for Improvement', value: o.areas } : null,
           o.suggestions ? { icon: 'fa-comment-dots', label: 'Suggestions', value: o.suggestions } : null,
@@ -16428,7 +16428,7 @@ function showClusterDetail(encodedKey) {
  `;
 }
 
-// ===== SCHOOL STUDENT RECORDS (Learning Levels Ã— Class) =====
+// ===== SCHOOL STUDENT RECORDS (Learning Levels Ãƒâ€” Class) =====
 const STUDENT_LEVELS = [
   { key: 'lig', label: 'LIG', fullLabel: 'Lagging', color: '#ef4444', icon: '<i class="fas fa-circle"></i>' },
   { key: 'fln', label: 'FLN', fullLabel: 'Foundational Literacy & Numeracy', color: '#f59e0b', icon: '<i class="fas fa-circle"></i>' },
@@ -16599,7 +16599,7 @@ function _buildSchoolStudentSection(schoolKey) {
         .map(l => snapTotals[l.key] > 0
           ? `<span style="color:${l.color};font-size:11px;font-weight:600;">${l.icon} ${l.label}: ${snapTotals[l.key]}</span>`
           : '')
-        .filter(Boolean).join(' · ');
+        .filter(Boolean).join(' Â· ');
       return `<div class="ssr-history-entry">
  <div class="ssr-history-meta">
   <span class="ssr-history-date"><i class="fas fa-calendar-alt" style="margin-right:4px;"></i>${snapDate}</span>
@@ -17522,7 +17522,7 @@ function previewBulkDelete() {
     listEl.innerHTML = shown.map(c => `
  <div class="bulk-preview-item">
  <span class="bulk-preview-name">${escapeHtml(c.name || 'Unknown')}</span>
- <span class="bulk-preview-meta">${escapeHtml(c.role || '')}${c.block ? ' · ' + escapeHtml(c.block) : ''}${c.cluster ? ' · ' + escapeHtml(c.cluster) : ''}</span>
+ <span class="bulk-preview-meta">${escapeHtml(c.role || '')}${c.block ? ' Â· ' + escapeHtml(c.block) : ''}${c.cluster ? ' Â· ' + escapeHtml(c.cluster) : ''}</span>
  </div>
  `).join('') + (count > showMax ? `<div class="bulk-preview-more">...and ${count - showMax} more</div>` : '');
   }
@@ -18226,21 +18226,21 @@ function importTeacherRecordsExcel(event) {
 
       const headers = Object.keys(rows[0]);
       const matchPatterns = {
-        name: /^(teacher\s*)?name|à¤¶à¤¿à¤•à¥à¤·à¤•\s*à¤•à¤¾\s*à¤¨à¤¾à¤®|full\s*name/i,
-        gender: /^gender|à¤²à¤¿à¤‚à¤—|sex/i,
-        school: /^school|à¤µà¤¿à¤¦à¥à¤¯à¤¾à¤²à¤¯|à¤¸à¥à¤•à¥‚à¤²|institution/i,
-        designation: /^designation|à¤ªà¤¦à¤¨à¤¾à¤®|post|position/i,
-        subject: /^subject|à¤µà¤¿à¤·à¤¯|teaching\s*subject/i,
-        classesTaught: /^class|à¤•à¤•à¥à¤·à¤¾|classes?\s*taught|grade/i,
-        phone: /^phone|mobile|à¤®à¥‹à¤¬à¤¾à¤‡à¤²|contact\s*no|tel/i,
-        email: /^email|à¤ˆ-?à¤®à¥‡à¤²|e\s*-?\s*mail/i,
-        block: /^block|à¤¬à¥à¤²à¥‰à¤•|district/i,
-        cluster: /^cluster|à¤¸à¤‚à¤•à¥à¤²|zone/i,
-        qualification: /^quali|à¤¯à¥‹à¤—à¥à¤¯à¤¤à¤¾|education|degree/i,
-        experience: /^exp|à¤…à¤¨à¥à¤­à¤µ|years?\s*(of\s*)?exp/i,
-        joinDate: /^(date\s*(of\s*)?)?join|à¤¨à¤¿à¤¯à¥à¤•à¥à¤¤à¤¿|doj|joining/i,
-        nid: /^(n\.?)?id|employee\s*id|emp\s*id|à¤•à¤°à¥à¤®à¤šà¤¾à¤°à¥€\s*à¤†à¤ˆ/i,
-        notes: /^note|remarks|à¤Ÿà¤¿à¤ªà¥à¤ªà¤£à¥€/i
+        name: /^(teacher\s*)?name|Ã Â¤Â¶Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤â€¢\s*Ã Â¤â€¢Ã Â¤Â¾\s*Ã Â¤Â¨Ã Â¤Â¾Ã Â¤Â®|full\s*name/i,
+        gender: /^gender|Ã Â¤Â²Ã Â¤Â¿Ã Â¤â€šÃ Â¤â€”|sex/i,
+        school: /^school|Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¦Ã Â¥ÂÃ Â¤Â¯Ã Â¤Â¾Ã Â¤Â²Ã Â¤Â¯|Ã Â¤Â¸Ã Â¥ÂÃ Â¤â€¢Ã Â¥â€šÃ Â¤Â²|institution/i,
+        designation: /^designation|Ã Â¤ÂªÃ Â¤Â¦Ã Â¤Â¨Ã Â¤Â¾Ã Â¤Â®|post|position/i,
+        subject: /^subject|Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â·Ã Â¤Â¯|teaching\s*subject/i,
+        classesTaught: /^class|Ã Â¤â€¢Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¾|classes?\s*taught|grade/i,
+        phone: /^phone|mobile|Ã Â¤Â®Ã Â¥â€¹Ã Â¤Â¬Ã Â¤Â¾Ã Â¤â€¡Ã Â¤Â²|contact\s*no|tel/i,
+        email: /^email|Ã Â¤Ë†-?Ã Â¤Â®Ã Â¥â€¡Ã Â¤Â²|e\s*-?\s*mail/i,
+        block: /^block|Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â²Ã Â¥â€°Ã Â¤â€¢|district/i,
+        cluster: /^cluster|Ã Â¤Â¸Ã Â¤â€šÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â²|zone/i,
+        qualification: /^quali|Ã Â¤Â¯Ã Â¥â€¹Ã Â¤â€”Ã Â¥ÂÃ Â¤Â¯Ã Â¤Â¤Ã Â¤Â¾|education|degree/i,
+        experience: /^exp|Ã Â¤â€¦Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â­Ã Â¤Âµ|years?\s*(of\s*)?exp/i,
+        joinDate: /^(date\s*(of\s*)?)?join|Ã Â¤Â¨Ã Â¤Â¿Ã Â¤Â¯Ã Â¥ÂÃ Â¤â€¢Ã Â¥ÂÃ Â¤Â¤Ã Â¤Â¿|doj|joining/i,
+        nid: /^(n\.?)?id|employee\s*id|emp\s*id|Ã Â¤â€¢Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â°Ã Â¥â‚¬\s*Ã Â¤â€ Ã Â¤Ë†/i,
+        notes: /^note|remarks|Ã Â¤Å¸Ã Â¤Â¿Ã Â¤ÂªÃ Â¥ÂÃ Â¤ÂªÃ Â¤Â£Ã Â¥â‚¬/i
       };
 
       headers.forEach(h => {
@@ -18391,7 +18391,7 @@ const MARAI_INTERVENTIONS = {
     ],
     subjectWise: {
       'Language': ['Read-aloud session with picture book', 'Word wall creation', 'Story telling activity', 'Simple conversation circles'],
-      'Hindi': ['à¤•à¤¹à¤¾à¤¨à¥€ à¤¸à¥à¤¨à¤¾à¤“ à¤—à¤¤à¤¿à¤µà¤¿à¤§à¤¿', 'à¤¶à¤¬à¥à¤¦ à¤¦à¥€à¤µà¤¾à¤° à¤¬à¤¨à¤¾à¤¨à¤¾', 'à¤šà¤¿à¤¤à¥à¤° à¤¦à¥‡à¤–à¤•à¤° à¤¬à¥‹à¤²à¥‹', 'à¤¸à¤°à¤² à¤•à¤µà¤¿à¤¤à¤¾ à¤—à¤¾à¤¯à¤¨'],
+      'Hindi': ['Ã Â¤â€¢Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â‚¬ Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¨Ã Â¤Â¾Ã Â¤â€œ Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â§Ã Â¤Â¿', 'Ã Â¤Â¶Ã Â¤Â¬Ã Â¥ÂÃ Â¤Â¦ Ã Â¤Â¦Ã Â¥â‚¬Ã Â¤ÂµÃ Â¤Â¾Ã Â¤Â° Ã Â¤Â¬Ã Â¤Â¨Ã Â¤Â¾Ã Â¤Â¨Ã Â¤Â¾', 'Ã Â¤Å¡Ã Â¤Â¿Ã Â¤Â¤Ã Â¥ÂÃ Â¤Â° Ã Â¤Â¦Ã Â¥â€¡Ã Â¤â€“Ã Â¤â€¢Ã Â¤Â° Ã Â¤Â¬Ã Â¥â€¹Ã Â¤Â²Ã Â¥â€¹', 'Ã Â¤Â¸Ã Â¤Â°Ã Â¤Â² Ã Â¤â€¢Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¤Ã Â¤Â¾ Ã Â¤â€”Ã Â¤Â¾Ã Â¤Â¯Ã Â¤Â¨'],
       'English': ['Picture talk activity', 'Simple rhyme singing', 'Label the classroom', 'Show & tell with objects'],
       'Mathematics': ['Number game using local materials', 'Math in daily life examples', 'Simple measurement activity', 'Pattern recognition with objects'],
       'EVS': ['Nature walk & observation', 'My family tree activity', 'Local plants identification', 'Weather observation chart'],
@@ -18430,7 +18430,7 @@ const MARAI_INTERVENTIONS = {
     ],
     subjectWise: {
       'Language': ['Identify reading levels in class', 'Analyze writing samples for gaps', 'Observe oral expression opportunities', 'Review language textbook activities critically'],
-      'Hindi': ['à¤¬à¤šà¥à¤šà¥‹à¤‚ à¤•à¥€ à¤ªà¤ à¤¨ à¤•à¥à¤·à¤®à¤¤à¤¾ à¤†à¤•à¤²à¤¨', 'à¤²à¥‡à¤–à¤¨ à¤¨à¤®à¥‚à¤¨à¥‹à¤‚ à¤•à¤¾ à¤µà¤¿à¤¶à¥à¤²à¥‡à¤·à¤£', 'à¤®à¥Œà¤–à¤¿à¤• à¤…à¤­à¤¿à¤µà¥à¤¯à¤•à¥à¤¤à¤¿ à¤•à¥‡ à¤…à¤µà¤¸à¤°', 'à¤ªà¤¾à¤ à¥à¤¯à¤ªà¥à¤¸à¥à¤¤à¤• à¤—à¤¤à¤¿à¤µà¤¿à¤§à¤¿à¤¯à¥‹à¤‚ à¤•à¥€ à¤¸à¤®à¥€à¤•à¥à¤·à¤¾'],
+      'Hindi': ['Ã Â¤Â¬Ã Â¤Å¡Ã Â¥ÂÃ Â¤Å¡Ã Â¥â€¹Ã Â¤â€š Ã Â¤â€¢Ã Â¥â‚¬ Ã Â¤ÂªÃ Â¤Â Ã Â¤Â¨ Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â®Ã Â¤Â¤Ã Â¤Â¾ Ã Â¤â€ Ã Â¤â€¢Ã Â¤Â²Ã Â¤Â¨', 'Ã Â¤Â²Ã Â¥â€¡Ã Â¤â€“Ã Â¤Â¨ Ã Â¤Â¨Ã Â¤Â®Ã Â¥â€šÃ Â¤Â¨Ã Â¥â€¹Ã Â¤â€š Ã Â¤â€¢Ã Â¤Â¾ Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¶Ã Â¥ÂÃ Â¤Â²Ã Â¥â€¡Ã Â¤Â·Ã Â¤Â£', 'Ã Â¤Â®Ã Â¥Å’Ã Â¤â€“Ã Â¤Â¿Ã Â¤â€¢ Ã Â¤â€¦Ã Â¤Â­Ã Â¤Â¿Ã Â¤ÂµÃ Â¥ÂÃ Â¤Â¯Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â¤Ã Â¤Â¿ Ã Â¤â€¢Ã Â¥â€¡ Ã Â¤â€¦Ã Â¤ÂµÃ Â¤Â¸Ã Â¤Â°', 'Ã Â¤ÂªÃ Â¤Â¾Ã Â¤Â Ã Â¥ÂÃ Â¤Â¯Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¤â€¢ Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â§Ã Â¤Â¿Ã Â¤Â¯Ã Â¥â€¹Ã Â¤â€š Ã Â¤â€¢Ã Â¥â‚¬ Ã Â¤Â¸Ã Â¤Â®Ã Â¥â‚¬Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¾'],
       'English': ['Assess reading fluency levels', 'Analyze common writing errors', 'Check comprehension vs decoding', 'Map textbook activities to skills'],
       'Mathematics': ['Diagnose number sense understanding', 'Identify conceptual vs procedural gaps', 'Observe math anxiety signs', 'Review worksheet dependency vs manipulation'],
       'EVS': ['Check experiential learning opportunities', 'Review project-based activities in class', 'Observe inquiry questions from students', 'Map local knowledge integration'],
@@ -18469,7 +18469,7 @@ const MARAI_INTERVENTIONS = {
     ],
     subjectWise: {
       'Language': ['Plan a shared reading lesson together', 'Design process writing activity', 'Create reading corner with leveled books', 'Plan oral language development activities'],
-      'Hindi': ['à¤¸à¤¾à¤à¤¾ à¤ªà¤ à¤¨ à¤ªà¤¾à¤  à¤¯à¥‹à¤œà¤¨à¤¾ à¤¬à¤¨à¤¾à¤¨à¤¾', 'à¤ªà¥à¤°à¤•à¥à¤°à¤¿à¤¯à¤¾ à¤²à¥‡à¤–à¤¨ à¤—à¤¤à¤¿à¤µà¤¿à¤§à¤¿', 'à¤¸à¥à¤¤à¤°à¤¾à¤¨à¥à¤¸à¤¾à¤° à¤ªà¥à¤¸à¥à¤¤à¤• à¤•à¥‹à¤¨à¤¾', 'à¤®à¥Œà¤–à¤¿à¤• à¤­à¤¾à¤·à¤¾ à¤µà¤¿à¤•à¤¾à¤¸ à¤—à¤¤à¤¿à¤µà¤¿à¤§à¤¿à¤¯à¤¾à¤'],
+      'Hindi': ['Ã Â¤Â¸Ã Â¤Â¾Ã Â¤ÂÃ Â¤Â¾ Ã Â¤ÂªÃ Â¤Â Ã Â¤Â¨ Ã Â¤ÂªÃ Â¤Â¾Ã Â¤Â  Ã Â¤Â¯Ã Â¥â€¹Ã Â¤Å“Ã Â¤Â¨Ã Â¤Â¾ Ã Â¤Â¬Ã Â¤Â¨Ã Â¤Â¾Ã Â¤Â¨Ã Â¤Â¾', 'Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â°Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â¯Ã Â¤Â¾ Ã Â¤Â²Ã Â¥â€¡Ã Â¤â€“Ã Â¤Â¨ Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â§Ã Â¤Â¿', 'Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¤Â°Ã Â¤Â¾Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â¸Ã Â¤Â¾Ã Â¤Â° Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¤â€¢ Ã Â¤â€¢Ã Â¥â€¹Ã Â¤Â¨Ã Â¤Â¾', 'Ã Â¤Â®Ã Â¥Å’Ã Â¤â€“Ã Â¤Â¿Ã Â¤â€¢ Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤ÂµÃ Â¤Â¿Ã Â¤â€¢Ã Â¤Â¾Ã Â¤Â¸ Ã Â¤â€”Ã Â¤Â¤Ã Â¤Â¿Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â§Ã Â¤Â¿Ã Â¤Â¯Ã Â¤Â¾Ã Â¤Â'],
       'English': ['Design a picture composition lesson', 'Plan a phonics-based reading session', 'Create vocabulary games for class', 'Plan a storytelling-based grammar lesson'],
       'Mathematics': ['Plan a manipulative-based math lesson', 'Design math games for practice', 'Create word problem solving framework', 'Plan a measurement activity outdoors'],
       'EVS': ['Plan a field visit-based lesson', 'Design a community mapping activity', 'Create a simple experiment together', 'Plan seed-to-plant observation journal'],
@@ -18508,7 +18508,7 @@ const MARAI_INTERVENTIONS = {
     ],
     subjectWise: {
       'Language': ['Implement daily reading program', 'Start creative writing wall magazine', 'Conduct literature circle / book clubs', 'Run a class newspaper project'],
-      'Hindi': ['à¤¦à¥ˆà¤¨à¤¿à¤• à¤ªà¤ à¤¨ à¤•à¤¾à¤°à¥à¤¯à¤•à¥à¤°à¤® à¤¶à¥à¤°à¥‚ à¤•à¤°à¥‡à¤‚', 'à¤°à¤šà¤¨à¤¾à¤¤à¥à¤®à¤• à¤²à¥‡à¤–à¤¨ à¤¦à¥€à¤µà¤¾à¤° à¤ªà¤¤à¥à¤°à¤¿à¤•à¤¾', 'à¤•à¤¹à¤¾à¤¨à¥€ / à¤•à¤µà¤¿à¤¤à¤¾ à¤®à¤‚à¤¡à¤²à¥€', 'à¤•à¤•à¥à¤·à¤¾ à¤¸à¤®à¤¾à¤šà¤¾à¤° à¤ªà¤¤à¥à¤° à¤ªà¤°à¤¿à¤¯à¥‹à¤œà¤¨à¤¾'],
+      'Hindi': ['Ã Â¤Â¦Ã Â¥Ë†Ã Â¤Â¨Ã Â¤Â¿Ã Â¤â€¢ Ã Â¤ÂªÃ Â¤Â Ã Â¤Â¨ Ã Â¤â€¢Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¯Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â°Ã Â¤Â® Ã Â¤Â¶Ã Â¥ÂÃ Â¤Â°Ã Â¥â€š Ã Â¤â€¢Ã Â¤Â°Ã Â¥â€¡Ã Â¤â€š', 'Ã Â¤Â°Ã Â¤Å¡Ã Â¤Â¨Ã Â¤Â¾Ã Â¤Â¤Ã Â¥ÂÃ Â¤Â®Ã Â¤â€¢ Ã Â¤Â²Ã Â¥â€¡Ã Â¤â€“Ã Â¤Â¨ Ã Â¤Â¦Ã Â¥â‚¬Ã Â¤ÂµÃ Â¤Â¾Ã Â¤Â° Ã Â¤ÂªÃ Â¤Â¤Ã Â¥ÂÃ Â¤Â°Ã Â¤Â¿Ã Â¤â€¢Ã Â¤Â¾', 'Ã Â¤â€¢Ã Â¤Â¹Ã Â¤Â¾Ã Â¤Â¨Ã Â¥â‚¬ / Ã Â¤â€¢Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¤Ã Â¤Â¾ Ã Â¤Â®Ã Â¤â€šÃ Â¤Â¡Ã Â¤Â²Ã Â¥â‚¬', 'Ã Â¤â€¢Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â¾ Ã Â¤Â¸Ã Â¤Â®Ã Â¤Â¾Ã Â¤Å¡Ã Â¤Â¾Ã Â¤Â° Ã Â¤ÂªÃ Â¤Â¤Ã Â¥ÂÃ Â¤Â° Ã Â¤ÂªÃ Â¤Â°Ã Â¤Â¿Ã Â¤Â¯Ã Â¥â€¹Ã Â¤Å“Ã Â¤Â¨Ã Â¤Â¾'],
       'English': ['Start sustained silent reading (SSR)', 'Implement process writing weekly', 'Run English corner activities', 'Student-led show & tell sessions'],
       'Mathematics': ['Daily mental math routine', 'Math journal implementation', 'Student-created word problems', 'Math lab activities weekly'],
       'EVS': ['Weekly hands-on experiment', 'Student-led field documentation', 'Local knowledge integration project', 'Environmental audit by students'],
@@ -18547,7 +18547,7 @@ const MARAI_INTERVENTIONS = {
     ],
     subjectWise: {
       'Language': ['Action research on reading comprehension', 'Mentor other teachers in language pedagogy', 'Create language resource bank for school', 'Lead a book reading movement'],
-      'Hindi': ['à¤ªà¤ à¤¨ à¤¬à¥‹à¤§ à¤ªà¤° à¤•à¤¾à¤°à¥à¤¯ à¤…à¤¨à¥à¤¸à¤‚à¤§à¤¾à¤¨', 'à¤­à¤¾à¤·à¤¾ à¤¶à¤¿à¤•à¥à¤·à¤£ à¤®à¥‡à¤‚ à¤¸à¤¹à¤•à¤°à¥à¤®à¥€ à¤®à¤¾à¤°à¥à¤—à¤¦à¤°à¥à¤¶à¤¨', 'à¤µà¤¿à¤¦à¥à¤¯à¤¾à¤²à¤¯ à¤¸à¥à¤¤à¤° à¤­à¤¾à¤·à¤¾ à¤¸à¤‚à¤¸à¤¾à¤§à¤¨ à¤¬à¥ˆà¤‚à¤•', 'à¤ªà¥à¤¸à¥à¤¤à¤• à¤ªà¤ à¤¨ à¤†à¤‚à¤¦à¥‹à¤²à¤¨ à¤•à¤¾ à¤¨à¥‡à¤¤à¥ƒà¤¤à¥à¤µ'],
+      'Hindi': ['Ã Â¤ÂªÃ Â¤Â Ã Â¤Â¨ Ã Â¤Â¬Ã Â¥â€¹Ã Â¤Â§ Ã Â¤ÂªÃ Â¤Â° Ã Â¤â€¢Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¯ Ã Â¤â€¦Ã Â¤Â¨Ã Â¥ÂÃ Â¤Â¸Ã Â¤â€šÃ Â¤Â§Ã Â¤Â¾Ã Â¤Â¨', 'Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤Â¶Ã Â¤Â¿Ã Â¤â€¢Ã Â¥ÂÃ Â¤Â·Ã Â¤Â£ Ã Â¤Â®Ã Â¥â€¡Ã Â¤â€š Ã Â¤Â¸Ã Â¤Â¹Ã Â¤â€¢Ã Â¤Â°Ã Â¥ÂÃ Â¤Â®Ã Â¥â‚¬ Ã Â¤Â®Ã Â¤Â¾Ã Â¤Â°Ã Â¥ÂÃ Â¤â€”Ã Â¤Â¦Ã Â¤Â°Ã Â¥ÂÃ Â¤Â¶Ã Â¤Â¨', 'Ã Â¤ÂµÃ Â¤Â¿Ã Â¤Â¦Ã Â¥ÂÃ Â¤Â¯Ã Â¤Â¾Ã Â¤Â²Ã Â¤Â¯ Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¤Â° Ã Â¤Â­Ã Â¤Â¾Ã Â¤Â·Ã Â¤Â¾ Ã Â¤Â¸Ã Â¤â€šÃ Â¤Â¸Ã Â¤Â¾Ã Â¤Â§Ã Â¤Â¨ Ã Â¤Â¬Ã Â¥Ë†Ã Â¤â€šÃ Â¤â€¢', 'Ã Â¤ÂªÃ Â¥ÂÃ Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¤â€¢ Ã Â¤ÂªÃ Â¤Â Ã Â¤Â¨ Ã Â¤â€ Ã Â¤â€šÃ Â¤Â¦Ã Â¥â€¹Ã Â¤Â²Ã Â¤Â¨ Ã Â¤â€¢Ã Â¤Â¾ Ã Â¤Â¨Ã Â¥â€¡Ã Â¤Â¤Ã Â¥Æ’Ã Â¤Â¤Ã Â¥ÂÃ Â¤Âµ'],
       'English': ['Action research on writing skills', 'Create English resource repository', 'Train peers in communicative approach', 'Lead English reading program school-wide'],
       'Mathematics': ['Action research on math conceptual understanding', 'Create school math resource kit', 'Lead math mela / exhibition', 'Mentor peers in manipulative-based teaching'],
       'EVS': ['Action research on inquiry learning', 'Create school EVS garden / lab', 'Lead community engagement project', 'Document local knowledge resources'],
@@ -19561,7 +19561,14 @@ async function vpLinkExcel() {
   if (window.showOpenFilePicker) {
     try {
       const [handle] = await window.showOpenFilePicker({
-        types: [{ description: 'Excel Files', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }],
+        types: [{
+          description: 'Excel Files (.xlsx, .xlsm, .xls)',
+          accept: {
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            'application/vnd.ms-excel.sheet.macroEnabled.12': ['.xlsm'],
+            'application/vnd.ms-excel': ['.xls']
+          }
+        }],
         multiple: false
       });
       // Request write permission upfront so save won't prompt later
@@ -19583,7 +19590,8 @@ async function vpLinkExcel() {
       const data = new Uint8Array(await file.arrayBuffer());
       _vpParseWorkbook(data);
       _vpUpdateLinkedUI(handle.name, true);
-      showToast(' Excel linked! Changes auto-save to file.');
+      const isMacroFile = handle.name.toLowerCase().endsWith('.xlsm');
+      showToast('✅ ' + (isMacroFile ? 'Macro Excel (.xlsm)' : 'Excel') + ' linked! Changes auto-save to file.');
       return;
     } catch (err) {
       if (err.name === 'AbortError') return;
@@ -19593,7 +19601,7 @@ async function vpLinkExcel() {
   // Fallback for Brave/Firefox/Safari read only, data stays in app
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.xlsx,.xls';
+  input.accept = '.xlsx,.xlsm,.xls';
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -19604,7 +19612,8 @@ async function vpLinkExcel() {
       try {
         _vpParseWorkbook(new Uint8Array(ev.target.result));
         _vpUpdateLinkedUI(file.name, false);
-        showToast(' Excel loaded! For auto-save back to file, use Chrome or Edge.');
+        const isMacroFb = file.name.toLowerCase().endsWith('.xlsm');
+        showToast('✅ ' + (isMacroFb ? 'Macro Excel (.xlsm)' : 'Excel') + ' loaded! For auto-save back to file, use Chrome or Edge.');
       } catch (err) {
         showToast(' Error: ' + err.message);
       }
@@ -19614,6 +19623,200 @@ async function vpLinkExcel() {
   input.click();
 }
 
+
+// ===== Visit Plan Excel Dropdown Menu =====
+function toggleVpExcelMenu(e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('vpExcelDropdownMenu');
+  if (!menu) return;
+  var isOpen = menu.style.display !== 'none';
+  if (isOpen) { hideVpExcelMenu(); return; }
+  menu.style.display = 'block';
+  setTimeout(function() {
+    document.addEventListener('click', _vpMenuOutsideHandler, { once: true, capture: true });
+  }, 0);
+}
+function _vpMenuOutsideHandler(e) {
+  var menu = document.getElementById('vpExcelDropdownMenu');
+  var group = document.getElementById('vpExcelSplitGroup');
+  if (menu && group && !group.contains(e.target)) hideVpExcelMenu();
+}
+function hideVpExcelMenu() {
+  var menu = document.getElementById('vpExcelDropdownMenu');
+  if (menu) menu.style.display = 'none';
+}
+
+// ===== Download Macro Excel Template =====
+function vpDownloadMacroExcel() {
+  var entries = DB.get('visitPlanEntries') || [];
+  var wb = XLSX.utils.book_new();
+
+  // Sheet 1: Visit Plan Data
+  var header = ['Date','Day','Time','Plan Domain','Stakeholder Type','Cluster','Venue',
+    'Stakeholder Name','Designation','Broader plan/Objective','Review against intervention plan',
+    'Number of TPs','No of stakeholders','Qualitative comments for teachers',
+    'Qualitative comments for engagement with students','Report sharing'];
+  var dataRows = [header];
+  var prevDate = null;
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    var dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(new Date(e.date)) : '');
+    var showDate = dateVal !== prevDate ? dateVal : '';
+    prevDate = dateVal;
+    dataRows.push([showDate,e.day,e.time,e.domain,e.stakeholderType,e.cluster,e.venue,
+      e.stakeholderName,e.designation,e.objective,e.review,
+      e.tps,e.stakeholderCount,e.teacherComments,e.studentComments,e.reportSharing]);
+  }
+  var ws = XLSX.utils.aoa_to_sheet(dataRows);
+  ws['!cols'] = header.map(function(_,idx){ return { wch: idx===0?12:idx>=9?30:18 }; });
+  XLSX.utils.book_append_sheet(wb, ws, 'Sujit 2026');
+
+  // Sheet 2: Dropdowns (Sheet4)
+  var dd = DB.get('visitPlanDropdowns');
+  if (dd) {
+    var keys = ['domains','days','times','stakeholderTypes','clusters','stakeholderNames','venues','designations'];
+    var labels = ['Plan Domains','Days','Time','Stakeholder Types','Clusters','Stakeholder Names','Venues','Designations'];
+    var maxLen = Math.max(1, Math.max.apply(null, keys.map(function(k){ return (dd[k]||[]).length; })));
+    var ddRows = [['',...labels],['',... labels.map(function(){ return ''; })],['',... labels.map(function(){ return ''; })]];
+    for (var r=0;r<maxLen;r++) ddRows.push(['',... keys.map(function(k){ return (dd[k]||[])[r]||''; })]);
+    var ddWs = XLSX.utils.aoa_to_sheet(ddRows);
+    XLSX.utils.book_append_sheet(wb, ddWs, 'Sheet4');
+  }
+
+  // Sheet 3: VBA Macro Setup Guide
+  var vbaLines = [
+    ['APF DASHBOARD - VISIT PLAN MACRO SETUP GUIDE'],
+    [''],
+    ['HOW TO ENABLE VBA MACROS IN THIS FILE:'],
+    ['Step 1: Open this file in Microsoft Excel'],
+    ['Step 2: Go to File > Save As > choose "Excel Macro-Enabled Workbook (.xlsm)"'],
+    ['Step 3: Press Alt + F11 to open the VBA Editor'],
+    ['Step 4: In VBA Editor left panel, right-click your project > Insert > Module'],
+    ['Step 5: Copy ALL the VBA code below (between the === lines) and paste into the module'],
+    ['Step 6: Close VBA Editor (Alt+Q)'],
+    ['Step 7: Press Alt + F8, select SetupMacroButton, click Run'],
+    ['Step 8: Sync buttons appear on Sheet 1!'],
+    ['Step 9: In APF Dashboard > Visit Plan > click arrow next to Link Excel > choose Link Excel (.xlsx/.xlsm) > select your .xlsm file'],
+    [''],
+    ['============================== VBA CODE START =============================='],
+    [''],
+    ['Option Explicit'],
+    [''],
+    ["' ================================================================"],
+    ["' APF Dashboard - Visit Plan Sync Macro v2.0"],
+    ["' ================================================================"],
+    [''],
+    ['Sub SetupMacroButton()'],
+    ["    ' Run this once to add Refresh and Export buttons to Sheet 1"],
+    ['    Dim ws As Worksheet'],
+    ['    Set ws = ThisWorkbook.Sheets(1)'],
+    ['    Dim shp As Shape'],
+    ['    For Each shp In ws.Shapes'],
+    ['        If InStr(shp.Name, "APF_") > 0 Then shp.Delete'],
+    ['    Next shp'],
+    ['    Dim btn As Shape'],
+    ['    Set btn = ws.Shapes.AddShape(msoShapeRoundedRectangle, 5, 5, 190, 32)'],
+    ['    With btn'],
+    ['        .Name = "APF_RefreshBtn"'],
+    ['        .TextFrame.Characters.Text = "  Sync with APF Dashboard"'],
+    ['        .TextFrame.Characters.Font.Size = 10'],
+    ['        .TextFrame.Characters.Font.Bold = True'],
+    ['        .TextFrame.Characters.Font.Color = RGB(255, 255, 255)'],
+    ['        .Fill.ForeColor.RGB = RGB(99, 102, 241)'],
+    ['        .Line.Visible = msoFalse'],
+    ['        .OnAction = "ShowSyncInstructions"'],
+    ['    End With'],
+    ['    Dim btn2 As Shape'],
+    ['    Set btn2 = ws.Shapes.AddShape(msoShapeRoundedRectangle, 205, 5, 150, 32)'],
+    ['    With btn2'],
+    ['        .Name = "APF_HowToBtn"'],
+    ['        .TextFrame.Characters.Text = "  How to Import"'],
+    ['        .TextFrame.Characters.Font.Size = 10'],
+    ['        .TextFrame.Characters.Font.Bold = True'],
+    ['        .TextFrame.Characters.Font.Color = RGB(255, 255, 255)'],
+    ['        .Fill.ForeColor.RGB = RGB(16, 185, 129)'],
+    ['        .Line.Visible = msoFalse'],
+    ['        .OnAction = "ShowSyncInstructions"'],
+    ['    End With'],
+    ['    MsgBox "Macro buttons added!" & vbNewLine & "Click the purple button for sync steps.", vbInformation, "APF Dashboard"'],
+    ['End Sub'],
+    [''],
+    ['Sub ShowSyncInstructions()'],
+    ['    Dim msg As String'],
+    ['    msg = "HOW TO SYNC THIS FILE WITH APF DASHBOARD:" & vbNewLine & vbNewLine'],
+    ['    msg = msg & "1. Save this file (Ctrl+S)" & vbNewLine'],
+    ['    msg = msg & "2. Open APF Dashboard in Chrome or Edge browser" & vbNewLine'],
+    ['    msg = msg & "3. Go to Visit Plan section" & vbNewLine'],
+    ['    msg = msg & "4. Click the small arrow next to the Link Excel button" & vbNewLine'],
+    ['    msg = msg & "5. Choose: Link Excel (.xlsx / .xlsm)" & vbNewLine'],
+    ['    msg = msg & "6. Select this .xlsm file" & vbNewLine & vbNewLine'],
+    ['    msg = msg & "Your data imports automatically!" & vbNewLine'],
+    ['    msg = msg & "In Chrome/Edge: data auto-saves back here when you edit in the app."'],
+    ['    MsgBox msg, vbInformation, "APF Dashboard Sync Guide"'],
+    ['End Sub'],
+    [''],
+    ['Sub AutoSyncReminder()'],
+    ["    ' Attach to Workbook_BeforeSave in ThisWorkbook module:"],
+    ["    '   Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)"],
+    ["    '       Call AutoSyncReminder"],
+    ["    '   End Sub"],
+    ['    Application.StatusBar = "APF: File saved. Re-link in APF Dashboard > Visit Plan to sync."'],
+    ['End Sub'],
+    [''],
+    ['============================== VBA CODE END ================================'],
+    [''],
+    ['IMPORTANT NOTES:'],
+    ['- Save as .xlsm (Excel Macro-Enabled Workbook) to keep the macro active'],
+    ['- APF Dashboard Link Excel button now supports: .xlsx, .xlsm and .xls'],
+    ['- Chrome/Edge: data auto-syncs BACK to this file when you edit in the app'],
+    ['- Enable the Auto-Sync toggle in the app for live two-way synchronization'],
+  ];
+  var vbaWs = XLSX.utils.aoa_to_sheet(vbaLines);
+  vbaWs['!cols'] = [{ wch: 92 }];
+  XLSX.utils.book_append_sheet(wb, vbaWs, 'Macro Setup Guide');
+
+  XLSX.writeFile(wb, 'APF_Visit_Plan_Macro_Template.xlsx');
+  showToast('Macro template downloaded! See the "Macro Setup Guide" sheet for setup steps.', 'success');
+  setTimeout(function(){ _vpShowMacroGuideModal(); }, 500);
+}
+
+function _vpShowMacroGuideModal() {
+  var existing = document.getElementById('vpMacroGuideOverlay');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'vpMacroGuideOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+  var steps = [
+    { icon:'💾', n:1, title:'Save as .xlsm', desc:'<strong>File &rarr; Save As</strong> &rarr; select <strong>Excel Macro-Enabled Workbook (*.xlsm)</strong>' },
+    { icon:'⌨️', n:2, title:'Open VBA Editor', desc:'Press <strong>Alt&nbsp;+&nbsp;F11</strong> to open Visual Basic for Applications' },
+    { icon:'📄', n:3, title:'Insert Module', desc:'Right-click your project in left panel &rarr; <strong>Insert &rarr; Module</strong>' },
+    { icon:'📋', n:4, title:'Paste VBA Code', desc:'Copy code from <strong>&quot;Macro Setup Guide&quot;</strong> sheet (between the === lines) and paste into the module' },
+    { icon:'▶️', n:5, title:'Run SetupMacroButton', desc:'Press <strong>Alt&nbsp;+&nbsp;F8</strong> &rarr; select <strong>SetupMacroButton</strong> &rarr; click <strong>Run</strong>' },
+    { icon:'🔗', n:6, title:'Link in APF App', desc:'Visit Plan &rarr; click <strong>arrow on Link Excel button</strong> &rarr; <strong>Link Excel (.xlsx/.xlsm)</strong> &rarr; select your .xlsm file' },
+  ];
+  var stepsHtml = steps.map(function(s){
+    return '<div style="display:flex;gap:12px;align-items:flex-start;background:var(--bg-secondary,rgba(255,255,255,0.04));border-radius:12px;padding:11px 14px;border:1px solid var(--border-color,rgba(255,255,255,0.07));">'
+      + '<div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">' + s.icon + '</div>'
+      + '<div><strong style="font-size:0.83rem;color:var(--text-primary,#f0f1f5);">Step ' + s.n + ': ' + s.title + '</strong>'
+      + '<p style="margin:3px 0 0;font-size:0.78rem;color:var(--text-secondary,#9ca3b8);line-height:1.4;">' + s.desc + '</p></div></div>';
+  }).join('');
+  overlay.innerHTML = '<div style="background:var(--card-bg,#1e2235);border-radius:20px;padding:0;min-width:340px;max-width:560px;width:94vw;box-shadow:0 28px 80px rgba(0,0,0,0.6);overflow:hidden;">'
+    + '<div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px 24px 16px;display:flex;align-items:center;gap:12px;">'
+    + '<div style="width:42px;height:42px;background:rgba(255,255,255,0.18);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">\uD83D\uDD2E</div>'
+    + '<div style="flex:1"><h3 style="margin:0;color:#fff;font-size:1rem;font-weight:700;">Macro Excel Setup Guide</h3>'
+    + '<p style="margin:2px 0 0;color:rgba(255,255,255,0.78);font-size:0.76rem;">Enable VBA macros for one-click sync with APF Dashboard</p></div>'
+    + '<button onclick="document.getElementById(\'vpMacroGuideOverlay\').remove()" style="background:rgba(255,255,255,0.18);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">\u00D7</button></div>'
+    + '<div style="padding:20px 24px;max-height:68vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">'
+    + stepsHtml
+    + '<div style="margin-top:4px;padding:11px 14px;background:rgba(16,185,129,0.1);border-radius:10px;border:1px solid rgba(16,185,129,0.25);">'
+    + '<p style="margin:0;font-size:0.79rem;color:#10b981;"><strong>\u2705 Pro tip:</strong> Use <strong>Chrome or Edge</strong> &mdash; once linked, every edit in the app auto-saves back to your .xlsm file!</p></div></div>'
+    + '<div style="padding:12px 24px 18px;border-top:1px solid var(--border-color,rgba(255,255,255,0.07));display:flex;gap:10px;justify-content:flex-end;">'
+    + '<button onclick="document.getElementById(\'vpMacroGuideOverlay\').remove()" style="padding:9px 18px;border-radius:10px;border:1px solid var(--border-color,rgba(255,255,255,0.15));background:transparent;color:var(--text-secondary,#9ca3b8);cursor:pointer;font-size:0.83rem;">Close</button>'
+    + '<button onclick="vpLinkExcel();document.getElementById(\'vpMacroGuideOverlay\').remove()" style="padding:9px 20px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;cursor:pointer;font-size:0.83rem;font-weight:600;"><i class=\'fas fa-link\' style=\'margin-right:6px\'></i>Link Excel Now</button>'
+    + '</div></div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+}
 function vpUnlinkExcel() {
   window._vpFileHandle = null;
   window._vpLinkedName = null;
@@ -19630,11 +19833,11 @@ function vpToggleAutoSync() {
   window._vpAutoSyncEnabled = !window._vpAutoSyncEnabled;
   _vpUpdateAutoSyncUI();
   if (window._vpAutoSyncEnabled) {
-    showToast('⚠️ Auto-sync ON — changes will overwrite linked Excel', 'warning');
+    showToast('âš ï¸ Auto-sync ON â€” changes will overwrite linked Excel', 'warning');
     // Immediately sync once when turned on
     _vpSyncToExcel();
   } else {
-    showToast('✅ Auto-sync OFF — Excel file is protected', 'success');
+    showToast('âœ… Auto-sync OFF â€” Excel file is protected', 'success');
   }
 }
 
@@ -19645,11 +19848,11 @@ function _vpUpdateAutoSyncUI() {
     if (window._vpAutoSyncEnabled) {
       btn.classList.add('vp-autosync-on');
       label.textContent = 'Sync ON';
-      btn.title = 'Auto-sync is ON — changes will overwrite Excel';
+      btn.title = 'Auto-sync is ON â€” changes will overwrite Excel';
     } else {
       btn.classList.remove('vp-autosync-on');
       label.textContent = 'Sync OFF';
-      btn.title = 'Auto-sync is OFF — Excel file is protected';
+      btn.title = 'Auto-sync is OFF â€” Excel file is protected';
     }
   }
 }
@@ -19683,7 +19886,7 @@ async function _vpSyncToExcel() {
   // Safety guard: never overwrite file with empty data
   const entries = DB.get('visitPlanEntries') || [];
   if (entries.length === 0) {
-    console.warn('[VP Sync] Skipped — no entries to write. Will not overwrite file with empty data.');
+    console.warn('[VP Sync] Skipped â€” no entries to write. Will not overwrite file with empty data.');
     return;
   }
   window._vpSyncing = true;
@@ -19775,13 +19978,13 @@ function _vpParseWorkbook(data) {
   }
   DB.set('visitPlanDropdowns', dropdowns);
 
-  // Build sheet info for picker — use sheet !ref to get actual range
+  // Build sheet info for picker â€” use sheet !ref to get actual range
   const sheetInfo = wb.SheetNames.map(name => {
     const ws = wb.Sheets[name];
     const ref = ws['!ref'] || '';
     let rowCount = 0;
     if (ref) {
-      // ref looks like "A1:P120" — extract last row number
+      // ref looks like "A1:P120" â€” extract last row number
       const match = ref.match(/:.*?(\d+)$/);
       if (match) rowCount = parseInt(match[1], 10);
     }
@@ -19792,7 +19995,7 @@ function _vpParseWorkbook(data) {
     return { name, rows: rowCount, ref };
   });
 
-  // If only 1 sheet total, import directly — otherwise show picker
+  // If only 1 sheet total, import directly â€” otherwise show picker
   if (sheetInfo.length <= 1) {
     _vpParseSheet(wb, sheetInfo[0].name);
     return;
@@ -19947,11 +20150,11 @@ function _vpParseSheet(wb, sheetName) {
     seenKeys.add(key);
     const existing = existingByKey.get(key);
     if (existing && _isExecuted(existing)) {
-      // Executed — keep as-is, ignore Excel version
+      // Executed â€” keep as-is, ignore Excel version
       finalEntries.push(existing);
       cntPreserved++;
     } else {
-      // Planned or new — use Excel version, preserve existing id if replacing
+      // Planned or new â€” use Excel version, preserve existing id if replacing
       finalEntries.push(existing ? { ...newEntry, id: existing.id } : newEntry);
       if (existing) cntReplaced++; else cntAdded++;
     }
@@ -19975,7 +20178,7 @@ function _vpParseSheet(wb, sheetName) {
   if (cntAdded) mergeParts.push(`${cntAdded} added`);
   if (cntReplaced) mergeParts.push(`${cntReplaced} planned updated`);
   if (cntPreserved) mergeParts.push(`${cntPreserved} executed preserved`);
-  showToast(`✅ Imported from "${sheetName}" — ${mergeParts.join(', ')}${skipParts.length ? ' | ' + skipParts.join(' | ') : ''}`);
+  showToast(`âœ… Imported from "${sheetName}" â€” ${mergeParts.join(', ')}${skipParts.length ? ' | ' + skipParts.join(' | ') : ''}`);
 }
 
 function _vpExcelDateToJS(serial) {
@@ -20010,7 +20213,7 @@ function importVisitPlanExcel(event) {
       _vpParseWorkbook(data);
     } catch (err) {
       console.error('Excel Import Error:', err);
-      showToast('❌ Error importing Excel: ' + err.message);
+      showToast('âŒ Error importing Excel: ' + err.message);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -20108,7 +20311,7 @@ function _vpPopulateDropdowns() {
     if (current) el.value = current;
   };
 
-  // Datalists (for combo text inputs — Domain, Stakeholder, Cluster, Venue, Names)
+  // Datalists (for combo text inputs â€” Domain, Stakeholder, Cluster, Venue, Names)
   const fillDatalist = (id, items) => {
     const dl = document.getElementById(id);
     if (!dl) return;
@@ -20228,11 +20431,11 @@ function _vpRenderQuickBar(opts) {
 
   let html = '<div class="vp-bulk-half-actions">';
   html += `<div class="vp-half-group">
- <button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" title="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half → Visits</button>
+ <button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" title="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half â†’ Visits</button>
  <div class="vp-half-counts">${badge(firstAll, firstFiltered, firstSent)}</div>
  </div>`;
   html += `<div class="vp-half-group">
- <button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" title="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half → Visits</button>
+ <button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" title="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half â†’ Visits</button>
  <div class="vp-half-counts">${badge(secondAll, secondFiltered, secondSent)}</div>
  </div>`;
 
@@ -20322,7 +20525,7 @@ async function vpBulkAddHalfToVisits(half) {
   const isFirst = half === 'First Half';
   const confirmed = await showPopupConfirm({
     title: isFirst ? ' First Half Visits' : ' Second Half Visits',
-    message: `Add <strong>${halfEntries.length}</strong> "${half}" entries to School Visits?<br><small style="color:var(--text-muted)">Planned → Planned &nbsp;|&nbsp; Executed → Completed &nbsp;|&nbsp; Sundays &amp; TLC excluded</small>`,
+    message: `Add <strong>${halfEntries.length}</strong> "${half}" entries to School Visits?<br><small style="color:var(--text-muted)">Planned â†’ Planned &nbsp;|&nbsp; Executed â†’ Completed &nbsp;|&nbsp; Sundays &amp; TLC excluded</small>`,
     icon: isFirst ? 'fa-sun' : 'fa-moon',
     confirmText: `Add ${halfEntries.length} Entries`,
     confirmColor: isFirst ? '#f59e0b' : '#8b5cf6'
@@ -20359,7 +20562,7 @@ async function vpBulkAddHalfToVisits(half) {
     // Duplicate check 1: already linked by fromVisitPlan id
     const existingByLink = visits.find(v => v.fromVisitPlan === e.id);
     if (existingByLink) { duplicates.push({ entry: e, existingVisit: existingByLink }); return; }
-    // Duplicate check 2: same slotId — First Half and Second Half produce different slotIds
+    // Duplicate check 2: same slotId â€” First Half and Second Half produce different slotIds
     const existingBySlot = visits.find(v => (v.slotId || _makeSlotId(v)) === slotId);
     if (existingBySlot) { duplicates.push({ entry: e, existingVisit: existingBySlot }); return; }
 
@@ -20431,7 +20634,7 @@ function vpQuickAdd(domain) {
   document.getElementById('vpEntryId').value = '';
   document.getElementById('vpModalTitle').innerHTML = `<i class="fas ${tpl.icon || 'fa-clipboard-check'}"></i> ${domain}`;
 
-  // Pre-fill today's date (skip Sunday → Monday)
+  // Pre-fill today's date (skip Sunday â†’ Monday)
   const today = _vpSkipSunday(new Date().toISOString().split('T')[0]);
   document.getElementById('vpDate').value = today;
   document.getElementById('vpTime').value = 'First Half';
@@ -20485,9 +20688,9 @@ function saveVisitPlanEntry(event) {
   let dateStr = document.getElementById('vpDate').value;
   let dateObj = dateStr ? new Date(dateStr) : null;
 
-  // Block Sunday — cannot save a Sunday entry
+  // Block Sunday â€” cannot save a Sunday entry
   if (dateObj && dateObj.getDay() === 0) {
-    showToast('Sunday is not allowed — please select another date', 'error');
+    showToast('Sunday is not allowed â€” please select another date', 'error');
     return;
   }
 
@@ -20635,7 +20838,7 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
   const existingByLink = visits.find(v => v.fromVisitPlan === entry.id);
   if (existingByLink) return { added: false, reason: 'already_linked', existingVisit: existingByLink };
 
-  // Duplicate check 2: exact slotId match — First Half and Second Half produce different slotIds
+  // Duplicate check 2: exact slotId match â€” First Half and Second Half produce different slotIds
   // Compute slotId on-the-fly for old visits that don't have it stored
   const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}`;
   const existingBySlot = visits.find(v => (v.slotId || _makeSlotId(v)) === slotId);
@@ -20700,12 +20903,12 @@ function vpSendToSchoolVisits(id) {
   if (res.added) {
     DB.set('visitPlanEntries', entries);
     renderVisitPlan();
-    showToast('✅ Added to School Visits!', 'success');
+    showToast('âœ… Added to School Visits!', 'success');
     setTimeout(() => _vpSyncToExcel(), 200);
   } else if (res.reason === 'sunday') {
-    showToast('Cannot add — Sunday entries are not allowed in School Visits', 'error');
+    showToast('Cannot add â€” Sunday entries are not allowed in School Visits', 'error');
   } else if (res.reason === 'tlc') {
-    showToast('Cannot add — TLC entries are excluded from School Visits', 'error');
+    showToast('Cannot add â€” TLC entries are excluded from School Visits', 'error');
   } else if (res.existingVisit) {
     // Show duplicate popup instead of silently skipping
     _vpShowDuplicateModal(res.existingVisit, e);
@@ -22683,15 +22886,15 @@ const SarvamAI = {
     // Inject user's preferred response language into the system prompt
     const langCode = s.sarvamDefaultLang || 'en-IN';
     const langNames = {
-      'hi-IN': 'Hindi (हिन्दी)', 'bn-IN': 'Bengali (বাংলা)', 'ta-IN': 'Tamil (தமிழ்)',
-      'te-IN': 'Telugu (తెలుగు)', 'kn-IN': 'Kannada (ಕನ್ನಡ)', 'ml-IN': 'Malayalam (മലയാളം)',
-      'mr-IN': 'Marathi (मराठी)', 'gu-IN': 'Gujarati (ગુજરાતી)', 'or-IN': 'Odia (ଓଡ଼ିଆ)',
-      'pa-IN': 'Punjabi (ਪੰਜਾਬੀ)', 'ur-IN': 'Urdu (اردو)'
+      'hi-IN': 'Hindi (à¤¹à¤¿à¤¨à¥à¤¦à¥€)', 'bn-IN': 'Bengali (à¦¬à¦¾à¦‚à¦²à¦¾)', 'ta-IN': 'Tamil (à®¤à®®à®¿à®´à¯)',
+      'te-IN': 'Telugu (à°¤à±†à°²à±à°—à±)', 'kn-IN': 'Kannada (à²•à²¨à³à²¨à²¡)', 'ml-IN': 'Malayalam (à´®à´²à´¯à´¾à´³à´‚)',
+      'mr-IN': 'Marathi (à¤®à¤°à¤¾à¤ à¥€)', 'gu-IN': 'Gujarati (àª—à«àªœàª°àª¾àª¤à«€)', 'or-IN': 'Odia (à¬“à¬¡à¬¼à¬¿à¬†)',
+      'pa-IN': 'Punjabi (à¨ªà©°à¨œà¨¾à¨¬à©€)', 'ur-IN': 'Urdu (Ø§Ø±Ø¯Ùˆ)'
     };
     const langName = langNames[langCode];
     if (langName && messages.length > 0 && messages[0].role === 'system') {
       messages = messages.map((m, i) => i === 0
-        ? { ...m, content: m.content + `\n\nIMPORTANT: You MUST respond entirely in ${langName}. Write all your output in ${langName} — headings, bullets, explanations, everything. Do NOT respond in English.` }
+        ? { ...m, content: m.content + `\n\nIMPORTANT: You MUST respond entirely in ${langName}. Write all your output in ${langName} â€” headings, bullets, explanations, everything. Do NOT respond in English.` }
         : m
       );
     }
@@ -22949,7 +23152,7 @@ async function testSarvamConnection() {
     const s = getAppSettings(); s.sarvamApiKey = key;
     try { localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(s)); } catch (e) { }
     const res = await SarvamAI.translate('Hello', 'en-IN', 'hi-IN');
-    if (resultEl) { resultEl.style.background = 'rgba(16,185,129,0.1)'; resultEl.style.color = '#10b981'; resultEl.innerHTML = '<i class="fas fa-check-circle"></i> Connection successful! Translated "Hello" -> "' + escapeHtml(res.translated_text || 'à¤¨à¤®à¤¸à¥à¤¤à¥‡') + '"'; }
+    if (resultEl) { resultEl.style.background = 'rgba(16,185,129,0.1)'; resultEl.style.color = '#10b981'; resultEl.innerHTML = '<i class="fas fa-check-circle"></i> Connection successful! Translated "Hello" -> "' + escapeHtml(res.translated_text || 'Ã Â¤Â¨Ã Â¤Â®Ã Â¤Â¸Ã Â¥ÂÃ Â¤Â¤Ã Â¥â€¡') + '"'; }
     const dot = document.getElementById('sarvamStatusDot');
     if (dot) { dot.style.background = '#10b981'; dot.title = 'Connected'; }
     showToast('Sarvam AI connected successfully!', 'success');
@@ -22971,9 +23174,9 @@ function switchAITab(tab) {
   if (tab === 'lessonplanner') initLessonPlanner();
 }
 
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // LESSON PLANNER
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function initLessonPlanner() {
   const tps = DB.get('teachingPractices') || [];
@@ -23022,7 +23225,7 @@ function initLessonPlanner() {
   lpPopulateLinkTeachers();
 }
 
-// ── Lesson Planner Custom Calendar ──────────────────────
+// â”€â”€ Lesson Planner Custom Calendar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _lpCalYear = new Date().getFullYear(), _lpCalMonth = new Date().getMonth();
 let _lpCalOpen = false;
 
@@ -23117,7 +23320,7 @@ document.addEventListener('click', function (e) {
   if (_lpCalOpen && !e.target.closest('#lpCalWrap')) lpCalClose();
 });
 
-// ── Auto-Suggest from Observations ──────────────────────
+// â”€â”€ Auto-Suggest from Observations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _lpAutoSuggestOpen = false;
 
 function lpToggleAutoSuggest() {
@@ -23139,7 +23342,7 @@ function lpPopulateLinkTeachers() {
     const opt = document.createElement('option');
     opt.value = r.name;
     opt.dataset.school = r.school || '';
-    opt.textContent = r.name + (r.school ? ' — ' + r.school : '');
+    opt.textContent = r.name + (r.school ? ' â€” ' + r.school : '');
     sel.appendChild(opt);
   });
   // Restore selection if still valid
@@ -23249,7 +23452,7 @@ function lpAnalyzeObservations() {
     html += '</div>';
   });
   html += '</div>';
-  html += '<button type="button" class="btn btn-primary lp-autosuggest-apply" onclick="lpApplySuggestions()"><i class="fas fa-magic"></i> Apply Suggestions — Select TPs & Pre-fill Objective</button>';
+  html += '<button type="button" class="btn btn-primary lp-autosuggest-apply" onclick="lpApplySuggestions()"><i class="fas fa-magic"></i> Apply Suggestions â€” Select TPs & Pre-fill Objective</button>';
 
   // Store issues for apply step
   resultsEl._suggestions = issues;
@@ -23480,7 +23683,7 @@ async function lpGeneratePlanAI() {
   // Show loading
   const btn = document.getElementById('lpAIBtn');
   const origLabel = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generatingâ€¦';
   btn.disabled = true;
   const wrap = document.getElementById('lpOutputWrap');
   const output = document.getElementById('lpOutput');
@@ -23488,18 +23691,18 @@ async function lpGeneratePlanAI() {
   output.innerHTML = `<div class="lp-ai-loading">
   <div class="lp-ai-loading-icon"><i class="fas fa-robot"></i><div class="lp-ai-pulse"></div></div>
   <p>Sarvam AI is generating your lesson plan&hellip;</p>
-  <small>This usually takes 5–15 seconds</small>
+  <small>This usually takes 5â€“15 seconds</small>
  </div>`;
   wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Build prompt
   const tpList = selectedTPs.length
     ? selectedTPs.map(tp => `- ${(tp.serialNo || '').match(/^TP/i) ? tp.serialNo : 'TP' + (tp.serialNo || '')} (${tp.group || 'General'}): ${tp.practice || ''}`).join('\n')
-    : 'No specific TPs selected — use general good teaching practices';
+    : 'No specific TPs selected â€” use general good teaching practices';
 
   const loList = selectedLOs.length
     ? selectedLOs.map(lo => `- ${(lo.serialNo || '').match(/^LO/i) ? lo.serialNo : 'LO' + (lo.serialNo || '')} (${lo.group || 'General'}): ${lo.outcome || ''}`).join('\n')
-    : 'No specific LOs selected — define appropriate learning outcomes for the lesson';
+    : 'No specific LOs selected â€” define appropriate learning outcomes for the lesson';
 
   const matList = materials || 'As appropriate for the lesson';
 
@@ -23520,7 +23723,7 @@ async function lpGeneratePlanAI() {
 
   // Template display names
   const templateNames = { standard: 'Standard', '5e': '5E Model', quick: 'Quick Plan', observation: 'Observation' };
-  const languageNames = { english: 'English', hindi: 'हिन्दी Hindi', bilingual: 'Bilingual' };
+  const languageNames = { english: 'English', hindi: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€ Hindi', bilingual: 'Bilingual' };
 
   // Assessment prompt block based on user selection
   let assessmentTemplate = '';
@@ -23528,15 +23731,15 @@ async function lpGeneratePlanAI() {
   if (assessmentLevel === 'basic') {
     assessmentTemplate = `
 **Assessment**
-* **Exit Ticket (${tExit} min):** [Describe a quick formative check — 1-2 questions or a short task to gauge understanding before students leave. Include the exact questions.]`;
+* **Exit Ticket (${tExit} min):** [Describe a quick formative check â€” 1-2 questions or a short task to gauge understanding before students leave. Include the exact questions.]`;
     assessmentRules = '- Include a brief Exit Ticket assessment section.';
   } else if (assessmentLevel === 'detailed') {
     assessmentTemplate = `
 **Assessment Plan**
-* **Formative Assessment (during lesson):** [Describe 2-3 specific moments during the lesson where the teacher checks understanding — e.g. thumbs-up/down, mini-whiteboards, oral questioning. State what to look for and how to respond.]
-* **Exit Ticket (${tExit} min):** [Provide 2-3 specific questions or a short task aligned to the LOs. Include a simple rubric or success criteria — e.g. "3/3 correct = mastered, 1-2 = needs review".]
-* **Summative Assessment Ideas:** [Suggest 1-2 follow-up assessment activities for the next class — e.g. a short quiz, project, or oral presentation. Include brief marking criteria.]
-* **Student Self-Assessment:** [Describe a quick self-reflection prompt students can do — e.g. traffic-light rating, "I learned…/I still wonder…" sentence starters.]`;
+* **Formative Assessment (during lesson):** [Describe 2-3 specific moments during the lesson where the teacher checks understanding â€” e.g. thumbs-up/down, mini-whiteboards, oral questioning. State what to look for and how to respond.]
+* **Exit Ticket (${tExit} min):** [Provide 2-3 specific questions or a short task aligned to the LOs. Include a simple rubric or success criteria â€” e.g. "3/3 correct = mastered, 1-2 = needs review".]
+* **Summative Assessment Ideas:** [Suggest 1-2 follow-up assessment activities for the next class â€” e.g. a short quiz, project, or oral presentation. Include brief marking criteria.]
+* **Student Self-Assessment:** [Describe a quick self-reflection prompt students can do â€” e.g. traffic-light rating, "I learnedâ€¦/I still wonderâ€¦" sentence starters.]`;
     assessmentRules = '- Include a comprehensive multi-part Assessment Plan with formative, summative, exit ticket, and self-assessment components.';
   } else {
     assessmentRules = '- Do NOT include any assessment or exit ticket section.';
@@ -23544,23 +23747,23 @@ async function lpGeneratePlanAI() {
 
   // Detail-level instructions
   const detailInstructions = detailLevel === 'concise'
-    ? 'Keep each section BRIEF — 1-2 sentences max per bullet. Focus on actionable steps only. No lengthy explanations. Total output should be SHORT and scannable.'
+    ? 'Keep each section BRIEF â€” 1-2 sentences max per bullet. Focus on actionable steps only. No lengthy explanations. Total output should be SHORT and scannable.'
     : detailLevel === 'detailed'
-      ? 'Make each section VERY DETAILED — 4-6 sentences per bullet. Include specific dialogue/questions the teacher should say, step-by-step procedures, anticipated student responses, common misconceptions to address, and time-management tips. Be thorough and comprehensive.'
-      : 'Use MODERATE detail — 2-3 sentences per bullet. Balance clarity with brevity. Include key specifics without excessive elaboration.';
+      ? 'Make each section VERY DETAILED â€” 4-6 sentences per bullet. Include specific dialogue/questions the teacher should say, step-by-step procedures, anticipated student responses, common misconceptions to address, and time-management tips. Be thorough and comprehensive.'
+      : 'Use MODERATE detail â€” 2-3 sentences per bullet. Balance clarity with brevity. Include key specifics without excessive elaboration.';
 
   const maxTokens = detailLevel === 'concise' ? 1800 : detailLevel === 'detailed' ? 5000 : 3000;
 
   // Language instructions
   const languageInstruction = language === 'hindi'
-    ? '\n\n**LANGUAGE: HINDI (हिन्दी)**\nWrite the ENTIRE lesson plan in Hindi (Devanagari script). All headings, all content, all instructions — everything must be in Hindi. Do NOT use any English except for proper nouns or technical terms that have no Hindi equivalent.'
+    ? '\n\n**LANGUAGE: HINDI (à¤¹à¤¿à¤¨à¥à¤¦à¥€)**\nWrite the ENTIRE lesson plan in Hindi (Devanagari script). All headings, all content, all instructions â€” everything must be in Hindi. Do NOT use any English except for proper nouns or technical terms that have no Hindi equivalent.'
     : language === 'bilingual'
-      ? '\n\n**LANGUAGE: BILINGUAL (English + हिन्दी)**\nKeep all section HEADINGS and field labels in English exactly as shown in the template. Write all CONTENT, descriptions, activities, questions, and instructions in Hindi (Devanagari script). This produces a plan where the structure is English but the teaching content is in Hindi — ideal for Indian school teachers.'
+      ? '\n\n**LANGUAGE: BILINGUAL (English + à¤¹à¤¿à¤¨à¥à¤¦à¥€)**\nKeep all section HEADINGS and field labels in English exactly as shown in the template. Write all CONTENT, descriptions, activities, questions, and instructions in Hindi (Devanagari script). This produces a plan where the structure is English but the teaching content is in Hindi â€” ideal for Indian school teachers.'
       : '';
 
   const systemPrompt = language === 'hindi'
-    ? `आप भारतीय स्कूलों के लिए एक विशेषज्ञ शिक्षण डिज़ाइनर और शिक्षक प्रशिक्षक हैं, जो NCF 2023 और NCERT शिक्षण पद्धति से गहराई से परिचित हैं। आप विस्तृत, पेशेवर, कक्षा-तैयार पाठ योजनाएँ हिंदी में तैयार करते हैं। उपयोगकर्ता द्वारा दिए गए टेम्पलेट का बिल्कुल पालन करें। Markdown formatting का उपयोग करें।`
-    : `You are an expert instructional designer and teacher trainer for Indian schools, deeply familiar with the NCF 2023 (National Curriculum Framework) and NCERT pedagogy. You generate detailed, professional, classroom-ready lesson plans. Always follow the EXACT output template provided by the user — do not add, remove, or rename any section. Use markdown formatting.${language === 'bilingual' ? ' For bilingual output: keep headings in English, write content in Hindi.' : ''}`;
+    ? `à¤†à¤ª à¤­à¤¾à¤°à¤¤à¥€à¤¯ à¤¸à¥à¤•à¥‚à¤²à¥‹à¤‚ à¤•à¥‡ à¤²à¤¿à¤ à¤à¤• à¤µà¤¿à¤¶à¥‡à¤·à¤œà¥à¤ž à¤¶à¤¿à¤•à¥à¤·à¤£ à¤¡à¤¿à¤œà¤¼à¤¾à¤‡à¤¨à¤° à¤”à¤° à¤¶à¤¿à¤•à¥à¤·à¤• à¤ªà¥à¤°à¤¶à¤¿à¤•à¥à¤·à¤• à¤¹à¥ˆà¤‚, à¤œà¥‹ NCF 2023 à¤”à¤° NCERT à¤¶à¤¿à¤•à¥à¤·à¤£ à¤ªà¤¦à¥à¤§à¤¤à¤¿ à¤¸à¥‡ à¤—à¤¹à¤°à¤¾à¤ˆ à¤¸à¥‡ à¤ªà¤°à¤¿à¤šà¤¿à¤¤ à¤¹à¥ˆà¤‚à¥¤ à¤†à¤ª à¤µà¤¿à¤¸à¥à¤¤à¥ƒà¤¤, à¤ªà¥‡à¤¶à¥‡à¤µà¤°, à¤•à¤•à¥à¤·à¤¾-à¤¤à¥ˆà¤¯à¤¾à¤° à¤ªà¤¾à¤  à¤¯à¥‹à¤œà¤¨à¤¾à¤à¤ à¤¹à¤¿à¤‚à¤¦à¥€ à¤®à¥‡à¤‚ à¤¤à¥ˆà¤¯à¤¾à¤° à¤•à¤°à¤¤à¥‡ à¤¹à¥ˆà¤‚à¥¤ à¤‰à¤ªà¤¯à¥‹à¤—à¤•à¤°à¥à¤¤à¤¾ à¤¦à¥à¤µà¤¾à¤°à¤¾ à¤¦à¤¿à¤ à¤—à¤ à¤Ÿà¥‡à¤®à¥à¤ªà¤²à¥‡à¤Ÿ à¤•à¤¾ à¤¬à¤¿à¤²à¥à¤•à¥à¤² à¤ªà¤¾à¤²à¤¨ à¤•à¤°à¥‡à¤‚à¥¤ Markdown formatting à¤•à¤¾ à¤‰à¤ªà¤¯à¥‹à¤— à¤•à¤°à¥‡à¤‚à¥¤`
+    : `You are an expert instructional designer and teacher trainer for Indian schools, deeply familiar with the NCF 2023 (National Curriculum Framework) and NCERT pedagogy. You generate detailed, professional, classroom-ready lesson plans. Always follow the EXACT output template provided by the user â€” do not add, remove, or rename any section. Use markdown formatting.${language === 'bilingual' ? ' For bilingual output: keep headings in English, write content in Hindi.' : ''}`;
 
   // Common prompt header shared by all templates
   const promptHeader = `Generate a complete lesson plan using the EXACT template below. Fill in every placeholder with specific, practical details based on the inputs.
@@ -23595,7 +23798,7 @@ ${loList}
       : '- Write everything in clear, professional English.';
 
   const commonRules = `IMPORTANT RULES:
-- Follow the EXACT heading and bullet structure above — do not add extra sections or rename them.
+- Follow the EXACT heading and bullet structure above â€” do not add extra sections or rename them.
 - Make all content specific to ${subject} and ${classGrade || 'the appropriate grade level'}.
 - Reference the actual TPs and LOs provided by their codes (e.g. TP1, LO3) in the relevant sections.
 - Be practical and classroom-ready for Indian school teachers.
@@ -23604,11 +23807,11 @@ ${loList}
 ${assessmentRules}
 ${languageRule}`;
 
-  // ── Template-specific body ──
+  // â”€â”€ Template-specific body â”€â”€
   let templateBody = '';
 
   if (templateType === '5e') {
-    // 5E Model: Engage → Explore → Explain → Elaborate → Evaluate
+    // 5E Model: Engage â†’ Explore â†’ Explain â†’ Elaborate â†’ Evaluate
     const t5Engage = Math.round(totalMin * 0.15);
     const t5Explore = Math.round(totalMin * 0.20);
     const t5Explain = Math.round(totalMin * 0.25);
@@ -23616,7 +23819,7 @@ ${languageRule}`;
     const t5Evaluate = totalMin - t5Engage - t5Explore - t5Explain - t5Elaborate;
 
     templateBody = `
-**OUTPUT — Follow this EXACT 5E Model template (fill in every [placeholder]):**
+**OUTPUT â€” Follow this EXACT 5E Model template (fill in every [placeholder]):**
 
 ### Lesson: ${title || subject + ' Lesson'}
 
@@ -23634,16 +23837,16 @@ ${languageRule}`;
 **5E Pedagogical Plan**
 
 **1. Engage (${t5Engage} min)**
-[Capture student interest and activate prior knowledge. Describe a hook activity — a thought-provoking question, a short video, a demonstration, or a real-world scenario. Include the exact questions/prompts to use. Reference relevant TPs.]
+[Capture student interest and activate prior knowledge. Describe a hook activity â€” a thought-provoking question, a short video, a demonstration, or a real-world scenario. Include the exact questions/prompts to use. Reference relevant TPs.]
 
 **2. Explore (${t5Explore} min)**
-[Students investigate the topic through hands-on, student-centered activities. Describe a specific exploration task — an experiment, group investigation, manipulative activity, or data collection. The teacher facilitates, does NOT lecture. Reference relevant TPs.]
+[Students investigate the topic through hands-on, student-centered activities. Describe a specific exploration task â€” an experiment, group investigation, manipulative activity, or data collection. The teacher facilitates, does NOT lecture. Reference relevant TPs.]
 
 **3. Explain (${t5Explain} min)**
 [Students share findings; teacher clarifies and introduces formal concepts/vocabulary. Describe: (a) how students present their discoveries, (b) key explanations the teacher provides, (c) specific examples, analogies, or visuals to use. Reference relevant TPs and LOs.]
 
 **4. Elaborate (${t5Elaborate} min)**
-[Students apply learning to new contexts. Describe an extension activity — a new problem, a real-world application, a cross-curricular connection, or a creative project. Include specific tasks. Reference how this deepens the LOs.]
+[Students apply learning to new contexts. Describe an extension activity â€” a new problem, a real-world application, a cross-curricular connection, or a creative project. Include specific tasks. Reference how this deepens the LOs.]
 
 **5. Evaluate (${t5Evaluate} min)**
 [Assess student understanding. Describe both informal checks (observation, questioning) and a formal assessment task. Include specific questions or tasks aligned to the LOs.]
@@ -23658,7 +23861,7 @@ ${commonRules}`;
   } else if (templateType === 'quick') {
     // Quick Plan: Minimal, scannable, action-oriented
     templateBody = `
-**OUTPUT — Follow this EXACT Quick Plan template (fill in every [placeholder]):**
+**OUTPUT â€” Follow this EXACT Quick Plan template (fill in every [placeholder]):**
 
 ### Quick Plan: ${title || subject + ' Lesson'}
 
@@ -23674,7 +23877,7 @@ ${commonRules}`;
 [Write 1-2 clear, measurable objectives for this lesson, referencing the LOs provided.]
 
 **Materials Needed**
-[Bullet list of materials — keep it short and practical.]
+[Bullet list of materials â€” keep it short and practical.]
 
 **Lesson Flow**
 1. **Opening (${Math.round(totalMin * 0.15)} min):** [One-line hook/warm-up activity with an example question.]
@@ -23697,7 +23900,7 @@ ${commonRules}`;
     const tClose = totalMin - tIntro - tCore - tReflect;
 
     templateBody = `
-**OUTPUT — Follow this EXACT Observation-Focused template (fill in every [placeholder]):**
+**OUTPUT â€” Follow this EXACT Observation-Focused template (fill in every [placeholder]):**
 
 ### Observation Lesson: ${title || subject + ' Lesson'}
 
@@ -23708,7 +23911,7 @@ ${commonRules}`;
 * **Duration:** ${duration}
 * **Template:** Observation-Focused
 * **Learning Outcomes:** [List all targeted learning outcomes, referencing the LOs provided]
-* **Focal Teaching Practices:** [List ALL the TPs provided — these are the practices being observed]
+* **Focal Teaching Practices:** [List ALL the TPs provided â€” these are the practices being observed]
 * **Materials Required:** [List all materials needed]
 
 **Teaching Practice Observation Guide**
@@ -23735,16 +23938,16 @@ ${selectedTPs.length ? selectedTPs.map(tp => {
 ${assessmentTemplate}
 
 **Post-Observation Reflection Prompts**
-[List 3-4 reflection questions the observer and teacher can discuss after the lesson — focused on the effectiveness of the TPs observed.]
+[List 3-4 reflection questions the observer and teacher can discuss after the lesson â€” focused on the effectiveness of the TPs observed.]
 
 ---
 ${commonRules}
-- For the Observation Guide, be VERY specific about observable behaviors — avoid vague statements.`;
+- For the Observation Guide, be VERY specific about observable behaviors â€” avoid vague statements.`;
 
   } else {
-    // Standard (default) — existing NCERT-style template
+    // Standard (default) â€” existing NCERT-style template
     templateBody = `
-**OUTPUT — Follow this EXACT template (fill in every [placeholder]):**
+**OUTPUT â€” Follow this EXACT template (fill in every [placeholder]):**
 
 ### Lesson: ${title || subject + ' Lesson'}
 
@@ -23760,7 +23963,7 @@ ${commonRules}
 
 **Pedagogical Plan**
 * **Warm-up/Introduction (${tWarmup} min):** [Describe a specific warm-up activity that activates prior knowledge and sparks curiosity. Include exact questions to ask.]
-* **Direct Instruction (${tDirect} min):** [Describe the teacher-led explanation of new concepts. Be specific — include examples, analogies, visuals to use. Reference which TPs apply here.]
+* **Direct Instruction (${tDirect} min):** [Describe the teacher-led explanation of new concepts. Be specific â€” include examples, analogies, visuals to use. Reference which TPs apply here.]
 * **Guided Practice (${tGuided} min):** [Describe a structured practice activity where teacher supports students step-by-step. Include sample problems or tasks. Reference which TPs apply here.]
 * **Independent Practice (${tIndep} min):** [Describe tasks students complete on their own to demonstrate understanding. Include specific exercises or worksheet details.]
 * **Differentiation Plan (${tDiff} min):** [Describe how to support struggling learners AND extend advanced students. Include specific strategies for both groups.]
@@ -23784,13 +23987,13 @@ ${commonRules}`;
 
     let reply = res.choices?.[0]?.message?.content || 'No response received from Sarvam AI.';
 
-    // Strip AI reasoning/thinking blocks — not needed in lesson plan output
+    // Strip AI reasoning/thinking blocks â€” not needed in lesson plan output
     reply = reply.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
     if (!reply) reply = 'No lesson plan content received. Please try again.';
 
     // Build header
     const headerHtml = `<div class="lp-plan-header">
-   <h2 class="lp-plan-title"><i class="fas fa-robot" style="margin-right:8px;font-size:16px;opacity:.7"></i>${title || subject + ' — Lesson Plan'}</h2>
+   <h2 class="lp-plan-title"><i class="fas fa-robot" style="margin-right:8px;font-size:16px;opacity:.7"></i>${title || subject + ' â€” Lesson Plan'}</h2>
    <div class="lp-plan-meta-grid">
     <div class="lp-plan-meta-item"><i class="fas fa-book"></i><span>Subject</span><strong>${subject}</strong></div>
     ${classGrade ? `<div class="lp-plan-meta-item"><i class="fas fa-chalkboard"></i><span>Class</span><strong>${classGrade}</strong></div>` : ''}
@@ -23837,7 +24040,7 @@ ${commonRules}`;
   }
 }
 
-// ── Weekly Plan View ────────────────────────────────────
+// â”€â”€ Weekly Plan View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function _lpWeekdayDates(dateStr) {
   const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
   const day = base.getDay();
@@ -23888,19 +24091,19 @@ async function lpGenerateWeeklyPlanAI() {
 
   const language = _lpGetPillValue('lpLanguage') || 'english';
   const detailLevel = _lpGetPillValue('lpDetailLevel') || 'standard';
-  const languageNames = { english: 'English', hindi: 'हिन्दी Hindi', bilingual: 'Bilingual' };
+  const languageNames = { english: 'English', hindi: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€ Hindi', bilingual: 'Bilingual' };
 
   const tpStr = selectedTPs.length
-    ? selectedTPs.map(tp => `${(tp.serialNo || '').match(/^TP/i) ? tp.serialNo : 'TP' + (tp.serialNo || '')} — ${tp.practice || ''}`).join('; ')
+    ? selectedTPs.map(tp => `${(tp.serialNo || '').match(/^TP/i) ? tp.serialNo : 'TP' + (tp.serialNo || '')} â€” ${tp.practice || ''}`).join('; ')
     : 'Use general good teaching practices';
   const loStr = selectedLOs.length
-    ? selectedLOs.map(lo => `${(lo.serialNo || '').match(/^LO/i) ? lo.serialNo : 'LO' + (lo.serialNo || '')} — ${lo.outcome || ''}`).join('; ')
+    ? selectedLOs.map(lo => `${(lo.serialNo || '').match(/^LO/i) ? lo.serialNo : 'LO' + (lo.serialNo || '')} â€” ${lo.outcome || ''}`).join('; ')
     : 'Define appropriate learning outcomes for each day';
 
   // Loading
   const btn = document.getElementById('lpWeeklyBtn');
   const origLabel = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generatingâ€¦';
   btn.disabled = true;
   document.getElementById('lpAIBtn').disabled = true;
 
@@ -23912,7 +24115,7 @@ async function lpGenerateWeeklyPlanAI() {
   output.innerHTML = `<div class="lp-ai-loading">
   <div class="lp-ai-loading-icon"><i class="fas fa-calendar-week"></i><div class="lp-ai-pulse"></div></div>
   <p>Sarvam AI is generating your weekly plan&hellip;</p>
-  <small>This may take 15–30 seconds for 5 connected lesson plans</small>
+  <small>This may take 15â€“30 seconds for 5 connected lesson plans</small>
  </div>`;
   wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -23922,15 +24125,15 @@ async function lpGenerateWeeklyPlanAI() {
       ? ' Keep field names in English. Write all descriptions in Hindi (Devanagari script).'
       : '';
 
-  const systemPrompt = `You are an expert instructional designer for Indian schools, familiar with NCF 2023 and NCERT pedagogy. You create connected weekly lesson plan outlines. Always respond with ONLY a valid JSON array — no markdown code fences, no explanation, no preamble, just the raw JSON array.${langInstr}`;
+  const systemPrompt = `You are an expert instructional designer for Indian schools, familiar with NCF 2023 and NCERT pedagogy. You create connected weekly lesson plan outlines. Always respond with ONLY a valid JSON array â€” no markdown code fences, no explanation, no preamble, just the raw JSON array.${langInstr}`;
 
   const detailNote = detailLevel === 'detailed'
-    ? 'Make activities more detailed — include specific questions, examples, and student grouping strategies.'
+    ? 'Make activities more detailed â€” include specific questions, examples, and student grouping strategies.'
     : detailLevel === 'concise'
-      ? 'Keep activities brief — one short sentence per phase is enough.'
-      : 'Keep activities moderately detailed — one or two sentences per phase.';
+      ? 'Keep activities brief â€” one short sentence per phase is enough.'
+      : 'Keep activities moderately detailed â€” one or two sentences per phase.';
 
-  const userPrompt = `Generate a Mon–Fri connected weekly lesson plan.
+  const userPrompt = `Generate a Monâ€“Fri connected weekly lesson plan.
 
 INPUTS:
 - Subject: ${subject}
@@ -23943,7 +24146,7 @@ ${chapter ? `- Chapter/Unit: ${chapter}\n` : ''}- Weekly Objective: ${objective 
 ${linkedTeacher ? `- Teacher: ${linkedTeacher}\n` : ''}${linkedSchool ? `- School: ${linkedSchool}\n` : ''}Teaching Practices: ${tpStr}
 Learning Outcomes: ${loStr}
 
-Return EXACTLY this JSON structure — an array of 5 objects:
+Return EXACTLY this JSON structure â€” an array of 5 objects:
 [
   {
     "day": "Monday",
@@ -23996,7 +24199,7 @@ RULES:
 - ${detailNote}
 - Reference TPs and LOs by code in activities where relevant
 - builds_on must be empty string "" for Monday only; all other days must describe the connection
-- Return ONLY the JSON array — no other text`;
+- Return ONLY the JSON array â€” no other text`;
 
   try {
     const res = await SarvamAI.chat([
@@ -24014,14 +24217,14 @@ RULES:
     } catch (_) {
       const match = raw.match(/\[[\s\S]*\]/);
       if (match) days = JSON.parse(match[0]);
-      else throw new Error('Could not parse weekly plan data — please try again.');
+      else throw new Error('Could not parse weekly plan data â€” please try again.');
     }
     if (!Array.isArray(days) || days.length === 0) throw new Error('Invalid weekly plan data received.');
 
     // Build header
-    const weekLabel = `${weekDates[0].label} – ${weekDates[4].label}`;
+    const weekLabel = `${weekDates[0].label} â€“ ${weekDates[4].label}`;
     const headerHtml = `<div class="lp-plan-header">
-   <h2 class="lp-plan-title"><i class="fas fa-calendar-week" style="margin-right:8px;font-size:16px;opacity:.7"></i>${title || subject + ' — Weekly Plan'}</h2>
+   <h2 class="lp-plan-title"><i class="fas fa-calendar-week" style="margin-right:8px;font-size:16px;opacity:.7"></i>${title || subject + ' â€” Weekly Plan'}</h2>
    <div class="lp-plan-meta-grid">
     <div class="lp-plan-meta-item"><i class="fas fa-book"></i><span>Subject</span><strong>${subject}</strong></div>
     ${classGrade ? `<div class="lp-plan-meta-item"><i class="fas fa-chalkboard"></i><span>Class</span><strong>${classGrade}</strong></div>` : ''}
@@ -24089,7 +24292,7 @@ RULES:
   }
 }
 
-// ── Refine Section ──────────────────────────────────────
+// â”€â”€ Refine Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function _lpCleanRefineUI(html) {
   const t = document.createElement('div');
   t.innerHTML = html;
@@ -24188,7 +24391,7 @@ function lpShowRefineMenu(btn) {
   <button onclick="lpRefineSection(this,'manipulatives')"><i class="fas fa-cubes"></i> Add manipulatives</button>
   <button onclick="lpRefineSection(this,'questions')"><i class="fas fa-circle-question"></i> Add questions</button>
   <div class="lp-refine-custom-row">
-   <input type="text" class="lp-refine-custom-input" placeholder="Describe your changes…" onkeydown="if(event.key==='Enter'){lpRefineSection(this,'custom')}" />
+   <input type="text" class="lp-refine-custom-input" placeholder="Describe your changesâ€¦" onkeydown="if(event.key==='Enter'){lpRefineSection(this,'custom')}" />
    <button class="lp-refine-custom-go" onclick="lpRefineSection(this,'custom')" title="Apply custom refinement"><i class="fas fa-arrow-right"></i></button>
   </div>`;
   section.appendChild(menu);
@@ -24218,7 +24421,7 @@ async function lpRefineSection(menuBtn, action) {
 
   if (!SarvamAI.isConfigured()) { showToast('Configure your Sarvam AI API key in Settings first', 'warning'); return; }
 
-  // Find heading — could be h2/h3/h4 or <strong> inside a heading row
+  // Find heading â€” could be h2/h3/h4 or <strong> inside a heading row
   const headingEl = section.querySelector('h2, h3, h4') || section.querySelector('.lp-refine-heading-row strong');
   if (!headingEl) return;
 
@@ -24252,7 +24455,7 @@ async function lpRefineSection(menuBtn, action) {
   if (language === 'hindi') langInstr = '\nWrite the ENTIRE output in Hindi (Devanagari script). No English except unavoidable technical terms.';
   else if (language === 'bilingual') langInstr = '\nKeep section HEADINGS in English. Write all CONTENT in Hindi (Devanagari script).';
 
-  const systemPrompt = 'You are an expert instructional designer for Indian schools. You refine specific sections of lesson plans while maintaining consistency with the overall plan. Output ONLY the refined section content in markdown — no preamble, no explanation, no section heading.';
+  const systemPrompt = 'You are an expert instructional designer for Indian schools. You refine specific sections of lesson plans while maintaining consistency with the overall plan. Output ONLY the refined section content in markdown â€” no preamble, no explanation, no section heading.';
   const userPrompt = `Refine the following section of a lesson plan.
 
 **Section:** ${sectionTitle}
@@ -24323,7 +24526,7 @@ function lpOpenEditor() {
   let cleanHtml = output.innerHTML.replace(/<details[^>]*class="ai-thinking-block"[\s\S]*?<\/details>/gi, '');
   cleanHtml = _lpCleanRefineUI(cleanHtml);
   const bodyHtml = `<!DOCTYPE html><html><head><style>${printCss}</style></head><body>${cleanHtml}</body></html>`;
-  openPdfEditor(bodyHtml, 'Edit Lesson Plan — ' + (title || subject));
+  openPdfEditor(bodyHtml, 'Edit Lesson Plan â€” ' + (title || subject));
 }
 
 function lpExportPDF() {
@@ -24345,15 +24548,15 @@ function lpExportPDF() {
   // Resolve any remaining var() references in inline styles / attribute strings
   wrapper.innerHTML = _resolveCssVarsForPrint(wrapper.innerHTML);
 
-  // ── Self-contained style block ──────────────────────────────────────────
+  // â”€â”€ Self-contained style block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // html2canvas clones this wrapper into an isolated iframe where only the
-  // app's dark-mode stylesheet loads — no body.light-mode class exists there.
+  // app's dark-mode stylesheet loads â€” no body.light-mode class exists there.
   // By embedding a <style> with (a) !important CSS-variable overrides and
   // (b) all LP class rules hard-coded in light-mode values, we make the
   // wrapper completely independent of the app's CSS theme state.
   const styleTag = document.createElement('style');
   styleTag.textContent = `
-  /* ① Force every CSS variable to its light-mode value so any surviving
+  /* â‘  Force every CSS variable to its light-mode value so any surviving
        var() references resolve correctly inside the html2canvas iframe.   */
   :root {
     --bg-primary:#f5f6fa!important; --bg-secondary:#ffffff!important;
@@ -24373,9 +24576,9 @@ function lpExportPDF() {
     --glass-bg:rgba(255,255,255,0.85)!important;
     --glass-border:rgba(0,0,0,0.06)!important;
   }
-  /* ② Hard-coded light-mode LP styles (no CSS variables, no dependencies). */
+  /* â‘¡ Hard-coded light-mode LP styles (no CSS variables, no dependencies). */
   ${lpGetPrintCSS()}
-  /* ③ Page-break hints */
+  /* â‘¢ Page-break hints */
   p,li,tr,blockquote,pre{page-break-inside:avoid}
   h2,h3,h4,strong{page-break-after:avoid}
   ul,ol,table{page-break-inside:avoid}
@@ -24402,7 +24605,7 @@ function lpExportPDF() {
     pagebreak: { mode: 'css', before: '.lp-plan-header', avoid: ['li', 'p', 'strong', 'h2', 'h3', 'h4', 'tr', '.lp-plan-meta-grid', '.lp-ai-response > *'] }
   };
 
-  showToast('Generating PDF…', 'info');
+  showToast('Generating PDFâ€¦', 'info');
   html2pdf().set(opt).from(wrapper).save().then(() => {
     showToast('PDF downloaded!', 'success');
   }).catch(err => {
@@ -24445,7 +24648,7 @@ function lpGetPrintCSS() {
   .lp-refine-btn,.lp-refine-menu,.lp-refine-section,.lp-refine-heading-row{all:unset;display:contents}
   .lp-plan-footer{font-size:11px;color:#6b7280;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;display:flex;align-items:center;gap:6px}
   .lp-plan-footer i{display:none}
-  /* ── Weekly plan print styles ── */
+  /* â”€â”€ Weekly plan print styles â”€â”€ */
   .lp-weekly-grid{display:flex;flex-direction:column;gap:10px;margin:16px 0 8px}
   .lp-weekly-day-card{display:grid;grid-template-columns:220px 1fr;border:1px solid #e2e8f0;border-left:4px solid var(--day-accent,#6366f1);border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid}
   .lp-weekly-day-left{background:#f8f7ff;border-right:1px solid #e2e8f0;padding:0}
@@ -24511,7 +24714,7 @@ function lpClearPlan() {
   if (defLang) defLang.classList.add('active');
 }
 
-// ── Save & History ──────────────────────────────────────
+// â”€â”€ Save & History â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function lpSavePlan() {
   const output = document.getElementById('lpOutput');
   if (!output || !output.innerHTML.trim() || output.querySelector('.lp-ai-error')) {
@@ -24697,7 +24900,7 @@ function lpToggleHistory() {
   if (_lpHistoryOpen) lpRenderHistory();
 }
 
-// ── LP Analytics ──
+// â”€â”€ LP Analytics â”€â”€
 let _lpAnalyticsOpen = false;
 function lpToggleAnalytics() {
   _lpAnalyticsOpen = !_lpAnalyticsOpen;
@@ -24729,7 +24932,7 @@ function renderLPAnalytics() {
     return;
   }
 
-  // ── KPI Summary ──
+  // â”€â”€ KPI Summary â”€â”€
   const subjects = new Set();
   const teachers = new Set();
   const templates = {};
@@ -24749,7 +24952,7 @@ function renderLPAnalytics() {
   const totalTPs = plans.reduce((s, p) => s + (p.tpCount || 0), 0);
   const totalLOs = plans.reduce((s, p) => s + (p.loCount || 0), 0);
   const dateRange = earliest && latest
-    ? new Date(earliest).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' – ' + new Date(latest).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    ? new Date(earliest).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' â€“ ' + new Date(latest).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
     : '';
 
   kpiEl.innerHTML = `
@@ -24758,10 +24961,10 @@ function renderLPAnalytics() {
     <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b"><i class="fas fa-chalkboard-teacher"></i></div><div class="lpa-kpi-val">${teachers.size}</div><div class="lpa-kpi-lbl">Teachers</div></div>
     <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6"><i class="fas fa-layer-group"></i></div><div class="lpa-kpi-val">${totalTPs}</div><div class="lpa-kpi-lbl">TPs Used</div></div>
     <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(14,165,233,0.12);color:#0ea5e9"><i class="fas fa-bullseye"></i></div><div class="lpa-kpi-val">${totalLOs}</div><div class="lpa-kpi-lbl">LOs Used</div></div>
-    <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(236,72,153,0.12);color:#ec4899"><i class="fas fa-calendar-alt"></i></div><div class="lpa-kpi-val" style="font-size:13px">${dateRange || '—'}</div><div class="lpa-kpi-lbl">Date Range</div></div>
+    <div class="lpa-kpi"><div class="lpa-kpi-icon" style="background:rgba(236,72,153,0.12);color:#ec4899"><i class="fas fa-calendar-alt"></i></div><div class="lpa-kpi-val" style="font-size:13px">${dateRange || 'â€”'}</div><div class="lpa-kpi-lbl">Date Range</div></div>
   `;
 
-  // ── Plans per Subject ──
+  // â”€â”€ Plans per Subject â”€â”€
   const subjCounts = {};
   plans.forEach(p => { const s = p.subject || 'Unknown'; subjCounts[s] = (subjCounts[s] || 0) + 1; });
   const subjEntries = Object.entries(subjCounts).sort((a, b) => b[1] - a[1]);
@@ -24772,7 +24975,7 @@ function renderLPAnalytics() {
     return `<div class="lpa-bar-row"><div class="lpa-bar-label" title="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[i % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
   }).join('');
 
-  // ── Plans per Teacher ──
+  // â”€â”€ Plans per Teacher â”€â”€
   const tchrCounts = {};
   plans.forEach(p => { const t = p.linkedTeacher || p.teacher || ''; if (t) tchrCounts[t] = (tchrCounts[t] || 0) + 1; });
   const tchrEntries = Object.entries(tchrCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
@@ -24782,7 +24985,7 @@ function renderLPAnalytics() {
     return `<div class="lpa-bar-row"><div class="lpa-bar-label" title="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[(i + 3) % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
   }).join('') || '<div class="lpa-empty"><i class="fas fa-user"></i>No teacher data linked</div>';
 
-  // ── Most-used TPs ──
+  // â”€â”€ Most-used TPs â”€â”€
   const tpCounts = {};
   const tpData = DB.get('teachingPractices') || [];
   plans.forEach(p => { (p.tpIds || []).forEach(id => { tpCounts[id] = (tpCounts[id] || 0) + 1; }); });
@@ -24792,10 +24995,10 @@ function renderLPAnalytics() {
     const name = tp ? (tp.practice || tp.serialNo || e[0]) : e[0];
     const subj = tp ? (tp.subject || '') : '';
     const obsCount = observations.filter(o => o.practiceSerial === e[0]).length;
-    return `<div class="lpa-rank-item"><div class="lpa-rank-num">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" title="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + '…' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}${obsCount ? ' · ' + obsCount + ' obs' : ''}</div></div><div class="lpa-rank-badge">${e[1]}×</div></div>`;
+    return `<div class="lpa-rank-item"><div class="lpa-rank-num">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" title="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + 'â€¦' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}${obsCount ? ' Â· ' + obsCount + ' obs' : ''}</div></div><div class="lpa-rank-badge">${e[1]}Ã—</div></div>`;
   }).join('') || '<div class="lpa-empty"><i class="fas fa-layer-group"></i>No TP data yet</div>';
 
-  // ── Most-used LOs ──
+  // â”€â”€ Most-used LOs â”€â”€
   const loCounts = {};
   const loData = DB.get('learningOutcomes') || [];
   plans.forEach(p => { (p.loIds || []).forEach(id => { loCounts[id] = (loCounts[id] || 0) + 1; }); });
@@ -24804,10 +25007,10 @@ function renderLPAnalytics() {
     const lo = loData.find(l => l.serialNo === e[0] || l.id === e[0]);
     const name = lo ? (lo.outcome || lo.serialNo || e[0]) : e[0];
     const subj = lo ? (lo.subject || '') : '';
-    return `<div class="lpa-rank-item"><div class="lpa-rank-num" style="background:linear-gradient(135deg,#10b981,#14b8a6)">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" title="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + '…' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}</div></div><div class="lpa-rank-badge" style="background:rgba(16,185,129,0.12);color:#10b981">${e[1]}×</div></div>`;
+    return `<div class="lpa-rank-item"><div class="lpa-rank-num" style="background:linear-gradient(135deg,#10b981,#14b8a6)">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" title="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + 'â€¦' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}</div></div><div class="lpa-rank-badge" style="background:rgba(16,185,129,0.12);color:#10b981">${e[1]}Ã—</div></div>`;
   }).join('') || '<div class="lpa-empty"><i class="fas fa-bullseye"></i>No LO data yet</div>';
 
-  // ── Plans vs Observations per Teacher ──
+  // â”€â”€ Plans vs Observations per Teacher â”€â”€
   const teacherSet = new Set();
   plans.forEach(p => { const t = p.linkedTeacher || p.teacher; if (t) teacherSet.add(t); });
   observations.forEach(o => { if (o.teacher) teacherSet.add(o.teacher); });
@@ -24816,17 +25019,17 @@ function renderLPAnalytics() {
     const tLower = t.toLowerCase();
     const planCount = plans.filter(p => (p.linkedTeacher || p.teacher || '').toLowerCase() === tLower).length;
     const obsCount = observations.filter(o => (o.teacher || '').toLowerCase() === tLower).length;
-    const ratio = obsCount > 0 ? (planCount / obsCount).toFixed(1) : planCount > 0 ? '∞' : '—';
+    const ratio = obsCount > 0 ? (planCount / obsCount).toFixed(1) : planCount > 0 ? 'âˆž' : 'â€”';
     const barMax = Math.max(planCount, obsCount, 1);
     return `<tr>
-      <td style="font-weight:600">${escapeHtml(t.length > 20 ? t.substring(0, 18) + '…' : t)}</td>
+      <td style="font-weight:600">${escapeHtml(t.length > 20 ? t.substring(0, 18) + 'â€¦' : t)}</td>
       <td><div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.round(planCount / barMax * 60)}px;height:8px;border-radius:4px;background:${_ac};min-width:2px"></div>${planCount}</div></td>
       <td><div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.round(obsCount / barMax * 60)}px;height:8px;border-radius:4px;background:#10b981;min-width:2px"></div>${obsCount}</div></td>
       <td style="color:var(--text-muted)">${ratio}</td>
     </tr>`;
   }).join('');
 
-  // ── Planning → Follow-up Tracking ──
+  // â”€â”€ Planning â†’ Follow-up Tracking â”€â”€
   const FOLLOWUP_WINDOW = 14 * 86400000; // 14 days
   const followupRows = [];
   plans.forEach(p => {
@@ -24856,16 +25059,16 @@ function renderLPAnalytics() {
   const followedUp = followupRows.filter(r => r.hasFollow).length;
   const followRate = followupRows.length ? Math.round((followedUp / followupRows.length) * 100) : 0;
   const fuTableRows = followupRows.map(r => `<tr>
-    <td style="font-weight:600">${escapeHtml((r.teacher || '').length > 18 ? r.teacher.substring(0, 16) + '…' : (r.teacher || ''))}</td>
+    <td style="font-weight:600">${escapeHtml((r.teacher || '').length > 18 ? r.teacher.substring(0, 16) + 'â€¦' : (r.teacher || ''))}</td>
     <td>${escapeHtml(r.subject)}</td>
     <td style="white-space:nowrap">${r.planDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
     <td>${r.hasFollow
-      ? '<span class="lpa-followup-yes"><span class="lpa-followup-dot" style="background:#10b981"></span>Yes — ' + r.followType + '</span>'
+      ? '<span class="lpa-followup-yes"><span class="lpa-followup-dot" style="background:#10b981"></span>Yes â€” ' + r.followType + '</span>'
       : '<span class="lpa-followup-no"><span class="lpa-followup-dot" style="background:#ef4444"></span>No follow-up</span>'
     }</td>
   </tr>`).join('');
 
-  // ── Render ──
+  // â”€â”€ Render â”€â”€
   chartsEl.innerHTML = `
     <div class="lpa-grid-2">
       <div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-book"></i> Plans per Subject</div><div class="lpa-card-body">${subjBars}</div></div>
@@ -24876,7 +25079,7 @@ function renderLPAnalytics() {
       <div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-bullseye"></i> Most-Used Learning Outcomes</div><div class="lpa-card-body">${loList}</div></div>
     </div>
     ${teacherArr.length ? `<div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-exchange-alt"></i> Plans vs Observations <span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:auto">${teacherArr.length} teachers</span></div><div class="lpa-card-body"><div class="lpa-table-wrap"><table class="lpa-table"><thead><tr><th>Teacher</th><th><i class="fas fa-file-alt" style="color:${_ac};margin-right:3px"></i>Plans</th><th><i class="fas fa-microscope" style="color:#10b981;margin-right:3px"></i>Obs</th><th>Ratio</th></tr></thead><tbody>${pvoRows}</tbody></table></div></div></div>` : ''}
-    ${followupRows.length ? `<div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-route"></i> Planning → Follow-up Tracking <span style="font-weight:400;font-size:11px;margin-left:auto"><span style="color:${followRate >= 60 ? '#10b981' : followRate >= 30 ? '#f59e0b' : '#ef4444'};font-weight:700">${followRate}%</span> follow-up rate (${followedUp}/${followupRows.length})</span></div><div class="lpa-card-body"><div class="lpa-table-wrap"><table class="lpa-table"><thead><tr><th>Teacher</th><th>Subject</th><th>Plan Date</th><th>Follow-up (14d)</th></tr></thead><tbody>${fuTableRows}</tbody></table></div></div></div>` : ''}
+    ${followupRows.length ? `<div class="lpa-card"><div class="lpa-card-title"><i class="fas fa-route"></i> Planning â†’ Follow-up Tracking <span style="font-weight:400;font-size:11px;margin-left:auto"><span style="color:${followRate >= 60 ? '#10b981' : followRate >= 30 ? '#f59e0b' : '#ef4444'};font-weight:700">${followRate}%</span> follow-up rate (${followedUp}/${followupRows.length})</span></div><div class="lpa-card-body"><div class="lpa-table-wrap"><table class="lpa-table"><thead><tr><th>Teacher</th><th>Subject</th><th>Plan Date</th><th>Follow-up (14d)</th></tr></thead><tbody>${fuTableRows}</tbody></table></div></div></div>` : ''}
   `;
 }
 
@@ -24903,13 +25106,13 @@ function _getAIChatModeConfig(mode) {
   const configs = {
     balanced: {
       label: 'Balanced Assistant',
-      instruction: 'Give concise, practical guidance with evidence from available data. If the user sends a casual greeting or general question unrelated to data, respond naturally and conversationally — do not force data analysis.',
+      instruction: 'Give concise, practical guidance with evidence from available data. If the user sends a casual greeting or general question unrelated to data, respond naturally and conversationally â€” do not force data analysis.',
       temperature: 0.6,
       maxTokens: 1500
     },
     'general-chat': {
       label: 'General Chat',
-      instruction: 'You are a friendly, helpful conversational assistant. Respond naturally to any topic — greetings, general knowledge, opinions, ideas, or casual conversation. Only reference the user\'s APF data if they explicitly ask about it. Keep responses warm, concise, and human-like.',
+      instruction: 'You are a friendly, helpful conversational assistant. Respond naturally to any topic â€” greetings, general knowledge, opinions, ideas, or casual conversation. Only reference the user\'s APF data if they explicitly ask about it. Keep responses warm, concise, and human-like.',
       temperature: 0.75,
       maxTokens: 1500
     },
@@ -24961,7 +25164,7 @@ Today's date: ${new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 
 Core behavior:
 - ${modeConfig.instruction}
 - Reply in the same language the user uses (Hindi, English, Tamil, Telugu, Kannada, etc.).
-- Be conversational and natural. Match the tone of the user — if they say "hi" or "hello", greet them back warmly and ask how you can help. Do NOT dump data analysis for casual messages.
+- Be conversational and natural. Match the tone of the user â€” if they say "hi" or "hello", greet them back warmly and ask how you can help. Do NOT dump data analysis for casual messages.
 - When the user asks about their data (visits, observations, trainings, follow-ups, etc.), use the data snapshot provided below to give specific, evidence-based answers.
 - When the user asks general questions, research topics, brainstorming, or anything unrelated to their APF data, respond helpfully like a knowledgeable assistant without forcing data references.
 - Stay factual and practical. When data is missing or insufficient, clearly say so.
@@ -24971,7 +25174,7 @@ Core behavior:
   if (!noData) {
     prompt += `\n\nUser's APF Data Snapshot (use this when the user asks about their work/data):\n${contextData}`;
   } else {
-    prompt += `\n\nNo data scope selected — respond as a general-purpose assistant.`;
+    prompt += `\n\nNo data scope selected â€” respond as a general-purpose assistant.`;
   }
 
   return prompt;
@@ -25154,7 +25357,7 @@ function formatAIResponse(text) {
     cleaned = text.replace(thinkRegex, '').trim();
     if (!cleaned) {
       // Reasoning models sometimes return only reasoning_content with no final answer.
-      // Show a clean fallback — the reasoning block is already visible above if present.
+      // Show a clean fallback â€” the reasoning block is already visible above if present.
       cleaned = reasoningParts.join('\n\n').trim() || '';
       if (!cleaned) cleaned = "<em>(AI response was incomplete. Please try again.)</em>";
       thinkingHtml = '';
@@ -25761,11 +25964,11 @@ function buildInsightPrompt(type) {
     }
     case 'strength-weakness': {
       const profile = DB.get('userProfile') || {};
-      return `Perform a strengths and gaps analysis for the cluster/block managed by APF Resource Person ${profile.name || 'N/A'} (Block: ${profile.block || 'N/A'}, Cluster: ${profile.cluster || 'N/A'}).\n\nData:\n${context}\n\nAnalyze: 1) Top 3-5 cluster-level STRENGTHS (what's going well — visit regularity, teacher engagement, training completion, etc.), 2) Top 3-5 GAPS or areas needing improvement (low visit schools, poor follow-up closure, training gaps), 3) Quick wins — things that can be improved immediately, 4) Long-term development areas. Format with clear headers and bullet points.`;
+      return `Perform a strengths and gaps analysis for the cluster/block managed by APF Resource Person ${profile.name || 'N/A'} (Block: ${profile.block || 'N/A'}, Cluster: ${profile.cluster || 'N/A'}).\n\nData:\n${context}\n\nAnalyze: 1) Top 3-5 cluster-level STRENGTHS (what's going well â€” visit regularity, teacher engagement, training completion, etc.), 2) Top 3-5 GAPS or areas needing improvement (low visit schools, poor follow-up closure, training gaps), 3) Quick wins â€” things that can be improved immediately, 4) Long-term development areas. Format with clear headers and bullet points.`;
     }
     case 'parent-community': {
       const communityVisits = visits.filter(v => (v.purpose || '').toLowerCase().includes('community') || (v.purpose || '').toLowerCase().includes('parent') || (v.purpose || '').toLowerCase().includes('smc') || (v.purpose || '').toLowerCase().includes('sdmc'));
-      return `Analyze parent and community engagement trends for this APF Resource Person.\n\nData:\n${context}\n\nCommunity/parent-related visits: ${communityVisits.length}\n${communityVisits.slice(0, 10).map(v => `- ${v.date}: ${v.school} — ${v.purpose || 'N/A'}`).join('\n') || 'No explicit community visits found'}\n\nBased on all available data: 1) How often are parents/community members being engaged? 2) Which schools show strong community participation? 3) Opportunities to increase parent involvement, 4) Suggest 3-4 actionable community engagement activities for next month. Even if explicit community data is limited, infer from visit patterns and provide useful suggestions.`;
+      return `Analyze parent and community engagement trends for this APF Resource Person.\n\nData:\n${context}\n\nCommunity/parent-related visits: ${communityVisits.length}\n${communityVisits.slice(0, 10).map(v => `- ${v.date}: ${v.school} â€” ${v.purpose || 'N/A'}`).join('\n') || 'No explicit community visits found'}\n\nBased on all available data: 1) How often are parents/community members being engaged? 2) Which schools show strong community participation? 3) Opportunities to increase parent involvement, 4) Suggest 3-4 actionable community engagement activities for next month. Even if explicit community data is limited, infer from visit patterns and provide useful suggestions.`;
     }
     case 'monthly-comparison': {
       const now = new Date();
@@ -25791,7 +25994,7 @@ function buildInsightPrompt(type) {
       const notVisited = Object.entries(schoolLastVisit).filter(([s, d]) => d < thirtyDaysAgo);
       const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
       const overdueFU = pendingFU.filter(f => f.dueDate && f.dueDate < new Date().toISOString().split('T')[0]);
-      return `Generate risk alerts for this APF Resource Person's cluster.\n\nData:\n${context}\n\nSchools NOT visited in the last 30 days (${notVisited.length}):\n${notVisited.slice(0, 15).map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All schools visited recently'}\n\nOverdue follow-ups (${overdueFU.length}):\n${overdueFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate})`).join('\n') || 'None'}\n\nTotal pending follow-ups: ${pendingFU.length}\n\nProvide: 1) 🔴 HIGH RISK items requiring immediate action, 2) 🟡 MEDIUM RISK items to address this week, 3) 🟢 LOW RISK items to monitor, 4) For each risk: what could go wrong if not addressed, 5) Recommended action with timeline.`;
+      return `Generate risk alerts for this APF Resource Person's cluster.\n\nData:\n${context}\n\nSchools NOT visited in the last 30 days (${notVisited.length}):\n${notVisited.slice(0, 15).map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All schools visited recently'}\n\nOverdue follow-ups (${overdueFU.length}):\n${overdueFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate})`).join('\n') || 'None'}\n\nTotal pending follow-ups: ${pendingFU.length}\n\nProvide: 1) ðŸ”´ HIGH RISK items requiring immediate action, 2) ðŸŸ¡ MEDIUM RISK items to address this week, 3) ðŸŸ¢ LOW RISK items to monitor, 4) For each risk: what could go wrong if not addressed, 5) Recommended action with timeline.`;
     }
     case 'time-allocation': {
       const purposeCount = {};
@@ -25800,7 +26003,7 @@ function buildInsightPrompt(type) {
       visits.forEach(v => { const s = v.school || 'Unknown'; schoolVisitCount[s] = (schoolVisitCount[s] || 0) + 1; });
       const topSchools = Object.entries(schoolVisitCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
       const bottomSchools = Object.entries(schoolVisitCount).sort((a, b) => a[1] - b[1]).slice(0, 5);
-      return `Analyze how this APF Resource Person's time is distributed across schools and activities.\n\nData:\n${context}\n\nVisit purposes breakdown:\n${Object.entries(purposeCount).sort((a, b) => b[1] - a[1]).map(([p, c]) => `- ${p}: ${c} visits (${(c / visits.length * 100).toFixed(1)}%)`).join('\n')}\n\nMost visited schools:\n${topSchools.map(([s, c]) => `- ${s}: ${c} visits`).join('\n')}\n\nLeast visited schools:\n${bottomSchools.map(([s, c]) => `- ${s}: ${c} visits`).join('\n')}\n\nTotal visits: ${visits.length}, Total schools: ${Object.keys(schoolVisitCount).length}\n\nProvide: 1) Where is most time being spent and is it justified? 2) Under-served schools that need more attention, 3) Activity balance — enough observations vs trainings vs general visits? 4) Optimized weekly schedule suggestion, 5) Time-saving tips.`;
+      return `Analyze how this APF Resource Person's time is distributed across schools and activities.\n\nData:\n${context}\n\nVisit purposes breakdown:\n${Object.entries(purposeCount).sort((a, b) => b[1] - a[1]).map(([p, c]) => `- ${p}: ${c} visits (${(c / visits.length * 100).toFixed(1)}%)`).join('\n')}\n\nMost visited schools:\n${topSchools.map(([s, c]) => `- ${s}: ${c} visits`).join('\n')}\n\nLeast visited schools:\n${bottomSchools.map(([s, c]) => `- ${s}: ${c} visits`).join('\n')}\n\nTotal visits: ${visits.length}, Total schools: ${Object.keys(schoolVisitCount).length}\n\nProvide: 1) Where is most time being spent and is it justified? 2) Under-served schools that need more attention, 3) Activity balance â€” enough observations vs trainings vs general visits? 4) Optimized weekly schedule suggestion, 5) Time-saving tips.`;
     }
     case 'observation-deep-dive': {
       const engLevels = {};
@@ -25809,7 +26012,7 @@ function buildInsightPrompt(type) {
       observations.forEach(o => { const s = o.subject || 'Unknown'; subjects[s] = (subjects[s] || 0) + 1; });
       const grades = {};
       observations.forEach(o => { const g = o.grade || o.class || 'Unknown'; grades[g] = (grades[g] || 0) + 1; });
-      return `Perform a deep-dive analysis of classroom observations.\n\nData:\n${context}\n\nTotal observations: ${observations.length}\n\nEngagement levels:\n${Object.entries(engLevels).map(([e, c]) => `- ${e}: ${c}`).join('\n')}\n\nSubject-wise:\n${Object.entries(subjects).sort((a, b) => b[1] - a[1]).map(([s, c]) => `- ${s}: ${c} observations`).join('\n')}\n\nGrade-wise:\n${Object.entries(grades).sort((a, b) => b[1] - a[1]).map(([g, c]) => `- ${g}: ${c} observations`).join('\n')}\n\nProvide: 1) Overall observation quality summary, 2) Engagement level trends — what's working, what's not, 3) Subject-wise patterns (which subjects need more support?), 4) Grade-wise analysis (which grades struggle most?), 5) Common teaching challenges observed, 6) Top 5 specific feedback points to share with teachers, 7) How to improve your own observation practice.`;
+      return `Perform a deep-dive analysis of classroom observations.\n\nData:\n${context}\n\nTotal observations: ${observations.length}\n\nEngagement levels:\n${Object.entries(engLevels).map(([e, c]) => `- ${e}: ${c}`).join('\n')}\n\nSubject-wise:\n${Object.entries(subjects).sort((a, b) => b[1] - a[1]).map(([s, c]) => `- ${s}: ${c} observations`).join('\n')}\n\nGrade-wise:\n${Object.entries(grades).sort((a, b) => b[1] - a[1]).map(([g, c]) => `- ${g}: ${c} observations`).join('\n')}\n\nProvide: 1) Overall observation quality summary, 2) Engagement level trends â€” what's working, what's not, 3) Subject-wise patterns (which subjects need more support?), 4) Grade-wise analysis (which grades struggle most?), 5) Common teaching challenges observed, 6) Top 5 specific feedback points to share with teachers, 7) How to improve your own observation practice.`;
     }
     case 'action-plan': {
       const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
@@ -25818,14 +26021,14 @@ function buildInsightPrompt(type) {
       const schoolLastVisit = {};
       visits.forEach(v => { const s = v.school || 'Unknown'; if (!schoolLastVisit[s] || v.date > schoolLastVisit[s]) schoolLastVisit[s] = v.date; });
       const staleSchools = Object.entries(schoolLastVisit).filter(([s, d]) => d < weekAgo).sort((a, b) => a[1].localeCompare(b[1])).slice(0, 5);
-      return `Create a prioritized action plan for the upcoming week for this APF Resource Person.\n\nData:\n${context}\n\nLast week's visits (${lastWeekVisits.length}):\n${lastWeekVisits.map(v => `- ${v.date}: ${v.school} — ${v.purpose || 'General'}`).join('\n') || 'None'}\n\nPending follow-ups (${pendingFU.length}):\n${pendingFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate || 'No date'})`).join('\n') || 'None'}\n\nSchools not visited recently:\n${staleSchools.map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All recent'}\n\nGenerate a day-by-day action plan (Monday-Saturday) including: 1) Which schools to visit each day and why, 2) Which follow-ups to close each day, 3) Observations to plan, 4) Training sessions to conduct, 5) Admin/documentation tasks, 6) Contingency buffer time. Make it realistic and actionable.`;
+      return `Create a prioritized action plan for the upcoming week for this APF Resource Person.\n\nData:\n${context}\n\nLast week's visits (${lastWeekVisits.length}):\n${lastWeekVisits.map(v => `- ${v.date}: ${v.school} â€” ${v.purpose || 'General'}`).join('\n') || 'None'}\n\nPending follow-ups (${pendingFU.length}):\n${pendingFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate || 'No date'})`).join('\n') || 'None'}\n\nSchools not visited recently:\n${staleSchools.map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All recent'}\n\nGenerate a day-by-day action plan (Monday-Saturday) including: 1) Which schools to visit each day and why, 2) Which follow-ups to close each day, 3) Observations to plan, 4) Training sessions to conduct, 5) Admin/documentation tasks, 6) Contingency buffer time. Make it realistic and actionable.`;
     }
     case 'email-draft': {
       const profile = DB.get('userProfile') || {};
       const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
       const recentVisits = visits.filter(v => v.date >= weekAgo);
       const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
-      return `Draft a professional email update that this APF Resource Person can send to their coordinator or district team.\n\nProfile: ${profile.name || 'N/A'}, Block: ${profile.block || 'N/A'}, Cluster: ${profile.cluster || 'N/A'}\n\nData:\n${context}\n\nRecent visits (last 7 days): ${recentVisits.length}\n${recentVisits.slice(0, 8).map(v => `- ${v.date}: ${v.school} — ${v.purpose || 'General'}`).join('\n') || 'None'}\n\nPending follow-ups: ${pendingFU.length}\nTotal observations: ${observations.length}\nTotal trainings: ${trainings.length}\n\nDraft a concise, professional email with: 1) Subject line, 2) Greeting, 3) Summary of this week's activities, 4) Key highlights/achievements, 5) Challenges encountered, 6) Support needed (if any), 7) Plan for next week, 8) Professional closing. Keep it under 300 words, formal but warm tone.`;
+      return `Draft a professional email update that this APF Resource Person can send to their coordinator or district team.\n\nProfile: ${profile.name || 'N/A'}, Block: ${profile.block || 'N/A'}, Cluster: ${profile.cluster || 'N/A'}\n\nData:\n${context}\n\nRecent visits (last 7 days): ${recentVisits.length}\n${recentVisits.slice(0, 8).map(v => `- ${v.date}: ${v.school} â€” ${v.purpose || 'General'}`).join('\n') || 'None'}\n\nPending follow-ups: ${pendingFU.length}\nTotal observations: ${observations.length}\nTotal trainings: ${trainings.length}\n\nDraft a concise, professional email with: 1) Subject line, 2) Greeting, 3) Summary of this week's activities, 4) Key highlights/achievements, 5) Challenges encountered, 6) Support needed (if any), 7) Plan for next week, 8) Professional closing. Keep it under 300 words, formal but warm tone.`;
     }
     case 'marai-progress': {
       const marai = DB.get('maraiTracking') || [];
@@ -25838,7 +26041,7 @@ function buildInsightPrompt(type) {
         teacherStages[t].push({ stage: m.stage, date: m.date, school: m.school });
       });
       const stuckTeachers = Object.entries(teacherStages).filter(([t, entries]) => entries.length === 1 && entries[0].date && entries[0].date < new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0]);
-      return `Analyze the MARAI (Motivation → Awareness → Readiness → Action → Internalization) stage progression of teachers.\n\nData:\n${context}\n\nTotal MARAI records: ${marai.length}\nTeachers tracked: ${Object.keys(teacherStages).length}\n\nStage distribution:\n${Object.entries(stageCount).map(([s, c]) => `- ${s}: ${c} records`).join('\n') || 'No data'}\n\nTeachers potentially stalled (single record, 60+ days old): ${stuckTeachers.length}\n${stuckTeachers.slice(0, 10).map(([t, e]) => `- ${t} (${e[0].school || 'N/A'}): stuck at '${e[0].stage}' since ${e[0].date}`).join('\n') || 'None detected'}\n\nSample teacher journeys:\n${Object.entries(teacherStages).slice(0, 8).map(([t, entries]) => `- ${t}: ${entries.map(e => e.stage).join(' → ')}`).join('\n')}\n\nProvide: 1) Overall MARAI health — what % teachers are at each stage? 2) Stage transition velocity — how fast are teachers progressing? 3) Stalled teachers who need immediate intervention, 4) Which stages have the highest drop-off? 5) Recommendations for moving teachers to the next stage, 6) Success stories (teachers who reached Action/Internalization).`;
+      return `Analyze the MARAI (Motivation â†’ Awareness â†’ Readiness â†’ Action â†’ Internalization) stage progression of teachers.\n\nData:\n${context}\n\nTotal MARAI records: ${marai.length}\nTeachers tracked: ${Object.keys(teacherStages).length}\n\nStage distribution:\n${Object.entries(stageCount).map(([s, c]) => `- ${s}: ${c} records`).join('\n') || 'No data'}\n\nTeachers potentially stalled (single record, 60+ days old): ${stuckTeachers.length}\n${stuckTeachers.slice(0, 10).map(([t, e]) => `- ${t} (${e[0].school || 'N/A'}): stuck at '${e[0].stage}' since ${e[0].date}`).join('\n') || 'None detected'}\n\nSample teacher journeys:\n${Object.entries(teacherStages).slice(0, 8).map(([t, entries]) => `- ${t}: ${entries.map(e => e.stage).join(' â†’ ')}`).join('\n')}\n\nProvide: 1) Overall MARAI health â€” what % teachers are at each stage? 2) Stage transition velocity â€” how fast are teachers progressing? 3) Stalled teachers who need immediate intervention, 4) Which stages have the highest drop-off? 5) Recommendations for moving teachers to the next stage, 6) Success stories (teachers who reached Action/Internalization).`;
     }
     case 'training-attendance': {
       const allAttendees = [];
@@ -25853,7 +26056,7 @@ function buildInsightPrompt(type) {
       const teacherRecs = DB.get('teacherRecords') || [];
       const attendedNames = new Set(allAttendees.map(a => a.name));
       const neverAttended = teacherRecs.filter(t => !attendedNames.has(t.name)).slice(0, 10);
-      return `Analyze training attendance patterns for this APF Resource Person's cluster.\n\nData:\n${context}\n\nTotal trainings conducted: ${trainings.length}\nTotal attendance records: ${allAttendees.length}\nUnique attendees: ${Object.keys(attendeeCounts).length}\n\nMost frequent attendees:\n${topAttendees.map(([n, c]) => `- ${n}: attended ${c} trainings`).join('\n') || 'No data'}\n\nTeachers in records who NEVER attended training:\n${neverAttended.map(t => `- ${t.name} (${t.school || 'N/A'})`).join('\n') || 'None or no teacher records'}\n\nProvide: 1) Training coverage rate — what % of known teachers have been trained? 2) Who are the most engaged teachers (repeat attendees)? 3) Teachers/schools being left behind, 4) Subject/topic gaps in training, 5) Optimal training schedule recommendations, 6) Teacher peer-mentoring suggestions based on attendance patterns.`;
+      return `Analyze training attendance patterns for this APF Resource Person's cluster.\n\nData:\n${context}\n\nTotal trainings conducted: ${trainings.length}\nTotal attendance records: ${allAttendees.length}\nUnique attendees: ${Object.keys(attendeeCounts).length}\n\nMost frequent attendees:\n${topAttendees.map(([n, c]) => `- ${n}: attended ${c} trainings`).join('\n') || 'No data'}\n\nTeachers in records who NEVER attended training:\n${neverAttended.map(t => `- ${t.name} (${t.school || 'N/A'})`).join('\n') || 'None or no teacher records'}\n\nProvide: 1) Training coverage rate â€” what % of known teachers have been trained? 2) Who are the most engaged teachers (repeat attendees)? 3) Teachers/schools being left behind, 4) Subject/topic gaps in training, 5) Optimal training schedule recommendations, 6) Teacher peer-mentoring suggestions based on attendance patterns.`;
     }
     case 'goal-achievement': {
       const goals = DB.get('goalTargets') || [];
@@ -25868,7 +26071,7 @@ function buildInsightPrompt(type) {
         const tgt = g.targets || {};
         return `${g.monthKey}: Visits ${a.v}/${tgt.visits || '?'}, Trainings ${a.t}/${tgt.trainings || '?'}, Observations ${a.o}/${tgt.observations || '?'}`;
       });
-      return `Analyze goal achievement for this APF Resource Person — compare targets vs actual performance.\n\nData:\n${context}\n\nGoal data (last 6 months, format: actual/target):\n${goalSummary.join('\n') || 'No goal data available'}\n\nCurrent month (${currentMonth}) progress:\n${monthlyActuals[currentMonth] ? `Visits: ${monthlyActuals[currentMonth].v}, Trainings: ${monthlyActuals[currentMonth].t}, Observations: ${monthlyActuals[currentMonth].o}` : 'No data yet'}\n\nProvide: 1) Overall achievement rate (% goals met), 2) Which goal types are consistently missed? 3) Month-over-month improvement trajectory, 4) Realistic target recommendations for next month, 5) Motivational insights — celebrate wins, 6) Strategies to close the gap on missed targets.`;
+      return `Analyze goal achievement for this APF Resource Person â€” compare targets vs actual performance.\n\nData:\n${context}\n\nGoal data (last 6 months, format: actual/target):\n${goalSummary.join('\n') || 'No goal data available'}\n\nCurrent month (${currentMonth}) progress:\n${monthlyActuals[currentMonth] ? `Visits: ${monthlyActuals[currentMonth].v}, Trainings: ${monthlyActuals[currentMonth].t}, Observations: ${monthlyActuals[currentMonth].o}` : 'No data yet'}\n\nProvide: 1) Overall achievement rate (% goals met), 2) Which goal types are consistently missed? 3) Month-over-month improvement trajectory, 4) Realistic target recommendations for next month, 5) Motivational insights â€” celebrate wins, 6) Strategies to close the gap on missed targets.`;
     }
     case 'worklog-summary': {
       const worklog = DB.get('worklog') || [];
@@ -25877,7 +26080,7 @@ function buildInsightPrompt(type) {
       const locationCount = {};
       worklog.forEach(w => { const l = w.location || 'Unknown'; locationCount[l] = (locationCount[l] || 0) + 1; });
       const last30 = worklog.filter(w => w.date >= new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]);
-      return `Summarize and analyze the work log of this APF Resource Person.\n\nData:\n${context}\n\nTotal work log entries: ${worklog.length}\nLast 30 days entries: ${last30.length}\n\nWork type distribution:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c} entries (${(c / worklog.length * 100).toFixed(1)}%)`).join('\n') || 'No data'}\n\nLocation distribution:\n${Object.entries(locationCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([l, c]) => `- ${l}: ${c} entries`).join('\n') || 'No data'}\n\nRecent entries:\n${last30.slice(-10).map(w => `- ${w.date}: ${w.type || 'N/A'} at ${w.location || 'N/A'} — ${(w.description || '').slice(0, 60)}`).join('\n') || 'None'}\n\nProvide: 1) Work pattern analysis — busiest/slowest days, 2) Activity type balance, 3) Field vs office time ratio, 4) Outcome quality from entries, 5) Productivity trends, 6) Suggestions to optimize your work week.`;
+      return `Summarize and analyze the work log of this APF Resource Person.\n\nData:\n${context}\n\nTotal work log entries: ${worklog.length}\nLast 30 days entries: ${last30.length}\n\nWork type distribution:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c} entries (${(c / worklog.length * 100).toFixed(1)}%)`).join('\n') || 'No data'}\n\nLocation distribution:\n${Object.entries(locationCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([l, c]) => `- ${l}: ${c} entries`).join('\n') || 'No data'}\n\nRecent entries:\n${last30.slice(-10).map(w => `- ${w.date}: ${w.type || 'N/A'} at ${w.location || 'N/A'} â€” ${(w.description || '').slice(0, 60)}`).join('\n') || 'None'}\n\nProvide: 1) Work pattern analysis â€” busiest/slowest days, 2) Activity type balance, 3) Field vs office time ratio, 4) Outcome quality from entries, 5) Productivity trends, 6) Suggestions to optimize your work week.`;
     }
     case 'visit-plan-execution': {
       const vpEntries = DB.get('visitPlanEntries') || [];
@@ -25887,7 +26090,7 @@ function buildInsightPrompt(type) {
       const completed = vpEntries.filter(v => (v.status || '').toLowerCase() === 'completed' || (v.status || '').toLowerCase() === 'done').length;
       const domainCount = {};
       vpEntries.forEach(v => { const d = v.domain || 'General'; domainCount[d] = (domainCount[d] || 0) + 1; });
-      return `Analyze visit plan execution — how well does this APF Resource Person follow their planned schedule?\n\nData:\n${context}\n\nTotal planned entries: ${total}\nExecution rate: ${total ? ((completed / total * 100).toFixed(1) + '%') : 'N/A'}\n\nStatus distribution:\n${Object.entries(statusCount).map(([s, c]) => `- ${s}: ${c} (${(c / total * 100).toFixed(1)}%)`).join('\n') || 'No data'}\n\nDomain distribution:\n${Object.entries(domainCount).sort((a, b) => b[1] - a[1]).map(([d, c]) => `- ${d}: ${c} planned visits`).join('\n') || 'No data'}\n\nRecent planned visits:\n${vpEntries.slice(-10).map(v => `- ${v.date}: ${v.venue || 'N/A'} — ${v.objective || 'N/A'} [${v.status || 'Planned'}]`).join('\n') || 'None'}\n\nProvide: 1) Plan adherence rate and trend, 2) Common reasons for deviation, 3) Which domains/stakeholders get deprioritized? 4) Day-of-week patterns (which days see more cancellations?), 5) Suggestions to improve plan-to-execution conversion, 6) Ideal planning template based on patterns.`;
+      return `Analyze visit plan execution â€” how well does this APF Resource Person follow their planned schedule?\n\nData:\n${context}\n\nTotal planned entries: ${total}\nExecution rate: ${total ? ((completed / total * 100).toFixed(1) + '%') : 'N/A'}\n\nStatus distribution:\n${Object.entries(statusCount).map(([s, c]) => `- ${s}: ${c} (${(c / total * 100).toFixed(1)}%)`).join('\n') || 'No data'}\n\nDomain distribution:\n${Object.entries(domainCount).sort((a, b) => b[1] - a[1]).map(([d, c]) => `- ${d}: ${c} planned visits`).join('\n') || 'No data'}\n\nRecent planned visits:\n${vpEntries.slice(-10).map(v => `- ${v.date}: ${v.venue || 'N/A'} â€” ${v.objective || 'N/A'} [${v.status || 'Planned'}]`).join('\n') || 'None'}\n\nProvide: 1) Plan adherence rate and trend, 2) Common reasons for deviation, 3) Which domains/stakeholders get deprioritized? 4) Day-of-week patterns (which days see more cancellations?), 5) Suggestions to improve plan-to-execution conversion, 6) Ideal planning template based on patterns.`;
     }
     case 'capacity-building': {
       const cb = DB.get('selfCapacityBuilding') || [];
@@ -25899,7 +26102,7 @@ function buildInsightPrompt(type) {
       cb.forEach(c => { const cat = c.category || 'General'; categoryCount[cat] = (categoryCount[cat] || 0) + 1; });
       const totalHours = cb.reduce((sum, c) => sum + (parseFloat(c.hours) || 0), 0);
       const completedAP = actionPlans.filter(a => a.status === 'completed' || a.status === 'done').length;
-      return `Analyze the professional growth and capacity building journey of this APF Resource Person.\n\nData:\n${context}\n\nCapacity building entries: ${cb.length}\nTotal learning hours: ${totalHours}\nGrowth self-assessments: ${growth.length}\nGrowth action plans: ${actionPlans.length} (completed: ${completedAP})\n\nBy type:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nBy category:\n${Object.entries(categoryCount).sort((a, b) => b[1] - a[1]).map(([cat, c]) => `- ${cat}: ${c}`).join('\n') || 'No data'}\n\nRecent activities:\n${cb.slice(-8).map(c => `- ${c.date || 'N/A'}: ${c.title || 'Untitled'} (${c.type || 'N/A'}) — ${c.status || 'N/A'}`).join('\n') || 'None'}\n\nProvide: 1) Overall professional development health score, 2) Learning diversity — are you exploring enough areas? 3) Course/book/workshop completion rate, 4) Skill gaps based on growth assessments, 5) Action plan progress, 6) Personalized next-steps for professional growth.`;
+      return `Analyze the professional growth and capacity building journey of this APF Resource Person.\n\nData:\n${context}\n\nCapacity building entries: ${cb.length}\nTotal learning hours: ${totalHours}\nGrowth self-assessments: ${growth.length}\nGrowth action plans: ${actionPlans.length} (completed: ${completedAP})\n\nBy type:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nBy category:\n${Object.entries(categoryCount).sort((a, b) => b[1] - a[1]).map(([cat, c]) => `- ${cat}: ${c}`).join('\n') || 'No data'}\n\nRecent activities:\n${cb.slice(-8).map(c => `- ${c.date || 'N/A'}: ${c.title || 'Untitled'} (${c.type || 'N/A'}) â€” ${c.status || 'N/A'}`).join('\n') || 'None'}\n\nProvide: 1) Overall professional development health score, 2) Learning diversity â€” are you exploring enough areas? 3) Course/book/workshop completion rate, 4) Skill gaps based on growth assessments, 5) Action plan progress, 6) Personalized next-steps for professional growth.`;
     }
     case 'teacher-action-progress': {
       const tap = DB.get('teacherActionPlans') || [];
@@ -25917,7 +26120,7 @@ function buildInsightPrompt(type) {
       const reflections = DB.get('reflections') || [];
       const moods = {};
       reflections.forEach(r => { const m = r.mood || 'Neutral'; moods[m] = (moods[m] || 0) + 1; });
-      return `Synthesize insights from this APF Resource Person's monthly reflections.\n\nData:\n${context}\n\nTotal reflections: ${reflections.length}\n\nMood distribution:\n${Object.entries(moods).map(([m, c]) => `- ${m}: ${c} months`).join('\n') || 'No data'}\n\nRecent reflections:\n${reflections.slice(-5).map(r => `Month: ${r.month || 'N/A'}\n  Mood: ${r.mood || 'N/A'}\n  Went Well: ${(r.wentWell || '').slice(0, 100)}\n  Challenges: ${(r.challenges || '').slice(0, 100)}\n  Learnings: ${(r.learnings || '').slice(0, 100)}`).join('\n\n') || 'No reflections found'}\n\nProvide: 1) Emotional trajectory — mood trend over months, 2) Recurring themes in 'what went well', 3) Persistent challenges that keep appearing, 4) Growth patterns visible in learnings, 5) Unaddressed concerns needing attention, 6) Positive affirmations based on achievements, 7) Suggestions for deeper self-reflection next month.`;
+      return `Synthesize insights from this APF Resource Person's monthly reflections.\n\nData:\n${context}\n\nTotal reflections: ${reflections.length}\n\nMood distribution:\n${Object.entries(moods).map(([m, c]) => `- ${m}: ${c} months`).join('\n') || 'No data'}\n\nRecent reflections:\n${reflections.slice(-5).map(r => `Month: ${r.month || 'N/A'}\n  Mood: ${r.mood || 'N/A'}\n  Went Well: ${(r.wentWell || '').slice(0, 100)}\n  Challenges: ${(r.challenges || '').slice(0, 100)}\n  Learnings: ${(r.learnings || '').slice(0, 100)}`).join('\n\n') || 'No reflections found'}\n\nProvide: 1) Emotional trajectory â€” mood trend over months, 2) Recurring themes in 'what went well', 3) Persistent challenges that keep appearing, 4) Growth patterns visible in learnings, 5) Unaddressed concerns needing attention, 6) Positive affirmations based on achievements, 7) Suggestions for deeper self-reflection next month.`;
     }
     case 'teacher-demographics': {
       const teachers = DB.get('teacherRecords') || [];
@@ -25929,7 +26132,7 @@ function buildInsightPrompt(type) {
       teachers.forEach(t => { const s = t.subject || 'Unknown'; bySubject[s] = (bySubject[s] || 0) + 1; });
       const observed = new Set(observations.map(o => o.teacher).filter(Boolean));
       const observedCount = teachers.filter(t => observed.has(t.name)).length;
-      return `Analyze the teacher demographic profile and observation coverage in this cluster.\n\nData:\n${context}\n\nTotal teachers in records: ${teachers.length}\nTeachers observed at least once: ${observedCount} (${teachers.length ? (observedCount / teachers.length * 100).toFixed(1) : 0}%)\n\nBy school:\n${Object.entries(bySchool).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, c]) => `- ${s}: ${c} teachers`).join('\n') || 'No data'}\n\nBy designation:\n${Object.entries(byDesignation).sort((a, b) => b[1] - a[1]).map(([d, c]) => `- ${d}: ${c}`).join('\n') || 'No data'}\n\nBy subject:\n${Object.entries(bySubject).sort((a, b) => b[1] - a[1]).map(([s, c]) => `- ${s}: ${c}`).join('\n') || 'No data'}\n\nProvide: 1) Cluster teacher profile summary, 2) School-wise teacher density, 3) Subject coverage gaps, 4) Observation coverage — who hasn't been observed yet? 5) Experience distribution insights, 6) Teachers who need priority engagement.`;
+      return `Analyze the teacher demographic profile and observation coverage in this cluster.\n\nData:\n${context}\n\nTotal teachers in records: ${teachers.length}\nTeachers observed at least once: ${observedCount} (${teachers.length ? (observedCount / teachers.length * 100).toFixed(1) : 0}%)\n\nBy school:\n${Object.entries(bySchool).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s, c]) => `- ${s}: ${c} teachers`).join('\n') || 'No data'}\n\nBy designation:\n${Object.entries(byDesignation).sort((a, b) => b[1] - a[1]).map(([d, c]) => `- ${d}: ${c}`).join('\n') || 'No data'}\n\nBy subject:\n${Object.entries(bySubject).sort((a, b) => b[1] - a[1]).map(([s, c]) => `- ${s}: ${c}`).join('\n') || 'No data'}\n\nProvide: 1) Cluster teacher profile summary, 2) School-wise teacher density, 3) Subject coverage gaps, 4) Observation coverage â€” who hasn't been observed yet? 5) Experience distribution insights, 6) Teachers who need priority engagement.`;
     }
     case 'meeting-effectiveness': {
       const meetings = DB.get('meetings') || [];
@@ -25937,7 +26140,7 @@ function buildInsightPrompt(type) {
       meetings.forEach(m => { const t = m.type || 'General'; typeCount[t] = (typeCount[t] || 0) + 1; });
       let totalActions = 0, doneActions = 0;
       meetings.forEach(m => { (m.actionItems || []).forEach(a => { totalActions++; if (a.done) doneActions++; }); });
-      return `Analyze meeting effectiveness and action item follow-through.\n\nData:\n${context}\n\nTotal meetings: ${meetings.length}\nMeeting types:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nAction items: ${totalActions} total, ${doneActions} completed (${totalActions ? (doneActions / totalActions * 100).toFixed(1) : 0}% follow-through)\n\nRecent meetings:\n${meetings.slice(-8).map(m => `- ${m.date || 'N/A'}: ${m.title || 'Untitled'} (${m.type || 'N/A'}) — ${(m.actionItems || []).length} action items`).join('\n') || 'None'}\n\nProvide: 1) Meeting frequency analysis — too many/too few? 2) Action item follow-through rate, 3) Meetings that generated the most decisions, 4) Patterns — which meeting types are most productive? 5) Suggestions to improve meeting effectiveness, 6) Template for better meeting agendas.`;
+      return `Analyze meeting effectiveness and action item follow-through.\n\nData:\n${context}\n\nTotal meetings: ${meetings.length}\nMeeting types:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nAction items: ${totalActions} total, ${doneActions} completed (${totalActions ? (doneActions / totalActions * 100).toFixed(1) : 0}% follow-through)\n\nRecent meetings:\n${meetings.slice(-8).map(m => `- ${m.date || 'N/A'}: ${m.title || 'Untitled'} (${m.type || 'N/A'}) â€” ${(m.actionItems || []).length} action items`).join('\n') || 'None'}\n\nProvide: 1) Meeting frequency analysis â€” too many/too few? 2) Action item follow-through rate, 3) Meetings that generated the most decisions, 4) Patterns â€” which meeting types are most productive? 5) Suggestions to improve meeting effectiveness, 6) Template for better meeting agendas.`;
     }
     case 'schoolwork-impact': {
       const sw = DB.get('schoolWork') || [];
@@ -25947,7 +26150,7 @@ function buildInsightPrompt(type) {
       sw.forEach(s => { const st = s.status || 'Unknown'; statusCount[st] = (statusCount[st] || 0) + 1; });
       const schoolCount = {};
       sw.forEach(s => { const sc = s.school || 'Unknown'; schoolCount[sc] = (schoolCount[sc] || 0) + 1; });
-      return `Analyze the impact and patterns of school-based work activities.\n\nData:\n${context}\n\nTotal school work entries: ${sw.length}\n\nBy type:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nBy status:\n${Object.entries(statusCount).map(([s, c]) => `- ${s}: ${c}`).join('\n') || 'No data'}\n\nBy school:\n${Object.entries(schoolCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([s, c]) => `- ${s}: ${c} activities`).join('\n') || 'No data'}\n\nRecent activities:\n${sw.slice(-8).map(s => `- ${s.date || 'N/A'}: ${s.title || 'Untitled'} at ${s.school || 'N/A'} — ${s.outcome || 'No outcome recorded'}`).join('\n') || 'None'}\n\nProvide: 1) What types of school work are most common? 2) Completion rates, 3) Schools with most/least engagement, 4) Outcomes quality assessment, 5) Impact measurement framework suggestion, 6) Priorities for next month's school-based work.`;
+      return `Analyze the impact and patterns of school-based work activities.\n\nData:\n${context}\n\nTotal school work entries: ${sw.length}\n\nBy type:\n${Object.entries(typeCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => `- ${t}: ${c}`).join('\n') || 'No data'}\n\nBy status:\n${Object.entries(statusCount).map(([s, c]) => `- ${s}: ${c}`).join('\n') || 'No data'}\n\nBy school:\n${Object.entries(schoolCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([s, c]) => `- ${s}: ${c} activities`).join('\n') || 'No data'}\n\nRecent activities:\n${sw.slice(-8).map(s => `- ${s.date || 'N/A'}: ${s.title || 'Untitled'} at ${s.school || 'N/A'} â€” ${s.outcome || 'No outcome recorded'}`).join('\n') || 'None'}\n\nProvide: 1) What types of school work are most common? 2) Completion rates, 3) Schools with most/least engagement, 4) Outcomes quality assessment, 5) Impact measurement framework suggestion, 6) Priorities for next month's school-based work.`;
     }
     case 'student-learning': {
       const studentRecs = DB.get('schoolStudentRecords') || [];
@@ -25978,7 +26181,7 @@ function buildInsightPrompt(type) {
       const summary = collections.map(c => `- ${c.name}: ${c.data.length} records`);
       const empty = collections.filter(c => c.data.length === 0).map(c => c.name);
       const hasProfile = !!(DB.get('userProfile') || {}).name;
-      return `Perform a comprehensive data quality and completeness audit for this APF Resource Person's dashboard.\n\nData:\n${context}\n\nCollection sizes:\n${summary.join('\n')}\n\nEmpty collections (0 records): ${empty.join(', ') || 'None — all have data!'}\nProfile configured: ${hasProfile ? 'Yes' : 'No'}\n\nProvide: 1) Overall DATA HEALTH SCORE (out of 100), 2) Collections with good data (praise these), 3) Empty or sparse collections that need attention, 4) For each sparse collection — why it matters and how to start populating it, 5) Data quality issues (e.g., missing dates/schools in records), 6) Prioritized recommendations to improve overall data quality, 7) Estimated time to fill gaps. Be encouraging but honest.`;
+      return `Perform a comprehensive data quality and completeness audit for this APF Resource Person's dashboard.\n\nData:\n${context}\n\nCollection sizes:\n${summary.join('\n')}\n\nEmpty collections (0 records): ${empty.join(', ') || 'None â€” all have data!'}\nProfile configured: ${hasProfile ? 'Yes' : 'No'}\n\nProvide: 1) Overall DATA HEALTH SCORE (out of 100), 2) Collections with good data (praise these), 3) Empty or sparse collections that need attention, 4) For each sparse collection â€” why it matters and how to start populating it, 5) Data quality issues (e.g., missing dates/schools in records), 6) Prioritized recommendations to improve overall data quality, 7) Estimated time to fill gaps. Be encouraging but honest.`;
     }
     default:
       return `Provide helpful insights based on this APF Resource Person's data:\n${context}`;
@@ -26819,11 +27022,11 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. ðŸ“‹, ðŸ«, âš ï¸, ðŸ“Š, ðŸ’ª, âœ…, ðŸ””).`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- 🏫 Your point here".' },
+      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- ðŸ« Your point here".' },
       { role: 'user', content: prompt }
     ], { temperature: 0.7, max_tokens: 1500 });
     const reply = res.choices?.[0]?.message?.content || 'No digest available.';
@@ -28951,7 +29154,7 @@ function _buildImportGuideHTML() {
       ['Class / Classes', 'Applicable classes', false, 'E.g. 6-8, Primary'],
       ['Effect Tracking / ET', 'Track effect?', false, 'y = yes, anything else = no']
     ],
-    'Must select a <strong>subject</strong> in the import modal. All imported practices are appended to the selected subject — existing practices are not deleted. Duplicate handling: rows with empty practice text are skipped.'
+    'Must select a <strong>subject</strong> in the import modal. All imported practices are appended to the selected subject â€” existing practices are not deleted. Duplicate handling: rows with empty practice text are skipped.'
   )}
 
  ${section('fa-graduation-cap', '#06b6d4', '7. Learning Outcomes (LOs)',
@@ -29251,7 +29454,7 @@ function saveQuickCapture() {
 
 // ===== TEACHER GROWTH TRACKER =====
 
-// Parses DD/MM/YYYY, YYYY-MM-DD, or any JS-parseable date string � always returns LOCAL date (no UTC shift)
+// Parses DD/MM/YYYY, YYYY-MM-DD, or any JS-parseable date string ï¿½ always returns LOCAL date (no UTC shift)
 function _parseDMTDate(str) {
   if (!str) return null;
   const s = String(str).trim();
@@ -30227,7 +30430,7 @@ function openPdfEditor(bodyHtml, title) {
     // Add size label
     const sizeLabel = document.createElement('span');
     sizeLabel.style.cssText = 'position:absolute;top:4px;left:6px;background:rgba(99,102,241,0.85);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;pointer-events:none;font-family:monospace';
-    sizeLabel.textContent = `${img.offsetWidth} × ${img.offsetHeight}`;
+    sizeLabel.textContent = `${img.offsetWidth} Ã— ${img.offsetHeight}`;
     wrap.appendChild(sizeLabel);
     // Add resize handle
     const handle = document.createElement('span');
@@ -30264,7 +30467,7 @@ function openPdfEditor(bodyHtml, title) {
       const btn = document.createElement('button');
       btn.textContent = pct;
       btn.style.cssText = 'background:#6366f1;color:#fff;border:none;padding:2px 6px;border-radius:3px;font-size:10px;cursor:pointer;font-family:sans-serif';
-      btn.onmousedown = (e) => { e.preventDefault(); e.stopPropagation(); img.style.width = pct; img.style.height = 'auto'; sizeLabel.textContent = `${img.offsetWidth} × ${img.offsetHeight}`; };
+      btn.onmousedown = (e) => { e.preventDefault(); e.stopPropagation(); img.style.width = pct; img.style.height = 'auto'; sizeLabel.textContent = `${img.offsetWidth} Ã— ${img.offsetHeight}`; };
       controls.appendChild(btn);
     });
     wrap.appendChild(controls);
@@ -30277,7 +30480,7 @@ function openPdfEditor(bodyHtml, title) {
         const newW = Math.max(40, startW + (ev.clientX - startX));
         img.style.width = newW + 'px';
         img.style.height = Math.round(newW * ratio) + 'px';
-        sizeLabel.textContent = `${Math.round(newW)} × ${Math.round(newW * ratio)}`;
+        sizeLabel.textContent = `${Math.round(newW)} Ã— ${Math.round(newW * ratio)}`;
       }
       function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
       document.addEventListener('mousemove', onMove);
@@ -31203,7 +31406,7 @@ function renderTpAnalytics(teacherFilter) {
  <div style="width:26px;height:26px;border-radius:50%;background:${['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'][i % 5]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">${escapeHtml(name.charAt(0).toUpperCase())}</div>
  <div style="flex:1;min-width:0">
  <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>
- <div style="font-size:11px;color:var(--text-muted)">${escapeHtml(data.school)} · ${data.serials.size} TP${data.serials.size !== 1 ? 's' : ''}</div>
+ <div style="font-size:11px;color:var(--text-muted)">${escapeHtml(data.school)} Â· ${data.serials.size} TP${data.serials.size !== 1 ? 's' : ''}</div>
  </div>
  <div style="background:${teacherFilter === 'no' ? '#f59e0b15' : teacherFilter === 'all' ? '#6366f115' : '#10b98115'};color:${teacherFilter === 'no' ? '#f59e0b' : teacherFilter === 'all' ? '#6366f1' : '#10b981'};font-size:12px;font-weight:700;padding:3px 8px;border-radius:12px;flex-shrink:0">${teacherFilter === 'no' ? 'No' : 'Yes'} ${data.count} obs</div>
  </div>`).join('') + `</div>`}
@@ -32094,7 +32297,7 @@ function renderLoAnalytics() {
                 </div>
               </div>
               <div style="border-top:1px solid var(--border);padding-top:12px;text-align:center">
-                <span style="font-size:10px;color:var(--text-muted)">${s.totalLos} outcomes · ${s.totalObs} observations</span>
+                <span style="font-size:10px;color:var(--text-muted)">${s.totalLos} outcomes Â· ${s.totalObs} observations</span>
               </div>
             </div>`;
     }).join('')}
@@ -32354,7 +32557,7 @@ function renderLoTeacherMapping() {
               <div style="width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px">${(a.teacher || '?')[0].toUpperCase()}</div>
               <div>
                 <div style="font-weight:600;color:var(--text-primary);font-size:14px">${escapeHtml(a.teacher || 'Unknown')}</div>
-                <div style="font-size:12px;color:var(--text-muted)">${a.school ? '<i class="fas fa-school"></i> ' + escapeHtml(a.school) : ''} ${a.notes ? ' · ' + escapeHtml(a.notes) : ''}</div>
+                <div style="font-size:12px;color:var(--text-muted)">${a.school ? '<i class="fas fa-school"></i> ' + escapeHtml(a.school) : ''} ${a.notes ? ' Â· ' + escapeHtml(a.notes) : ''}</div>
               </div>
             </div>
             <div style="display:flex;gap:6px;align-items:center">
@@ -32647,7 +32850,7 @@ async function generateAILoTips(loId) {
   const prompt = `Generate practical classroom strategies to help teachers achieve this learning outcome:
 
 SUBJECT: ${lo.subject}
-OUTCOME: ${lo.serialNo} — ${lo.outcome}
+OUTCOME: ${lo.serialNo} â€” ${lo.outcome}
 GROUP: ${lo.group || 'N/A'}
 APPLICABLE CLASSES: ${lo.classes || 'All'}
 EFFECT TRACKING: ${lo.effectTracking === 'y' ? 'Yes' : 'No'}
@@ -32660,13 +32863,13 @@ OBSERVATION DATA:
 - Recent notes: ${observations.slice(0, 3).map(o => o.notes || o.strengths || '').filter(Boolean).join(' | ') || 'None'}
 
 Provide:
-1. **Why This Outcome Matters** — 2-3 lines on its importance
-2. **Step-by-Step Teaching Approach** — 5-6 steps a teacher can follow
-3. **TLM / Activity Suggestions** — Specific materials and activities
-4. **Common Misconceptions** — What students typically struggle with
-5. **Peer Learning Ideas** — How teachers can support each other
-6. **Quick Classroom Activities** — 3 ready-to-use activities
-7. **How to Assess Progress** — Signs that the outcome is being achieved
+1. **Why This Outcome Matters** â€” 2-3 lines on its importance
+2. **Step-by-Step Teaching Approach** â€” 5-6 steps a teacher can follow
+3. **TLM / Activity Suggestions** â€” Specific materials and activities
+4. **Common Misconceptions** â€” What students typically struggle with
+5. **Peer Learning Ideas** â€” How teachers can support each other
+6. **Quick Classroom Activities** â€” 3 ready-to-use activities
+7. **How to Assess Progress** â€” Signs that the outcome is being achieved
 
 Keep language simple and practical for government school teachers in India.`;
 
@@ -32740,7 +32943,7 @@ function exportLoFrameworkPDF() {
         <td style="padding:6px 8px;border:1px solid #e2e8f0">${escapeHtml(lo.outcome || '')}</td>
         <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-size:10px;font-weight:600;color:${imp.color}">${imp.label}${ratio ? '<br><span style="font-weight:400;color:#64748b">' + ratio + '</span>' : ''}</td>
         <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center">${escapeHtml(lo.classes || '-')}</td>
-        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;color:${lo.effectTracking === 'y' ? '#10b981' : '#94a3b8'}">${lo.effectTracking === 'y' ? '✓' : '-'}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;color:${lo.effectTracking === 'y' ? '#10b981' : '#94a3b8'}">${lo.effectTracking === 'y' ? 'âœ“' : '-'}</td>
       </tr>`;
     });
     html += `</tbody></table>`;
@@ -34598,7 +34801,7 @@ function renderTeacherJourney() {
  </div>
  ${playbookRuns.length > 0 ? `<div style="margin-top:12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-secondary,#f8fafc)">
  <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Recent playbook runs</div>
- ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> · +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} · ${fmtDateShort(r.runAt)}</span><button onclick="deleteInterventionPlaybookRun('${r.id}')" title="Delete this run log" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">&times;</button></div>`).join('')}
+ ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> Â· +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} Â· ${fmtDateShort(r.runAt)}</span><button onclick="deleteInterventionPlaybookRun('${r.id}')" title="Delete this run log" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">&times;</button></div>`).join('')}
  </div>` : ''}
  ` : `<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="fas fa-check-circle" style="font-size:22px;opacity:0.35;margin-bottom:8px;display:block"></i>No critical recurring patterns found right now. Continue monitoring.</div>`);
 
@@ -34931,7 +35134,7 @@ function _runPeriodComparison() {
   const fmtLabel = (s, e) => {
     const opts = { day: 'numeric', month: 'short', year: 'numeric' };
     const ds = new Date(s + 'T00:00:00'), de = new Date(e + 'T00:00:00');
-    return ds.toLocaleDateString('en-IN', opts) + ' – ' + de.toLocaleDateString('en-IN', opts);
+    return ds.toLocaleDateString('en-IN', opts) + ' â€“ ' + de.toLocaleDateString('en-IN', opts);
   };
 
   // Data sources
@@ -34957,7 +35160,7 @@ function _runPeriodComparison() {
     return sum + entries.filter(e => /\(teacher\)/i.test(e)).length;
   }, 0);
 
-  // Avg visit rating (1–5) from School Visits
+  // Avg visit rating (1â€“5) from School Visits
   const avgRating = arr => {
     const rated = arr.filter(v => v.rating && !isNaN(parseFloat(v.rating)));
     return rated.length ? rated.reduce((s, v) => s + parseFloat(v.rating), 0) / rated.length : 0;
@@ -35016,7 +35219,7 @@ const SmartNotifications = {
   isEnabled() { return localStorage.getItem(this.PERM_KEY) === '1'; },
   setEnabled(v) { localStorage.setItem(this.PERM_KEY, v ? '1' : '0'); },
 
-  // Notifications don't work on file:// — need http://localhost
+  // Notifications don't work on file:// â€” need http://localhost
   isFileProtocol() { return location.protocol === 'file:'; },
 
   showFileProtocolWarning(show) {
@@ -35029,15 +35232,15 @@ const SmartNotifications = {
       showToast('Browser notifications not supported', 'error');
       return false;
     }
-    // file:// protocol — Notification API silently fails
+    // file:// protocol â€” Notification API silently fails
     if (this.isFileProtocol()) {
       this.showFileProtocolWarning(true);
-      showToast('⚠️ Notifications require localhost — run: npm run serve', 'error', 7000);
+      showToast('âš ï¸ Notifications require localhost â€” run: npm run serve', 'error', 7000);
       return false;
     }
     if (Notification.permission === 'granted') return true;
     if (Notification.permission === 'denied') {
-      showToast('Notifications blocked — click the 🔒 lock icon in the address bar to allow, then retry.', 'error', 6000);
+      showToast('Notifications blocked â€” click the ðŸ”’ lock icon in the address bar to allow, then retry.', 'error', 6000);
       return false;
     }
     const perm = await Notification.requestPermission();
@@ -35095,12 +35298,12 @@ const SmartNotifications = {
     if (total === 0) return;
 
     let body = [];
-    if (tasks.length) body.push(`📋 ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}`);
-    if (followups.length) body.push(`🔁 ${followups.length} pending follow-up${followups.length > 1 ? 's' : ''}`);
-    if (goals.length) body.push(`🎯 ${goals.length} goal${goals.length > 1 ? 's' : ''} behind schedule`);
+    if (tasks.length) body.push(`ðŸ“‹ ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}`);
+    if (followups.length) body.push(`ðŸ” ${followups.length} pending follow-up${followups.length > 1 ? 's' : ''}`);
+    if (goals.length) body.push(`ðŸŽ¯ ${goals.length} goal${goals.length > 1 ? 's' : ''} behind schedule`);
 
     this.fire(
-      `⚠️ APF Dashboard — ${total} item${total > 1 ? 's' : ''} need attention`,
+      `âš ï¸ APF Dashboard â€” ${total} item${total > 1 ? 's' : ''} need attention`,
       body.join('\n'),
       'apf-overdue-' + new Date().toDateString()
     );
@@ -35123,7 +35326,7 @@ const SmartNotifications = {
       // Permission denied or not supported
       const deniedByBrowser = 'Notification' in window && Notification.permission === 'denied';
       if (deniedByBrowser) {
-        showToast('Notifications blocked — please click the 🔒 lock icon in your browser address bar and allow notifications, then try again.', 'error', 6000);
+        showToast('Notifications blocked â€” please click the ðŸ”’ lock icon in your browser address bar and allow notifications, then try again.', 'error', 6000);
       } else {
         showToast('Notification permission denied.', 'error');
       }
@@ -35133,8 +35336,8 @@ const SmartNotifications = {
     }
     this.setEnabled(true);
     this.start();
-    this.fire('✅ APF Dashboard', 'Smart Notifications enabled! You will be alerted for overdue tasks.', 'apf-enable');
-    showToast('Local notifications enabled ✅', 'success');
+    this.fire('âœ… APF Dashboard', 'Smart Notifications enabled! You will be alerted for overdue tasks.', 'apf-enable');
+    showToast('Local notifications enabled âœ…', 'success');
     updateNotifUI();
   },
 
@@ -35259,7 +35462,7 @@ const CloudAutomation = {
       if (data.success || data.status === 'ok') {
         this.setLastSync(new Date().toISOString());
         updateCloudAutomationUI();
-        if (!silent) showToast('☁️ Cloud summary synced! Automation data updated.', 'success');
+        if (!silent) showToast('â˜ï¸ Cloud summary synced! Automation data updated.', 'success');
         return { ok: true };
       } else {
         if (!silent) showToast('Cloud sync error: ' + (data.error || 'Unknown'), 'error');
@@ -35348,7 +35551,7 @@ async function toggleCloudAutomation(checked) {
       return;
     }
     if (!url.startsWith('https://script.google.com/')) {
-      showToast('Invalid URL — must start with https://script.google.com/', 'error');
+      showToast('Invalid URL â€” must start with https://script.google.com/', 'error');
       const el = document.getElementById('cloudAutomationToggle');
       if (el) el.checked = false;
       return;
@@ -35386,7 +35589,7 @@ async function testCloudAutomationNow() {
   CloudAutomation.setEnabled(true);
   const email = document.getElementById('automationEmail')?.value?.trim();
   if (email) CloudAutomation.setEmail(email);
-  showToast('Syncing to cloud…', 'info');
+  showToast('Syncing to cloudâ€¦', 'info');
   const r = await CloudAutomation.syncSummary(false);
   if (r.ok) updateCloudAutomationUI();
 }
@@ -35395,7 +35598,7 @@ async function testLocalNotification() {
   const ok = await SmartNotifications.requestPermission();
   if (!ok) return;
   SmartNotifications.fire(
-    '🔔 APF Dashboard — Test Notification',
+    'ðŸ”” APF Dashboard â€” Test Notification',
     'Smart Notifications are working! You will receive alerts for overdue tasks.',
     'apf-test-' + Date.now()
   );
@@ -35415,38 +35618,38 @@ async function checkOverdueNow() {
 
   if (total === 0) {
     SmartNotifications.fire(
-      '✅ APF Dashboard — All Clear!',
+      'âœ… APF Dashboard â€” All Clear!',
       'No overdue tasks, follow-ups, or goals. Great job!',
       'apf-check-' + Date.now()
     );
-    showToast('All clear — no overdue items found ✅', 'success');
+    showToast('All clear â€” no overdue items found âœ…', 'success');
     return;
   }
 
   // Fire individual notifications for each category
   if (items.tasks?.length) {
     SmartNotifications.fire(
-      `⚠️ ${items.tasks.length} Overdue Planner Task${items.tasks.length > 1 ? 's' : ''}`,
-      items.tasks.slice(0, 3).map(t => `• ${t.title || 'Unnamed'} (due ${t.dueDate})`).join('\n'),
+      `âš ï¸ ${items.tasks.length} Overdue Planner Task${items.tasks.length > 1 ? 's' : ''}`,
+      items.tasks.slice(0, 3).map(t => `â€¢ ${t.title || 'Unnamed'} (due ${t.dueDate})`).join('\n'),
       'apf-overdue-tasks-' + Date.now()
     );
   }
   if (items.followups?.length) {
     SmartNotifications.fire(
-      `⚠️ ${items.followups.length} Overdue Follow-up${items.followups.length > 1 ? 's' : ''}`,
-      items.followups.slice(0, 3).map(f => `• ${f.name || f.teacherName || 'Unnamed'}`).join('\n'),
+      `âš ï¸ ${items.followups.length} Overdue Follow-up${items.followups.length > 1 ? 's' : ''}`,
+      items.followups.slice(0, 3).map(f => `â€¢ ${f.name || f.teacherName || 'Unnamed'}`).join('\n'),
       'apf-overdue-followups-' + Date.now()
     );
   }
   if (items.goals?.length) {
     SmartNotifications.fire(
-      `⚠️ ${items.goals.length} Goal${items.goals.length > 1 ? 's' : ''} Behind Schedule`,
-      items.goals.slice(0, 3).map(g => `• ${g.title || 'Unnamed'}`).join('\n'),
+      `âš ï¸ ${items.goals.length} Goal${items.goals.length > 1 ? 's' : ''} Behind Schedule`,
+      items.goals.slice(0, 3).map(g => `â€¢ ${g.title || 'Unnamed'}`).join('\n'),
       'apf-overdue-goals-' + Date.now()
     );
   }
 
-  showToast(`Found ${total} overdue item${total > 1 ? 's' : ''} — notifications sent!`, 'warning');
+  showToast(`Found ${total} overdue item${total > 1 ? 's' : ''} â€” notifications sent!`, 'warning');
 }
 
 // Send a live test payload to the cloud automation script
@@ -35460,11 +35663,11 @@ async function sendTestCloudAlert() {
     return;
   }
   if (!url.startsWith('https://script.google.com/')) {
-    showToast('Invalid URL — must start with https://script.google.com/', 'error');
+    showToast('Invalid URL â€” must start with https://script.google.com/', 'error');
     return;
   }
 
-  showToast('Sending test alert to cloud…', 'info');
+  showToast('Sending test alert to cloudâ€¦', 'info');
   try {
     // Gather Telegram & email config
     const tgCfg = (typeof getTelegramConfig === 'function') ? getTelegramConfig() : null;
@@ -35492,13 +35695,13 @@ async function sendTestCloudAlert() {
 
     if (data.success || data.telegramSent || data.emailSent) {
       const channels = [];
-      if (data.telegramSent) channels.push('Telegram ✅');
-      if (data.emailSent) channels.push('Email ✅');
-      showToast('Test alert sent → ' + (channels.length ? channels.join(' & ') : 'Cloud script reached!'), 'success', 6000);
+      if (data.telegramSent) channels.push('Telegram âœ…');
+      if (data.emailSent) channels.push('Email âœ…');
+      showToast('Test alert sent â†’ ' + (channels.length ? channels.join(' & ') : 'Cloud script reached!'), 'success', 6000);
       CloudAutomation.setLastSync(new Date().toISOString());
       updateCloudAutomationUI();
     } else if (data.errors && data.errors.length) {
-      // Script reached but couldn't send — show specific reason
+      // Script reached but couldn't send â€” show specific reason
       showToast('Script reached but: ' + data.errors[0], 'error', 7000);
     } else if (data.error) {
       showToast('Cloud script error: ' + data.error, 'error', 6000);
@@ -35591,7 +35794,7 @@ function initApp() {
   };
 
   if (appInitialized) {
-    // Re-unlocking from lock screen — show splash again
+    // Re-unlocking from lock screen â€” show splash again
     showSplashScreen();
     renderDashboard();
     return;
