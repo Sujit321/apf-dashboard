@@ -830,11 +830,11 @@ const GoogleDriveSync = {
         if (r.ok) {
           if (r.changed !== 0) {
             const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-            showToast(`☁️ Auto-backup saved to Google Drive · ${now}`, 'success');
+            showToast(`☁ï¸ Auto-backup saved to Google Drive · ${now}`, 'success');
           }
         } else {
           console.warn('Auto-backup failed:', r.error);
-          showToast(`☁️ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
+          showToast(`☁ï¸ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
         }
       });
     }, 10000); // 10 seconds debounce
@@ -9180,7 +9180,7 @@ function _svsDateMs(dateStr) {
     return isNaN(d.getTime()) ? null : d.getTime();
   }
 
-  // DD-Mon-YYYY (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔)
+  // DD-Mon-YYYY (e.g. 21-Jan-2026)
   const monNames = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
   const monMatch = s.match(/^(\d{1,2})[\/\-]([A-Za-z]{3})[\/\-](\d{4})$/);
   if (monMatch) {
@@ -16693,7 +16693,7 @@ function openStudentRecordEditor(encodedKey) {
  <div class="ssr-edit-preview" id="ssrPreview"></div>
  <div class="ssr-edit-notes">
  <label for="ssrNotes" style="font-size:13px;color:var(--text-secondary);font-weight:600;">Notes (optional)</label>
- <textarea id="ssrNotes" class="ssr-edit-textarea" rows="2" placeholder="e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔)}</textarea>
+ <textarea id="ssrNotes" class="ssr-edit-textarea" rows="2" placeholder="e.g., Assessment date, source of data...">${escapeHtml(sr.notes || '')}</textarea>
  </div>
  <div class="ssr-edit-actions">
  <button class="btn btn-primary" onclick="saveSchoolStudentRecords('${encodeURIComponent(schoolKey).replace(/'/g, '%27')}')"><i class="fas fa-save"></i> Save</button>
@@ -20831,7 +20831,8 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
   const timeSlot = (entry.time || '').trim().toLowerCase();
 
   // Deterministic slot ID: uniquely identifies one physical visit slot (date + half + school)
-  // e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).toLowerCase()}`;
+  // e.g. "slot|2026-03-02|first half|xyz school" vs "slot|2026-03-02|second half|xyz school"
+  const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}`;
 
   // Duplicate check 1: already linked by fromVisitPlan id
   const existingByLink = visits.find(v => v.fromVisitPlan === entry.id);
@@ -23937,7 +23938,27 @@ async function lpGeneratePlanAI() {
   } else if (assessmentLevel === 'detailed') {
     assessmentTemplate = `
 **Assessment Plan**
-* **Formative Assessment (during lesson):** [Describe 2-3 specific moments during the lesson where the teacher checks understanding — e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔):** [Provide 2-3 specific questions or a short task aligned to the LOs. Include a simple rubric or success criteria — e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔)**\nWrite the ENTIRE lesson plan in Hindi (Devanagari script). All headings, all content, all instructions — everything must be in Hindi. Do NOT use any English except for proper nouns or technical terms that have no Hindi equivalent.'
+* **Formative Assessment (during lesson):** [Describe 2-3 specific moments during the lesson where the teacher checks understanding — e.g. thumbs-up/down, mini-whiteboards, oral questioning. State what to look for and how to respond.]
+* **Exit Ticket (${tExit} min):** [Provide 2-3 specific questions or a short task aligned to the LOs. Include a simple rubric or success criteria — e.g. "3/3 correct = mastered, 1-2 = needs review".]
+* **Summative Assessment Ideas:** [Suggest 1-2 follow-up assessment activities for the next class — e.g. a short quiz, project, or oral presentation. Include brief marking criteria.]
+* **Student Self-Assessment:** [Describe a quick self-reflection prompt students can do — e.g. traffic-light rating, "I learned…/I still wonder…" sentence starters.]`;
+    assessmentRules = '- Include a comprehensive multi-part Assessment Plan with formative, summative, exit ticket, and self-assessment components.';
+  } else {
+    assessmentRules = '- Do NOT include any assessment or exit ticket section.';
+  }
+
+  // Detail-level instructions
+  const detailInstructions = detailLevel === 'concise'
+    ? 'Keep each section BRIEF — 1-2 sentences max per bullet. Focus on actionable steps only. No lengthy explanations. Total output should be SHORT and scannable.'
+    : detailLevel === 'detailed'
+      ? 'Make each section VERY DETAILED — 4-6 sentences per bullet. Include specific dialogue/questions the teacher should say, step-by-step procedures, anticipated student responses, common misconceptions to address, and time-management tips. Be thorough and comprehensive.'
+      : 'Use MODERATE detail — 2-3 sentences per bullet. Balance clarity with brevity. Include key specifics without excessive elaboration.';
+
+  const maxTokens = detailLevel === 'concise' ? 1800 : detailLevel === 'detailed' ? 5000 : 3000;
+
+  // Language instructions
+  const languageInstruction = language === 'hindi'
+    ? '\n\n**LANGUAGE: HINDI (हिन्दी)**\nWrite the ENTIRE lesson plan in Hindi (Devanagari script). All headings, all content, all instructions — everything must be in Hindi. Do NOT use any English except for proper nouns or technical terms that have no Hindi equivalent.'
     : language === 'bilingual'
       ? '\n\n**LANGUAGE: BILINGUAL (English + हिन्दी)**\nKeep all section HEADINGS and field labels in English exactly as shown in the template. Write all CONTENT, descriptions, activities, questions, and instructions in Hindi (Devanagari script). This produces a plan where the structure is English but the teaching content is in Hindi — ideal for Indian school teachers.'
       : '';
@@ -23981,7 +24002,7 @@ ${loList}
   const commonRules = `IMPORTANT RULES:
 - Follow the EXACT heading and bullet structure above — do not add extra sections or rename them.
 - Make all content specific to ${subject} and ${classGrade || 'the appropriate grade level'}.
-- Reference the actual TPs and LOs provided by their codes (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔) in the relevant sections.
+- Reference the actual TPs and LOs provided by their codes (e.g. TP1, LO3) in the relevant sections.
 - Be practical and classroom-ready for Indian school teachers.
 - Use clear, direct language. Avoid generic filler.
 - ${detailInstructions}
@@ -26362,7 +26383,7 @@ function buildInsightPrompt(type) {
       const summary = collections.map(c => `- ${c.name}: ${c.data.length} records`);
       const empty = collections.filter(c => c.data.length === 0).map(c => c.name);
       const hasProfile = !!(DB.get('userProfile') || {}).name;
-      return `Perform a comprehensive data quality and completeness audit for this APF Resource Person's dashboard.\n\nData:\n${context}\n\nCollection sizes:\n${summary.join('\n')}\n\nEmpty collections (0 records): ${empty.join(', ') || 'None — all have data!'}\nProfile configured: ${hasProfile ? 'Yes' : 'No'}\n\nProvide: 1) Overall DATA HEALTH SCORE (out of 100), 2) Collections with good data (praise these), 3) Empty or sparse collections that need attention, 4) For each sparse collection — why it matters and how to start populating it, 5) Data quality issues (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔), 6) Prioritized recommendations to improve overall data quality, 7) Estimated time to fill gaps. Be encouraging but honest.`;
+      return `Perform a comprehensive data quality and completeness audit for this APF Resource Person's dashboard.\n\nData:\n${context}\n\nCollection sizes:\n${summary.join('\n')}\n\nEmpty collections (0 records): ${empty.join(', ') || 'None — all have data!'}\nProfile configured: ${hasProfile ? 'Yes' : 'No'}\n\nProvide: 1) Overall DATA HEALTH SCORE (out of 100), 2) Collections with good data (praise these), 3) Empty or sparse collections that need attention, 4) For each sparse collection — why it matters and how to start populating it, 5) Data quality issues (e.g., missing dates/schools in records), 6) Prioritized recommendations to improve overall data quality, 7) Estimated time to fill gaps. Be encouraging but honest.`;
     }
     default:
       return `Provide helpful insights based on this APF Resource Person's data:\n${context}`;
@@ -26578,7 +26599,7 @@ For each follow-up item, provide:
 - Title (brief, specific)
 - Description (what to do)
 - Priority (High/Medium/Low)
-- Suggested deadline (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔)
+- Suggested deadline (e.g., "within 1 week", "within 2 weeks")
 - Type (School Visit / Teacher Meeting / Material Sharing / Training / Other)
 
 Generate 3-5 follow-up items. Focus on things that will make a real difference for the school/teacher. Be specific don't give generic advice.`;
@@ -26815,7 +26836,7 @@ Generate 8-10 deep, meaningful reflection questions that:
 6. Include at least 1 question about teacher relationships
 7. Include 1 question connecting micro-level classroom work to macro-level educational goals
 
-Format each prompt with a category label (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).
+Format each prompt with a category label (e.g., [Teaching Impact], [Self-Awareness], [Growth], [Challenges], [Relationships]).
 
 Make the questions genuinely thought-provoking, not generic.`;
 
@@ -27203,11 +27224,11 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, ðŸ«, ⚠ï¸, 📊, ðŸ’ª, ✅, ðŸ””).`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- 🏫 Your point here".' },
+      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- ðŸ« Your point here".' },
       { role: 'user', content: prompt }
     ], { temperature: 0.7, max_tokens: 1500 });
     const reply = res.choices?.[0]?.message?.content || 'No digest available.';
@@ -28574,7 +28595,7 @@ function renderGrowthTips() {
       ],
       4: [
         'Review and provide detailed feedback on session plans designed by other RPs.',
-        'Facilitate a difficult session (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔) and document your approach.',
+        'Facilitate a difficult session (e.g., sensitive topic, resistant audience) and document your approach.',
         'Create a session design toolkit or template for other RPs to use.'
       ]
     },
@@ -29240,7 +29261,7 @@ function _buildImportGuideHTML() {
       ['School Name', 'School', true, ''],
       ['Teacher: Teacher Name', 'Teacher name', true, ''],
       ['Teacher Phone No.', 'Phone number', false, ''],
-      ['Teacher Stage', 'Stage (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔)', false, ''],
+      ['Teacher Stage', 'Stage (e.g. Modelling)', false, ''],
       ['Cluster', 'Cluster name', false, ''],
       ['Block Name', 'Block name', false, ''],
       ['Observation', 'Observation status', false, 'Yes / No / Not_Observed'],
@@ -35518,7 +35539,7 @@ const SmartNotifications = {
     this.setEnabled(true);
     this.start();
     this.fire('✅ APF Dashboard', 'Smart Notifications enabled! You will be alerted for overdue tasks.', 'apf-enable');
-    showToast('🔔 Local notifications enabled!', 'success');
+    showToast('Local notifications enabled ✅', 'success');
     updateNotifUI();
   },
 
@@ -35643,7 +35664,7 @@ const CloudAutomation = {
       if (data.success || data.status === 'ok') {
         this.setLastSync(new Date().toISOString());
         updateCloudAutomationUI();
-        if (!silent) showToast('☁️ Cloud summary synced! Automation data updated.', 'success');
+        if (!silent) showToast('☁ï¸ Cloud summary synced! Automation data updated.', 'success');
         return { ok: true };
       } else {
         if (!silent) showToast('Cloud sync error: ' + (data.error || 'Unknown'), 'error');
