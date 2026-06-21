@@ -20213,7 +20213,7 @@ function importVisitPlanExcel(event) {
       _vpParseWorkbook(data);
     } catch (err) {
       console.error('Excel Import Error:', err);
-      showToast('âŒ Error importing Excel: ' + err.message);
+      showToast('❌ Error importing Excel: ' + err.message);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -21707,9 +21707,13 @@ async function bchRefreshHealth() {
 
   // 4. Service Worker check
   if ('serviceWorker' in navigator) {
-    var reg = await navigator.serviceWorker.getRegistration();
-    swOk = !!(reg && reg.active);
-    _bchSetCheck('bchCheckSW', swOk, swOk ? 'Active — Offline ready' : 'Not active');
+    try {
+      var reg = await navigator.serviceWorker.getRegistration();
+      swOk = !!(reg && reg.active);
+      _bchSetCheck('bchCheckSW', swOk, swOk ? 'Active — Offline ready' : 'Not active');
+    } catch(e) {
+      _bchSetCheck('bchCheckSW', false, 'Blocked (Local file)');
+    }
   } else {
     _bchSetCheck('bchCheckSW', false, 'Not supported');
   }
@@ -21723,9 +21727,11 @@ async function bchRefreshHealth() {
   } catch(e) { _bchSetCheck('bchCheckIDB', false, 'Blocked'); }
 
   // 6. Encryption check
-  var encOk = !!(window.crypto && window.crypto.subtle);
-  _bchSetCheck('bchCheckEnc', encOk, encOk ? 'AES-256-GCM active' : 'Not available');
-  if (encOk) score++;
+  try {
+    var encOk = !!(window.crypto && window.crypto.subtle);
+    _bchSetCheck('bchCheckEnc', encOk, encOk ? 'AES-256-GCM active' : 'Not available');
+    if (encOk) score++;
+  } catch(e) { _bchSetCheck('bchCheckEnc', false, 'Blocked'); }
 
   // 7. Network check
   var online = navigator.onLine;
@@ -23082,9 +23088,9 @@ const SarvamAI = {
     // Inject user's preferred response language into the system prompt
     const langCode = s.sarvamDefaultLang || 'en-IN';
     const langNames = {
-      'hi-IN': 'Hindi (à¤¹à¤¿à¤¨à¥à¤¦à¥€)', 'bn-IN': 'Bengali (à¦¬à¦¾à¦‚à¦²à¦¾)', 'ta-IN': 'Tamil (à®¤à®®à®¿à®´à¯)',
+      'hi-IN': 'Hindi (हिन्दी)', 'bn-IN': 'Bengali (à¦¬à¦¾à¦‚à¦²à¦¾)', 'ta-IN': 'Tamil (à®¤à®®à®¿à®´à¯)',
       'te-IN': 'Telugu (à°¤à±†à°²à±à°—à±)', 'kn-IN': 'Kannada (à²•à²¨à³à²¨à²¡)', 'ml-IN': 'Malayalam (à´®à´²à´¯à´¾à´³à´‚)',
-      'mr-IN': 'Marathi (à¤®à¤°à¤¾à¤ à¥€)', 'gu-IN': 'Gujarati (àª—à«àªœàª°àª¾àª¤à«€)', 'or-IN': 'Odia (à¬“à¬¡à¬¼à¬¿à¬†)',
+      'mr-IN': 'Marathi (मराठी)', 'gu-IN': 'Gujarati (àª—à«àªœàª°àª¾àª¤à«€)', 'or-IN': 'Odia (à¬“à¬¡à¬¼à¬¿à¬†)',
       'pa-IN': 'Punjabi (à¨ªà©°à¨œà¨¾à¨¬à©€)', 'ur-IN': 'Urdu (Ø§Ø±Ø¯Ùˆ)'
     };
     const langName = langNames[langCode];
@@ -23919,7 +23925,7 @@ async function lpGeneratePlanAI() {
 
   // Template display names
   const templateNames = { standard: 'Standard', '5e': '5E Model', quick: 'Quick Plan', observation: 'Observation' };
-  const languageNames = { english: 'English', hindi: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€ Hindi', bilingual: 'Bilingual' };
+  const languageNames = { english: 'English', hindi: 'हिन्दी Hindi', bilingual: 'Bilingual' };
 
   // Assessment prompt block based on user selection
   let assessmentTemplate = '';
@@ -23952,13 +23958,13 @@ async function lpGeneratePlanAI() {
 
   // Language instructions
   const languageInstruction = language === 'hindi'
-    ? '\n\n**LANGUAGE: HINDI (à¤¹à¤¿à¤¨à¥à¤¦à¥€)**\nWrite the ENTIRE lesson plan in Hindi (Devanagari script). All headings, all content, all instructions — everything must be in Hindi. Do NOT use any English except for proper nouns or technical terms that have no Hindi equivalent.'
+    ? '\n\n**LANGUAGE: HINDI (हिन्दी)**\nWrite the ENTIRE lesson plan in Hindi (Devanagari script). All headings, all content, all instructions — everything must be in Hindi. Do NOT use any English except for proper nouns or technical terms that have no Hindi equivalent.'
     : language === 'bilingual'
-      ? '\n\n**LANGUAGE: BILINGUAL (English + à¤¹à¤¿à¤¨à¥à¤¦à¥€)**\nKeep all section HEADINGS and field labels in English exactly as shown in the template. Write all CONTENT, descriptions, activities, questions, and instructions in Hindi (Devanagari script). This produces a plan where the structure is English but the teaching content is in Hindi — ideal for Indian school teachers.'
+      ? '\n\n**LANGUAGE: BILINGUAL (English + हिन्दी)**\nKeep all section HEADINGS and field labels in English exactly as shown in the template. Write all CONTENT, descriptions, activities, questions, and instructions in Hindi (Devanagari script). This produces a plan where the structure is English but the teaching content is in Hindi — ideal for Indian school teachers.'
       : '';
 
   const systemPrompt = language === 'hindi'
-    ? `à¤†à¤ª à¤­à¤¾à¤°à¤¤à¥€à¤¯ à¤¸à¥à¤•à¥‚à¤²à¥‹à¤‚ à¤•à¥‡ à¤²à¤¿à¤ à¤à¤• à¤µà¤¿à¤¶à¥‡à¤·à¤œà¥à¤ž à¤¶à¤¿à¤•à¥à¤·à¤£ à¤¡à¤¿à¤œà¤¼à¤¾à¤‡à¤¨à¤° à¤”à¤° à¤¶à¤¿à¤•à¥à¤·à¤• à¤ªà¥à¤°à¤¶à¤¿à¤•à¥à¤·à¤• à¤¹à¥ˆà¤‚, à¤œà¥‹ NCF 2023 à¤”à¤° NCERT à¤¶à¤¿à¤•à¥à¤·à¤£ à¤ªà¤¦à¥à¤§à¤¤à¤¿ à¤¸à¥‡ à¤—à¤¹à¤°à¤¾à¤ˆ à¤¸à¥‡ à¤ªà¤°à¤¿à¤šà¤¿à¤¤ à¤¹à¥ˆà¤‚à¥¤ à¤†à¤ª à¤µà¤¿à¤¸à¥à¤¤à¥ƒà¤¤, à¤ªà¥‡à¤¶à¥‡à¤µà¤°, à¤•à¤•à¥à¤·à¤¾-à¤¤à¥ˆà¤¯à¤¾à¤° à¤ªà¤¾à¤  à¤¯à¥‹à¤œà¤¨à¤¾à¤à¤ à¤¹à¤¿à¤‚à¤¦à¥€ à¤®à¥‡à¤‚ à¤¤à¥ˆà¤¯à¤¾à¤° à¤•à¤°à¤¤à¥‡ à¤¹à¥ˆà¤‚à¥¤ à¤‰à¤ªà¤¯à¥‹à¤—à¤•à¤°à¥à¤¤à¤¾ à¤¦à¥à¤µà¤¾à¤°à¤¾ à¤¦à¤¿à¤ à¤—à¤ à¤Ÿà¥‡à¤®à¥à¤ªà¤²à¥‡à¤Ÿ à¤•à¤¾ à¤¬à¤¿à¤²à¥à¤•à¥à¤² à¤ªà¤¾à¤²à¤¨ à¤•à¤°à¥‡à¤‚à¥¤ Markdown formatting à¤•à¤¾ à¤‰à¤ªà¤¯à¥‹à¤— à¤•à¤°à¥‡à¤‚à¥¤`
+    ? `आप भारतीय स्कूलों के लिए एक विशेषज्ञ शिक्षण डिज़ाइनर और शिक्षक प्रशिक्षक हैं, जो NCF 2023 और NCERT शिक्षण पद्धति से गहराई से परिचित हैं। आप विस्तृत, पेशेवर, कक्षा-तैयार पाठ योजनाएँ हिंदी में तैयार करते हैं। उपयोगकर्ता द्वारा दिए गए टेम्पलेट का बिल्कुल पालन करें। Markdown formatting का उपयोग करें।`
     : `You are an expert instructional designer and teacher trainer for Indian schools, deeply familiar with the NCF 2023 (National Curriculum Framework) and NCERT pedagogy. You generate detailed, professional, classroom-ready lesson plans. Always follow the EXACT output template provided by the user — do not add, remove, or rename any section. Use markdown formatting.${language === 'bilingual' ? ' For bilingual output: keep headings in English, write content in Hindi.' : ''}`;
 
   // Common prompt header shared by all templates
@@ -24287,7 +24293,7 @@ async function lpGenerateWeeklyPlanAI() {
 
   const language = _lpGetPillValue('lpLanguage') || 'english';
   const detailLevel = _lpGetPillValue('lpDetailLevel') || 'standard';
-  const languageNames = { english: 'English', hindi: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€ Hindi', bilingual: 'Bilingual' };
+  const languageNames = { english: 'English', hindi: 'हिन्दी Hindi', bilingual: 'Bilingual' };
 
   const tpStr = selectedTPs.length
     ? selectedTPs.map(tp => `${(tp.serialNo || '').match(/^TP/i) ? tp.serialNo : 'TP' + (tp.serialNo || '')} — ${tp.practice || ''}`).join('; ')
