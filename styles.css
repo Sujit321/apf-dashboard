@@ -1,6 +1,6 @@
-﻿/* ===== CSS Variables & Design System ===== */
+/* ===== CSS Variables & Design System ===== */
 :root {
-    /* Colors â€” Dark mode with warm amber/orange accent */
+    /* Colors — Dark mode with warm amber/orange accent */
     --bg-primary: #0f1117;
     --bg-secondary: #1a1d27;
     --bg-tertiary: #252a3a;
@@ -1735,7 +1735,7 @@ body.light-mode .howto-icon {
 }
 
 .visit-detail-field .vdf-value:empty::after {
-    content: 'â€”';
+    content: '—';
     color: var(--text-muted);
 }
 
@@ -2308,7 +2308,7 @@ body.light-mode .howto-icon {
     box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
 }
 
-/* View toggles pushed to end â€” override base .view-toggles */
+/* View toggles pushed to end — override base .view-toggles */
 .visit-filter-bar .view-toggles {
     margin-left: auto;
     border-radius: 10px;
@@ -4672,7 +4672,7 @@ body.light-mode .sp-activity-chip {
     }
 }
 
-/* ===== Smart Planner â€” Toolbar ===== */
+/* ===== Smart Planner — Toolbar ===== */
 .sp-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -7565,7 +7565,7 @@ body.modal-open {
 }
 
 /* ===== Excel Upload Zone ===== */
-/* ===== Excel Upload Zone â€” Redesigned ===== */
+/* ===== Excel Upload Zone — Redesigned ===== */
 .excel-upload-zone {
     background: var(--bg-card);
     border: 2px dashed rgba(245, 158, 11, 0.25);
@@ -9237,7 +9237,7 @@ body.modal-open {
     }
 }
 
-/* ===== Excel Insights Panel â€” Redesigned ===== */
+/* ===== Excel Insights Panel — Redesigned ===== */
 .excel-insights-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -9313,7 +9313,7 @@ body.modal-open {
     border-left-color: var(--purple);
 }
 
-/* ===== Excel Charts Grid â€” Redesigned ===== */
+/* ===== Excel Charts Grid — Redesigned ===== */
 .excel-charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
@@ -9492,7 +9492,7 @@ body.modal-open {
     gap: 8px;
 }
 
-/* ===== Excel Data Table â€” Redesigned ===== */
+/* ===== Excel Data Table — Redesigned ===== */
 .excel-table-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -13518,7 +13518,7 @@ body.modal-open {
 }
 
 .color-dot.active::after {
-    content: 'âœ“';
+    content: '✓';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -14255,7 +14255,7 @@ body.modal-open {
     margin-bottom: 10px;
 }
 
-/* Settings â€” SSR Class Toggle Grid */
+/* Settings — SSR Class Toggle Grid */
 .ssr-class-toggle-grid {
     display: flex;
     flex-wrap: wrap;
@@ -15370,7 +15370,7 @@ body.reduce-motion *::after {
 }
 
 /* ==================== MONTHLY WORK LOG ==================== */
-/* ===== WORK LOG â€” Clean Timeline Layout ===== */
+/* ===== WORK LOG — Clean Timeline Layout ===== */
 .worklog-stat-grid {
     display: flex;
     gap: 10px;
@@ -18864,7 +18864,7 @@ body.compact-mode .settings-card-header {
     cursor: pointer;
 }
 
-/* ==================== RESPONSIVE â€” NEW SECTIONS ==================== */
+/* ==================== RESPONSIVE — NEW SECTIONS ==================== */
 
 @media (max-width: 768px) {
     .school-cards-grid {
@@ -22858,7 +22858,7 @@ body.light-mode .sw-card-outcome {
 }
 
 /* ===== Period Comparison Panel ===== */
-/* ===== PERIOD COMPARISON â€” modern redesign ===== */
+/* ===== PERIOD COMPARISON — modern redesign ===== */
 @keyframes pcCardIn {
     from {
         opacity: 0;
@@ -25427,7 +25427,7 @@ body.light-mode .guide-modal {
     justify-content: flex-end;
 }
 
-/* Stat cards â€” full-width equal-column grid */
+/* Stat cards — full-width equal-column grid */
 .tr-stats-bar {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -28783,7 +28783,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     grid-column: span 4;
 }
 
-/* â”€â”€ Widget Card Header (Drag Handle) â”€â”€ */
+/* ── Widget Card Header (Drag Handle) ── */
 .widget-card-header {
     display: flex;
     align-items: center;
@@ -28840,14 +28840,14 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     text-decoration: underline;
 }
 
-/* â”€â”€ Widget Card Body â”€â”€ */
+/* ── Widget Card Body ── */
 .widget-card-body {
     padding: 0 18px 18px;
     flex: 1;
     min-height: 0;
 }
 
-/* â”€â”€ KPI Widget â”€â”€ */
+/* ── KPI Widget ── */
 .widget-kpi {
     display: flex;
     align-items: center;
@@ -28993,7 +28993,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     background: linear-gradient(90deg, #eab308, #facc15);
 }
 
-/* â”€â”€ Drag & Drop States â”€â”€ */
+/* ── Drag & Drop States ── */
 .widget-card.dragging {
     opacity: 0.45;
     transform: scale(0.97);
@@ -29020,19 +29020,19 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     opacity: 1;
 }
 
-/* â”€â”€ List widgets (upcoming visits, recent activity, follow-ups) â”€â”€ */
+/* ── List widgets (upcoming visits, recent activity, follow-ups) ── */
 .widget-card-body .widget-list-container {
     max-height: 280px;
     overflow-y: auto;
 }
 
-/* â”€â”€ Chart widgets â”€â”€ */
+/* ── Chart widgets ── */
 .widget-card-body canvas {
     max-height: 240px;
     width: 100%;
 }
 
-/* â”€â”€ Week at a Glance â”€â”€ */
+/* ── Week at a Glance ── */
 .week-glance-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -29088,7 +29088,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     font-size: 8px;
 }
 
-/* â”€â”€ Top Schools â”€â”€ */
+/* ── Top Schools ── */
 .top-schools-list {
     display: flex;
     flex-direction: column;
@@ -29133,7 +29133,7 @@ body.light-mode .ai-chat-bubble .ai-table tbody tr:hover {
     white-space: nowrap;
 }
 
-/* â”€â”€ Insights: Generic Callouts & Bars â”€â”€ */
+/* ── Insights: Generic Callouts & Bars ── */
 .widget-insight-container {
     display: flex;
     flex-direction: column;
@@ -30698,7 +30698,7 @@ body.light-mode .wi-meta {
     }
 }
 
-/* Section wrap â€” unified card for header + filter + list */
+/* Section wrap — unified card for header + filter + list */
 .lp-section-wrap {
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -30986,7 +30986,7 @@ body.light-mode .wi-meta {
 }
 
 /* Generate row */
-/* â”€â”€ Auto-Suggest from Observations â”€â”€ */
+/* ── Auto-Suggest from Observations ── */
 .lp-autosuggest-panel {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -31423,7 +31423,7 @@ body.light-mode .wi-meta {
     transform: none;
 }
 
-/* â”€â”€ Weekly Plan Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Weekly Plan Grid ─────────────────────────────────── */
 .lp-weekly-grid {
     display: flex;
     flex-direction: column;
@@ -31446,7 +31446,7 @@ body.light-mode .wi-meta {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
 }
 
-/* Left panel â€” day identity */
+/* Left panel — day identity */
 .lp-weekly-day-left {
     background: color-mix(in srgb, var(--day-accent, #6366f1) 9%, var(--card-bg));
     border-right: 1px solid var(--border);
@@ -31499,7 +31499,7 @@ body.light-mode .lp-weekly-day-left {
     flex: 1;
 }
 
-/* Right panel â€” activities & details */
+/* Right panel — activities & details */
 .lp-weekly-day-right {
     display: flex;
     flex-direction: column;
@@ -31732,7 +31732,7 @@ body.light-mode .lp-weekly-day-left {
 }
 
 
-/* â”€â”€ Refine Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Refine Section ────────────────────────── */
 .lp-refine-section {
     position: relative;
     border-radius: 8px;
@@ -31992,7 +31992,7 @@ body.light-mode .lp-weekly-day-left {
     background: rgba(16, 185, 129, 0.4) !important;
 }
 
-/* â”€â”€ Saved Plans History Panel â”€â”€ */
+/* ── Saved Plans History Panel ── */
 .lp-history-panel {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -32232,7 +32232,7 @@ body.light-mode .lp-weekly-day-left {
     padding: 24px 28px;
 }
 
-/* â”€â”€ Plan: header / meta â”€â”€ */
+/* ── Plan: header / meta ── */
 .lp-plan-header {
     margin-bottom: 20px;
     padding-bottom: 16px;
@@ -32345,7 +32345,7 @@ body.light-mode .lp-weekly-day-left {
     margin-bottom: 3px;
 }
 
-/* â”€â”€ 4-Block NCERT model â”€â”€ */
+/* ── 4-Block NCERT model ── */
 .lp-blocks {
     display: flex;
     flex-direction: column;
@@ -32508,7 +32508,7 @@ body.light-mode .lp-weekly-day-left {
     gap: 6px;
 }
 
-/* â”€â”€ LP Analytics Panel â”€â”€ */
+/* ── LP Analytics Panel ── */
 .lp-analytics-panel {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -34234,12 +34234,12 @@ body.light-mode .obj-tpl-pill {
 .smap-drop-empty { padding: 16px; text-align: center; font-size: 13px; color: var(--text-secondary); }
 
 /* =====================================================================
-   DASHBOARD ENHANCEMENTS â€” New Feature Styles
+   DASHBOARD ENHANCEMENTS — New Feature Styles
    Tasks: FAB, Today's Schedule, Motivational Quote, Weather,
           Report Writing, Parent Contacts
    ===================================================================== */
 
-/* â”€â”€ Quick Action FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Quick Action FAB ─────────────────────────────────────────────── */
 .fab-container {
     position: fixed;
     bottom: 32px;
@@ -34343,7 +34343,7 @@ body.light-mode .obj-tpl-pill {
     .fab-container { bottom: 80px; right: 16px; }
 }
 
-/* â”€â”€ Today's Schedule Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Today's Schedule Widget ─────────────────────────────────────── */
 .widget-schedule-list {
     display: flex;
     flex-direction: column;
@@ -34415,7 +34415,7 @@ body.light-mode .obj-tpl-pill {
     margin-left: 4px;
 }
 
-/* â”€â”€ Motivational Quote Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Motivational Quote Widget ───────────────────────────────────── */
 .widget-quote {
     padding: 8px 4px;
     position: relative;
@@ -34448,7 +34448,7 @@ body.light-mode .obj-tpl-pill {
     opacity: 0.85;
 }
 
-/* â”€â”€ Weather Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Weather Widget ─────────────────────────────────────────────── */
 .widget-weather {
     min-height: 80px;
     display: flex;
@@ -34513,7 +34513,7 @@ body.light-mode .obj-tpl-pill {
     text-align: right;
 }
 
-/* â”€â”€ Report Writing Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Report Writing Section ─────────────────────────────────────── */
 .reports-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -34640,7 +34640,7 @@ body.light-mode .obj-tpl-pill {
 .badge-success { background: rgba(34,197,94,0.15);  color: #22c55e; }
 .badge-info    { background: rgba(59,130,246,0.15); color: #3b82f6; }
 
-/* â”€â”€ Parent Contacts Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Parent Contacts Section ─────────────────────────────────────── */
 .parent-contacts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -34714,7 +34714,7 @@ body.light-mode .obj-tpl-pill {
     margin-top: 8px;
 }
 
-/* â”€â”€ Nav icon colors for new items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Nav icon colors for new items ───────────────────────────────── */
 #nav-reportswriting i {
     --ni1: #3b82f6;
     --ni2: #06b6d4;
@@ -34725,13 +34725,13 @@ body.light-mode .obj-tpl-pill {
     --ni2: #f43f5e;
 }
 
-/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .reports-grid { grid-template-columns: 1fr; }
     .parent-contacts-grid { grid-template-columns: 1fr; }
 }
 
-/* â”€â”€ Quote widget: live fetch shimmer & source badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Quote widget: live fetch shimmer & source badge ─────────────── */
 .quote-loading {
     min-height: 1.2em;
     display: block;
@@ -34786,7 +34786,7 @@ body.light-mode .quote-shimmer {
     color: #6b7280;
 }
 
-/* â”€â”€ Sarvam AI Quote Badge & Setup Hint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Sarvam AI Quote Badge & Setup Hint ──────────────────────────── */
 .quote-ai-badge {
     display: inline-flex;
     align-items: center;
@@ -34825,10 +34825,10 @@ body.light-mode .quote-shimmer {
 }
 
 /* =====================================================================
-   NOTE REMINDER ENGINE â€” UI Styles
+   NOTE REMINDER ENGINE — UI Styles
    ===================================================================== */
 
-/* â”€â”€ Reminder row injected into editing note cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Reminder row injected into editing note cards ─────────────────── */
 .note-reminder-row {
     display: flex;
     align-items: center;
@@ -34903,7 +34903,7 @@ body.light-mode .note-remind-dt {
 .rem-ch-label .fa-envelope { color: #f59e0b; }
 /* Bell stays default */
 
-/* â”€â”€ Reminder Settings Modal Blocks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Reminder Settings Modal Blocks ──────────────────────────────── */
 .reminder-settings-block {
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
@@ -34951,7 +34951,7 @@ body.light-mode .note-remind-dt {
     min-height: 16px;
 }
 
-/* â”€â”€ GAS code block in Reminder Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── GAS code block in Reminder Settings ─────────────────────────── */
 .gas-code-block {
     display: block;
     margin-top: 10px;
@@ -34971,13 +34971,13 @@ body.light-mode .note-remind-dt {
 details > summary { list-style: none; }
 details > summary::-webkit-details-marker { display: none; }
 
-/* â”€â”€ Telegram auto-connect status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Telegram auto-connect status badge ─────────────────────────── */
 .rsb-auto { border-color: rgba(38,165,228,0.2); }
 .rsb-auto-status { font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .rsb-connected    { color: #10b981; display:flex; align-items:center; gap:5px; }
 .rsb-disconnected { color: #f59e0b; display:flex; align-items:center; gap:5px; }
 
-/* â”€â”€ Flatpickr overrides inside note-remind-dt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Flatpickr overrides inside note-remind-dt ──────────────────── */
 /* Hide the hidden ISO input Flatpickr generates; show only altInput */
 .note-remind-dt { display: none !important; }
 
@@ -35003,7 +35003,7 @@ details > summary::-webkit-details-marker { display: none; }
     background: rgba(99,102,241,0.08);
 }
 
-/* â”€â”€ Note reminder: date + time input pair â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Note reminder: date + time input pair ───────────────────────── */
 /* Remove old Flatpickr override (no longer used in note cards) */
 
 .note-reminder-row--stacked {
@@ -35128,7 +35128,7 @@ body.light-mode .note-remind-time {
     background: rgba(255,255,255,0.1);
 }
 
-/* â”€â”€ Note reminder: VDR date button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Note reminder: VDR date button ─────────────────────────────── */
 .note-remind-date-btn {
     display: inline-flex;
     align-items: center;
@@ -35154,7 +35154,7 @@ body.light-mode .note-remind-time {
     color: var(--accent);
 }
 
-/* When a date is picked â€” icon becomes green */
+/* When a date is picked — icon becomes green */
 .note-remind-date-btn .fa-calendar-check { color: #10b981; }
 .note-remind-date-btn .fa-calendar-alt   { color: var(--text-muted); }
 
@@ -35163,10 +35163,10 @@ body.light-mode .note-remind-date-btn {
 }
 
 /* =====================================================================
-   QUICK NOTES â€” PREMIUM REDESIGN
+   QUICK NOTES — PREMIUM REDESIGN
    ===================================================================== */
 
-/* â”€â”€ Section wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Section wrapper ─────────────────────────────────────────────── */
 #section-notes {
     padding: 0 !important;
 }
@@ -35177,7 +35177,7 @@ body.light-mode .note-remind-date-btn {
     gap: 0;
 }
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Header ─────────────────────────────────────────────────────── */
 .qn-header {
     display: flex;
     align-items: center;
@@ -35296,7 +35296,7 @@ body.light-mode .qn-title {
     background: linear-gradient(135deg, #818cf8, #6366f1);
 }
 
-/* â”€â”€ Toolbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Toolbar ─────────────────────────────────────────────────────── */
 .qn-toolbar {
     display: flex;
     align-items: center;
@@ -35339,7 +35339,7 @@ body.light-mode .qn-title {
     box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
 }
 
-/* â”€â”€ Color filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Color filters ───────────────────────────────────────────────── */
 .qn-filters {
     display: flex;
     gap: 6px;
@@ -35386,7 +35386,7 @@ body.light-mode .qn-title {
 .qn-dot.purple { background: #8b5cf6; }
 .qn-dot.red    { background: #ef4444; }
 
-/* â”€â”€ View toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── View toggle ─────────────────────────────────────────────────── */
 .qn-view-toggle {
     display: flex;
     background: var(--bg-input);
@@ -35410,7 +35410,7 @@ body.light-mode .qn-title {
     color: #fff;
 }
 
-/* â”€â”€ Notes grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Notes grid ─────────────────────────────────────────────────── */
 .qn-grid {
     padding: 24px 32px;
     display: grid;
@@ -35424,7 +35424,7 @@ body.light-mode .qn-title {
     max-width: 780px;
 }
 
-/* â”€â”€ Note card redesign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Note card redesign ─────────────────────────────────────────── */
 #section-notes .note-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -35558,7 +35558,7 @@ body.light-mode .qn-title {
     transform: scale(1.15);
 }
 
-/* â”€â”€ Empty state redesign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Empty state redesign ───────────────────────────────────────── */
 .qn-empty-state {
     grid-column: 1 / -1;
     text-align: center;
@@ -35592,7 +35592,7 @@ body.light-mode .qn-title {
     color: var(--text-muted);
 }
 
-/* â”€â”€ List view card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── List view card ─────────────────────────────────────────────── */
 .qn-grid.list-view .note-card {
     display: flex;
     flex-direction: row;
@@ -35611,14 +35611,14 @@ body.light-mode .qn-title {
     padding-left: 14px;
 }
 
-/* â”€â”€ Countdown badge inside new design â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Countdown badge inside new design ─────────────────────────── */
 #section-notes .note-cd-badge {
     border-radius: 8px;
     margin-bottom: 8px;
     font-size: 12px;
 }
 
-/* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .qn-header, .qn-toolbar { padding: 16px 18px; }
     .qn-grid { padding: 16px 18px; }
