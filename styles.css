@@ -5750,6 +5750,148 @@ body.light-mode .obs-form-section-label {
     background: #3b82f6;
 }
 
+/* ===== Report Visit Cards (School Report / Visits Report) ===== */
+.rpt-visit-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    page-break-inside: avoid;
+}
+
+.rpt-visit-card-header {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rpt-visit-card-status {
+    font-size: 11px;
+    opacity: 0.85;
+    text-transform: capitalize;
+}
+
+.rpt-visit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+}
+
+.rpt-visit-row-even {
+    background: var(--bg-secondary);
+}
+
+.rpt-visit-row-odd {
+    background: var(--bg-card);
+}
+
+.rpt-visit-td-label {
+    padding: 5px 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    width: 36%;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    font-size: 12px;
+}
+
+.rpt-visit-td-val {
+    padding: 5px 12px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    word-break: break-word;
+    font-size: 12px;
+}
+
+.rpt-visit-longfield {
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+.rpt-visit-longfield-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.rpt-visit-longfield-val {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Light mode overrides for report visit cards */
+body.light-mode .rpt-visit-row-even {
+    background: #f8fafc;
+}
+
+body.light-mode .rpt-visit-row-odd {
+    background: #ffffff;
+}
+
+body.light-mode .rpt-visit-td-label {
+    color: #475569;
+    border-bottom-color: #f1f5f9;
+}
+
+body.light-mode .rpt-visit-td-val {
+    color: #1e293b;
+    border-bottom-color: #f1f5f9;
+}
+
+body.light-mode .rpt-visit-longfield {
+    background: #ffffff;
+    border-top-color: #f1f5f9;
+}
+
+body.light-mode .rpt-visit-longfield-label {
+    color: #475569;
+}
+
+body.light-mode .rpt-visit-longfield-val {
+    color: #1e293b;
+}
+
+body.light-mode .rpt-visit-card {
+    border-color: #e2e8f0;
+}
+
+/* Print overrides for report visit cards */
+@media print {
+    .rpt-visit-row-even {
+        background: #f8fafc !important;
+    }
+    .rpt-visit-row-odd {
+        background: #ffffff !important;
+    }
+    .rpt-visit-td-label {
+        color: #475569 !important;
+        border-bottom-color: #f1f5f9 !important;
+    }
+    .rpt-visit-td-val {
+        color: #1e293b !important;
+        border-bottom-color: #f1f5f9 !important;
+    }
+    .rpt-visit-longfield-val {
+        color: #1e293b !important;
+    }
+    .rpt-visit-longfield-label {
+        color: #475569 !important;
+    }
+}
+
 /* --- PDF Download Button --- */
 .btn-pdf {
     background: linear-gradient(135deg, #ef4444, #dc2626) !important;

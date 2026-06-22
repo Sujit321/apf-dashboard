@@ -5935,6 +5935,8 @@ function importVisitsExcel(event) {
       }
       const visits = DB.get('visits');
       let imported = 0;
+      // Log actual column headers for debugging
+      if (rows.length > 0) console.log('[Import Visits] Excel columns:', Object.keys(rows[0]));
       rows.forEach(r => {
         const school = (r['School'] || r['school'] || '').toString().trim();
         if (!school) return;
@@ -5951,17 +5953,15 @@ function importVisitsExcel(event) {
           rating: (r['Rating'] || r['rating'] || '').toString().trim(),
           peopleMet: (r['People Met'] || r['peopleMet'] || '').toString().trim(),
           teachersMet: (() => {
-            // Accept multiple column name variants for "no. of teachers/stakeholders met"
-            const raw = (
-              r['No of Stakeholders'] ||
-              r['No. of Stakeholders'] ||
-              r['No of stakeholders'] ||
-              r['No. of stakeholders'] ||
-              r['Stakeholders'] ||
-              r['Teachers Met'] ||
-              r['teachersMet'] ||
-              ''
-            ).toString().trim();
+            // Fuzzy case-insensitive column match — handles any spacing/dot/wording variant
+            // Matches: "No of Stakeholders", "No. of Stakeholders", "Stakeholder Count",
+            //          "Teachers Met", "No of Teachers Met", "teachersMet", etc.
+            const keys = Object.keys(r);
+            const matchKey = keys.find(k => {
+              const kn = k.toLowerCase().replace(/[.\s]+/g, '');
+              return kn.includes('stakeholder') || (kn.includes('teacher') && kn.includes('met'));
+            });
+            const raw = matchKey ? (r[matchKey] || '').toString().trim() : '';
             const n = parseInt(raw);
             return raw !== '' && !isNaN(n) ? n : null;
           })(),
@@ -11670,7 +11670,7 @@ function generateVisitsReport(output, visits, monthVal, year) {
       [' Rating', stars || null],
       [' HM Present', v.hmPresent || null],
       [' People Met', v.peopleMet || null],
-      [' Teachers Met', v.teachersMet || null],
+      [' Teachers Met', (v.teachersMet !== null && v.teachersMet !== undefined && v.teachersMet !== '') ? String(v.teachersMet) : null],
       [' Classes Visited', v.classesVisited || null],
       [' Students Observed', v.studentCount || null],
       [' Infrastructure', v.infrastructure || null],
@@ -11688,20 +11688,20 @@ function generateVisitsReport(output, visits, monthVal, year) {
       ['Challenges', v.challenges],
       [' Follow-up Action', v.followUp]
     ].filter(([, val]) => val && val.toString().trim());
-    return `<div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;page-break-inside:avoid">
- <div style="background:#6366f1;color:#fff;padding:8px 14px;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center">
+    return `<div class="rpt-visit-card">
+ <div class="rpt-visit-card-header">
  <span>${idx + 1}. ${escapeHtml(v.school || 'School Visit')} &nbsp; ${v.date ? new Date(v.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
- <span style="font-size:11px;opacity:0.85">${escapeHtml(v.status || '')}</span>
+ <span class="rpt-visit-card-status">${escapeHtml(v.status || '')}</span>
  </div>
- ${tableFields.length > 0 ? `<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">
- ${tableFields.map(([label, val], i) => `<tr style="background:${i % 2 === 0 ? '#f8fafc' : '#fff'}">
- <td style="padding:5px 12px;font-weight:600;color:#475569;width:36%;border-bottom:1px solid #f1f5f9;vertical-align:top">${label}</td>
- <td style="padding:5px 12px;color:#1e293b;border-bottom:1px solid #f1f5f9;word-break:break-word">${escapeHtml(String(val))}</td>
+ ${tableFields.length > 0 ? `<table class="rpt-visit-table">
+ ${tableFields.map(([label, val], i) => `<tr class="${i % 2 === 0 ? 'rpt-visit-row-even' : 'rpt-visit-row-odd'}">
+ <td class="rpt-visit-td-label">${label}</td>
+ <td class="rpt-visit-td-val">${escapeHtml(String(val))}</td>
  </tr>`).join('')}
  </table>` : ''}
- ${longFields.map(([label, val]) => `<div style="padding:8px 14px;border-top:1px solid #f1f5f9">
- <div style="font-weight:600;color:#475569;font-size:11px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px">${label}</div>
- <div style="color:#1e293b;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word">${escapeHtml(String(val))}</div>
+ ${longFields.map(([label, val]) => `<div class="rpt-visit-longfield">
+ <div class="rpt-visit-longfield-label">${label}</div>
+ <div class="rpt-visit-longfield-val">${escapeHtml(String(val))}</div>
  </div>`).join('')}
  </div>`;
   }).join('')}` : ''}
@@ -20892,17 +20892,18 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
   const purpose = purposeMap[entry.domain] || 'Classroom Observation';
   const timeSlot = (entry.time || '').trim().toLowerCase();
 
-  // Deterministic slot ID: uniquely identifies one physical visit slot (date + half + school)
-  // e.g. "slot|2026-03-02|first half|xyz school" vs "slot|2026-03-02|second half|xyz school"
-  const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}`;
+  // Deterministic slot ID: uniquely identifies one physical visit slot
+  // Now includes teacher/stakeholder name — same school + date + half BUT different teacher = NOT a duplicate
+  const teacherKey = (entry.stakeholderName || '').trim().toLowerCase();
+  const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}|${teacherKey}`;
 
   // Duplicate check 1: already linked by fromVisitPlan id
   const existingByLink = visits.find(v => v.fromVisitPlan === entry.id);
   if (existingByLink) return { added: false, reason: 'already_linked', existingVisit: existingByLink };
 
-  // Duplicate check 2: exact slotId match — First Half and Second Half produce different slotIds
+  // Duplicate check 2: exact slotId match — different teacher on same day/school/half is allowed
   // Compute slotId on-the-fly for old visits that don't have it stored
-  const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}`;
+  const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}|${(v.peopleMet || '').trim().toLowerCase()}`;
   const existingBySlot = visits.find(v => (v.slotId || _makeSlotId(v)) === slotId);
   if (existingBySlot) return { added: false, reason: 'duplicate', existingVisit: existingBySlot };
 
