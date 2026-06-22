@@ -20617,14 +20617,16 @@ async function vpBulkAddHalfToVisits(half) {
     const purpose = purposeMap[e.domain] || 'Classroom Observation';
     const timeSlot = (e.time || '').trim().toLowerCase();
 
-    // Deterministic slot ID for duplicate check (date + time half + school)
-    const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}`;
-    const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}`;
+    // Deterministic slot ID for duplicate check (date + time half + school + teacher)
+    // Different teacher at same school/date/half = NOT a duplicate
+    const teacherKey = (e.stakeholderName || '').trim().toLowerCase();
+    const slotId = `slot|${date}|${timeSlot}|${school.trim().toLowerCase()}|${teacherKey}`;
+    const _makeSlotId = v => `slot|${v.date || ''}|${(v.duration || '').trim().toLowerCase()}|${(v.school || '').trim().toLowerCase()}|${(v.peopleMet || '').trim().toLowerCase()}`;
 
     // Duplicate check 1: already linked by fromVisitPlan id
     const existingByLink = visits.find(v => v.fromVisitPlan === e.id);
     if (existingByLink) { duplicates.push({ entry: e, existingVisit: existingByLink }); return; }
-    // Duplicate check 2: same slotId — First Half and Second Half produce different slotIds
+    // Duplicate check 2: same slotId — different teacher on same day/school/half is allowed
     const existingBySlot = visits.find(v => (v.slotId || _makeSlotId(v)) === slotId);
     if (existingBySlot) { duplicates.push({ entry: e, existingVisit: existingBySlot }); return; }
 
@@ -20641,7 +20643,7 @@ async function vpBulkAddHalfToVisits(half) {
 
     visits.push({
       id: DB.generateId(),
-      slotId: slotId,
+      slotId: slotId,  // now includes teacher key
       school: school,
       block: e.cluster || '',
       cluster: e.cluster || '',
@@ -20651,6 +20653,7 @@ async function vpBulkAddHalfToVisits(half) {
       purpose: purpose,
       duration: e.time || '',
       peopleMet: [e.stakeholderName, e.designation ? '(' + e.designation + ')' : ''].filter(Boolean).join(' '),
+      teachersMet: e.stakeholderCount ? (parseInt(e.stakeholderCount) || null) : null,
       rating: '',
       notes: notesParts.join('\n'),
       followUp: e.reportSharing || '',
@@ -20927,6 +20930,7 @@ function _vpAddVisitFromPlanEntry(entry, allEntries) {
     purpose: purpose,
     duration: entry.time || '',
     peopleMet: [entry.stakeholderName, entry.designation ? '(' + entry.designation + ')' : ''].filter(Boolean).join(' '),
+    teachersMet: entry.stakeholderCount ? (parseInt(entry.stakeholderCount) || null) : null,
     rating: '',
     notes: notesParts.join('\n'),
     followUp: entry.reportSharing || '',
