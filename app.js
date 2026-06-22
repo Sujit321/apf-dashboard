@@ -3738,11 +3738,19 @@ function _initVDRDateInputs(container) {
       get() { return _stored; },
       set(v) {
         _stored = v || '';
+        // Also sync the DOM attribute so getAttribute('value') works as fallback
+        if (_stored) {
+          input.setAttribute('value', _stored);
+        } else {
+          input.removeAttribute('value');
+        }
         btn.textContent = _stored ? _fmtVDRDate(_stored) : 'Pick date';
         btn.classList.toggle('has-value', !!_stored);
       },
       configurable: true
     });
+    // Sync initial value to DOM attribute
+    if (_stored) input.setAttribute('value', _stored);
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -5034,12 +5042,17 @@ function saveVisit(e) {
   // Collect selected activities
   const activities = [];
   document.querySelectorAll('.visit-act-cb:checked').forEach(cb => activities.push(cb.value));
+
+  // Read date — works whether VDR picker or native input is used
+  const visitDateEl = document.getElementById('visitDate');
+  const dateVal = visitDateEl.value || visitDateEl.getAttribute('value') || '';
+
   const data = {
     school: document.getElementById('visitSchool').value.trim(),
     block: document.getElementById('visitBlock').value.trim(),
     cluster: document.getElementById('visitCluster').value.trim(),
     district: document.getElementById('visitDistrict').value.trim(),
-    date: document.getElementById('visitDate').value,
+    date: dateVal,
     status: document.getElementById('visitStatus').value,
     purpose: document.getElementById('visitPurpose').value,
     duration: document.getElementById('visitDuration').value,
@@ -5062,6 +5075,17 @@ function saveVisit(e) {
     materialsShared: document.getElementById('visitMaterialsShared').value.trim(),
     broaderPlan: document.getElementById('visitBroaderPlan').value.trim(),
   };
+
+  // Manual validation (form has novalidate, so we validate here)
+  if (!data.school) {
+    showToast('Please enter a school name', 'error');
+    document.getElementById('visitSchool').focus();
+    return;
+  }
+  if (!data.date) {
+    showToast('Please select a visit date', 'error');
+    return;
+  }
 
   if (id) {
     const idx = visits.findIndex(v => v.id === id);
@@ -12645,7 +12669,9 @@ function getGoalActuals(year, month) {
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
-  const teachersReached = trainings.reduce((sum, t) => sum + (t.attendees || 0), 0);
+  // Teachers reached = visit teachersMet + training attendees
+  const teachersFromVisits = visits.reduce((sum, v) => sum + (parseInt(v.teachersMet) || 0), 0);
+  const teachersReached = teachersFromVisits + trainings.reduce((sum, t) => sum + (t.attendees || 0), 0);
 
   const resources = DB.get('resources').filter(r => {
     if (!r.createdAt) return false;
@@ -13018,13 +13044,18 @@ function renderAnalyticsInsights(visits, trainings, observations, allVisits, all
     });
   }
 
-  // Training reach
-  const teachersReached = trainings.reduce((s, t) => s + (t.attendees || 0), 0);
-  if (trainings.length > 0) {
+  // Teacher reach: visits teachersMet + training attendees
+  const visitTeachers = visits.reduce((s, v) => s + (parseInt(v.teachersMet) || 0), 0);
+  const trainingTeachers = trainings.reduce((s, t) => s + (t.attendees || 0), 0);
+  const teachersReached = visitTeachers + trainingTeachers;
+  if (teachersReached > 0) {
+    const parts = [];
+    if (visitTeachers > 0) parts.push(`${visitTeachers} via visits`);
+    if (trainingTeachers > 0) parts.push(`${trainingTeachers} via trainings`);
     insights.push({
       icon: 'fa-graduation-cap',
       color: 'success',
-      text: `Reached <strong>${teachersReached} teachers</strong> through <strong>${trainings.length}</strong> training session(s)`
+      text: `Reached <strong>${teachersReached} teachers</strong> (${parts.join(', ')})`
     });
   }
 
@@ -13046,7 +13077,9 @@ function renderAnalyticsKPIs(visits, trainings, observations) {
   const grid = document.getElementById('analyticsKpiGrid');
   const completed = visits.filter(v => v.status === 'completed').length;
   const totalHours = trainings.reduce((s, t) => s + (t.duration || 0), 0);
-  const teachersReached = trainings.reduce((s, t) => s + (t.attendees || 0), 0);
+  // Teachers reached = visit teachersMet + training attendees
+  const teachersReached = visits.reduce((s, v) => s + (parseInt(v.teachersMet) || 0), 0)
+    + trainings.reduce((s, t) => s + (t.attendees || 0), 0);
   const schools = new Set();
   visits.forEach(v => schools.add((v.school || '').toLowerCase().trim()));
   observations.forEach(o => schools.add((o.school || '').toLowerCase().trim()));
@@ -22209,7 +22242,9 @@ function exportAllDataToExcel() {
     { Metric: 'Total Visits', Value: visits.length },
     { Metric: 'Completed Visits', Value: visits.filter(v => v.status === 'completed').length },
     { Metric: 'Trainings', Value: trainings.length },
-    { Metric: 'Teachers Reached', Value: trainings.reduce((s, t) => s + (t.attendees || 0), 0) },
+    { Metric: 'Teachers Reached (Visits)', Value: visits.reduce((s, v) => s + (parseInt(v.teachersMet) || 0), 0) },
+    { Metric: 'Teachers Reached (Trainings)', Value: trainings.reduce((s, t) => s + (t.attendees || 0), 0) },
+    { Metric: 'Teachers Reached (Total)', Value: visits.reduce((s, v) => s + (parseInt(v.teachersMet) || 0), 0) + trainings.reduce((s, t) => s + (t.attendees || 0), 0) },
     { Metric: 'Training Hours', Value: trainings.reduce((s, t) => s + (t.duration || 0), 0) },
     { Metric: 'Observations', Value: observations.length },
     { Metric: 'Resources', Value: resources.length },
@@ -35355,12 +35390,8 @@ function _runPeriodComparison() {
   const aVisitSchools = new Set(aVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
   const bVisitSchools = new Set(bVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
 
-  // Teachers reached: count entries with "(Teacher)" in Key People Met across visits
-  const sumTeachers = arr => arr.reduce((sum, v) => {
-    if (!v.peopleMet) return sum;
-    const entries = v.peopleMet.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
-    return sum + entries.filter(e => /\(teacher\)/i.test(e)).length;
-  }, 0);
+  // Teachers reached from visits: use teachersMet field directly
+  const sumTeachers = arr => arr.reduce((sum, v) => sum + (parseInt(v.teachersMet) || 0), 0);
 
   // Avg visit rating (1–5) from School Visits
   const avgRating = arr => {
