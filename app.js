@@ -4967,7 +4967,7 @@ function openVisitModal(id) {
       document.getElementById('visitFollowUp').value = v.followUp || '';
       document.getElementById('visitNextDate').value = v.nextDate || '';
       // New comprehensive fields
-      document.getElementById('visitTeachersMet').value = v.teachersMet || '';
+      document.getElementById('visitTeachersMet').value = (v.teachersMet !== null && v.teachersMet !== undefined && v.teachersMet !== '') ? v.teachersMet : '';
       document.getElementById('visitClassesVisited').value = v.classesVisited || '';
       document.getElementById('visitStudentCount').value = v.studentCount || '';
       document.getElementById('visitHMPresent').value = v.hmPresent || '';
@@ -5063,7 +5063,7 @@ function saveVisit(e) {
     nextDate: document.getElementById('visitNextDate').value,
     // New comprehensive fields
     activities: activities,
-    teachersMet: document.getElementById('visitTeachersMet').value,
+    teachersMet: document.getElementById('visitTeachersMet').value !== '' ? (parseInt(document.getElementById('visitTeachersMet').value) || 0) : null,
     classesVisited: document.getElementById('visitClassesVisited').value.trim(),
     studentCount: document.getElementById('visitStudentCount').value,
     hmPresent: document.getElementById('visitHMPresent').value,
@@ -5208,7 +5208,7 @@ function renderVisits() {
     const acts = v.activities || [];
     const actBadges = acts.length > 0 ? `<div class="visit-activity-badges">${acts.slice(0, 4).map(a => `<span class="visit-act-badge">${escapeHtml(a)}</span>`).join('')}${acts.length > 4 ? `<span class="visit-act-badge">+${acts.length - 4}</span>` : ''}</div>` : '';
     const hmBadge = v.hmPresent ? `<span class="visit-hm-indicator ${v.hmPresent === 'Yes' ? 'hm-yes' : 'hm-no'}"><i class="fas fa-user-tie"></i> HM ${v.hmPresent}</span>` : '';
-    const teachersBadge = v.teachersMet ? `<span><i class="fas fa-chalkboard-teacher"></i> ${v.teachersMet} teachers</span>` : '';
+    const teachersBadge = (v.teachersMet !== null && v.teachersMet !== undefined && v.teachersMet !== '') ? `<span><i class="fas fa-chalkboard-teacher"></i> ${v.teachersMet} teachers</span>` : '';
 
     const isSelected = window._appBulkDeleteEnabled && window._visitSelectedEntries && window._visitSelectedEntries.has(v.id);
     return `<div class="visit-item" data-id="${v.id}" onclick="toggleVisitDetailPanel('${v.id}')">
@@ -5399,9 +5399,13 @@ function renderVisitStats(visits) {
   const uniqueSchools = new Set(visits.map(v => (v.school || '').trim().toLowerCase())).size;
   const withFollowUp = visits.filter(v => v.followUp && v.followUp.trim()).length;
   const avgRating = visits.filter(v => v.rating).length > 0 ? (visits.filter(v => v.rating).reduce((s, v) => s + parseInt(v.rating), 0) / visits.filter(v => v.rating).length).toFixed(1) : '--';
-  // New stats
-  const visitsWithTeachers = visits.filter(v => v.teachersMet && parseInt(v.teachersMet) > 0);
-  const avgTeachers = visitsWithTeachers.length > 0 ? (visitsWithTeachers.reduce((s, v) => s + parseInt(v.teachersMet), 0) / visitsWithTeachers.length).toFixed(1) : '--';
+  // New stats — null = not entered, 0 = entered as zero, positive = actual count
+  const _tmNum = v => { const n = parseInt(v.teachersMet); return isNaN(n) ? 0 : n; };
+  const totalTeachersMet = visits.reduce((s, v) => s + _tmNum(v), 0);
+  const visitsWithTeachers = visits.filter(v => v.teachersMet !== null && v.teachersMet !== undefined && v.teachersMet !== '' && _tmNum(v) > 0);
+  const avgTeachers = visitsWithTeachers.length > 0
+    ? (visitsWithTeachers.reduce((s, v) => s + _tmNum(v), 0) / visitsWithTeachers.length).toFixed(1)
+    : '--';
   const hmVisits = visits.filter(v => v.hmPresent);
   const hmRate = hmVisits.length > 0 ? Math.round(hmVisits.filter(v => v.hmPresent === 'Yes').length / hmVisits.length * 100) : '--';
 
@@ -5415,7 +5419,16 @@ function renderVisitStats(visits) {
  <div class="vs-card month"><div class="vs-icon"><i class="fas fa-calendar-alt"></i></div><div class="vs-val">${thisMonthCount}</div><div class="vs-lbl">This Month</div></div>
  <div class="vs-card schools"><div class="vs-icon"><i class="fas fa-map-marked-alt"></i></div><div class="vs-val">${uniqueSchools}</div><div class="vs-lbl">Unique Schools</div></div>
  <div class="vs-card rating"><div class="vs-icon"><i class="fas fa-star"></i></div><div class="vs-val">${avgRating}</div><div class="vs-lbl">Avg Rating</div></div>
- <div class="vs-card" style="border-left:3px solid #8b5cf6;"><div class="vs-icon" style="color:#8b5cf6;"><i class="fas fa-chalkboard-teacher"></i></div><div class="vs-val">${avgTeachers}</div><div class="vs-lbl">Avg Teachers/Visit</div></div>
+ <div class="vs-card" style="border-left:3px solid #8b5cf6;">
+  <div class="vs-icon" style="color:#8b5cf6;"><i class="fas fa-users"></i></div>
+  <div class="vs-val">${totalTeachersMet}</div>
+  <div class="vs-lbl">Total Teachers Met</div>
+ </div>
+ <div class="vs-card" style="border-left:3px solid #8b5cf6;">
+  <div class="vs-icon" style="color:#8b5cf6;"><i class="fas fa-chalkboard-teacher"></i></div>
+  <div class="vs-val">${avgTeachers}</div>
+  <div class="vs-lbl">Avg Teachers/Visit</div>
+ </div>
  <div class="vs-card" style="border-left:3px solid #06b6d4;"><div class="vs-icon" style="color:#06b6d4;"><i class="fas fa-user-tie"></i></div><div class="vs-val">${hmRate}${hmRate !== '--' ? '%' : ''}</div><div class="vs-lbl">HM Available</div></div>
  <div class="vs-card" style="border-left:3px solid #f59e0b;"><div class="vs-icon" style="color:#f59e0b;"><i class="fas fa-redo-alt"></i></div><div class="vs-val">${withFollowUp}</div><div class="vs-lbl">With Follow-up</div></div>
  ${nextVisit ? `<div class="vs-card next" onclick="openVisitModal('${nextVisit.id}')"><div class="vs-icon"><i class="fas fa-arrow-right"></i></div><div class="vs-val-sm">${escapeHtml(nextVisit.school).substring(0, 18)}</div><div class="vs-lbl">Next: ${new Date(nextVisit.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div></div>` : ''}
@@ -5816,7 +5829,7 @@ function toggleVisitDetailPanel(id) {
  ${field('Key People Met', v.peopleMet)}
 
  <div class="visit-detail-section"><i class="fas fa-user-friends"></i> People & Classroom</div>
- ${field('Teachers Met', v.teachersMet)}
+ ${field('Teachers Met', v.teachersMet !== null && v.teachersMet !== undefined && v.teachersMet !== '' ? String(v.teachersMet) : null)}
  ${field('Classes Visited', v.classesVisited)}
  ${field('Students Observed', v.studentCount)}
  ${fieldRaw('HM Present', v.hmPresent ? `<span class="visit-hm-indicator ${v.hmPresent === 'Yes' ? 'hm-yes' : 'hm-no'}"><i class="fas fa-user-tie"></i> ${v.hmPresent}</span>` : '')}
@@ -5937,7 +5950,21 @@ function importVisitsExcel(event) {
           duration: (r['Duration'] || r['duration'] || '').toString().trim(),
           rating: (r['Rating'] || r['rating'] || '').toString().trim(),
           peopleMet: (r['People Met'] || r['peopleMet'] || '').toString().trim(),
-          teachersMet: (r['Teachers Met'] || r['teachersMet'] || '').toString().trim(),
+          teachersMet: (() => {
+            // Accept multiple column name variants for "no. of teachers/stakeholders met"
+            const raw = (
+              r['No of Stakeholders'] ||
+              r['No. of Stakeholders'] ||
+              r['No of stakeholders'] ||
+              r['No. of stakeholders'] ||
+              r['Stakeholders'] ||
+              r['Teachers Met'] ||
+              r['teachersMet'] ||
+              ''
+            ).toString().trim();
+            const n = parseInt(raw);
+            return raw !== '' && !isNaN(n) ? n : null;
+          })(),
           classesVisited: (r['Classes Visited'] || r['classesVisited'] || '').toString().trim(),
           studentCount: (r['Students Observed'] || r['studentCount'] || '').toString().trim(),
           hmPresent: (r['HM Present'] || r['hmPresent'] || '').toString().trim(),
@@ -12670,7 +12697,8 @@ function getGoalActuals(year, month) {
   });
 
   // Teachers reached = visit teachersMet + training attendees
-  const teachersFromVisits = visits.reduce((sum, v) => sum + (parseInt(v.teachersMet) || 0), 0);
+  // Use isNaN guard: parseInt(null/undefined/'') = NaN → 0; parseInt('5') = 5; parseInt(5) = 5
+  const teachersFromVisits = visits.reduce((sum, v) => { const n = parseInt(v.teachersMet); return sum + (isNaN(n) ? 0 : n); }, 0);
   const teachersReached = teachersFromVisits + trainings.reduce((sum, t) => sum + (t.attendees || 0), 0);
 
   const resources = DB.get('resources').filter(r => {
@@ -13045,7 +13073,8 @@ function renderAnalyticsInsights(visits, trainings, observations, allVisits, all
   }
 
   // Teacher reach: visits teachersMet + training attendees
-  const visitTeachers = visits.reduce((s, v) => s + (parseInt(v.teachersMet) || 0), 0);
+  const _safeInt = v => { const n = parseInt(v.teachersMet); return isNaN(n) ? 0 : n; };
+  const visitTeachers = visits.reduce((s, v) => s + _safeInt(v), 0);
   const trainingTeachers = trainings.reduce((s, t) => s + (t.attendees || 0), 0);
   const teachersReached = visitTeachers + trainingTeachers;
   if (teachersReached > 0) {
@@ -13078,7 +13107,7 @@ function renderAnalyticsKPIs(visits, trainings, observations) {
   const completed = visits.filter(v => v.status === 'completed').length;
   const totalHours = trainings.reduce((s, t) => s + (t.duration || 0), 0);
   // Teachers reached = visit teachersMet + training attendees
-  const teachersReached = visits.reduce((s, v) => s + (parseInt(v.teachersMet) || 0), 0)
+  const teachersReached = visits.reduce((s, v) => { const n = parseInt(v.teachersMet); return s + (isNaN(n) ? 0 : n); }, 0)
     + trainings.reduce((s, t) => s + (t.attendees || 0), 0);
   const schools = new Set();
   visits.forEach(v => schools.add((v.school || '').toLowerCase().trim()));
