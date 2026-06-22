@@ -3972,10 +3972,20 @@ const WidgetBuilder = {
         label = 'Trainings Held';
         trendClass = value > 0 ? '' : 'neutral';
         break;
-      case 'kpi-observations':
-        value = observations.length;
+      case 'kpi-observations': {
+        const now1 = new Date();
+        const prevMonth = now1.getMonth() === 0 ? 11 : now1.getMonth() - 1;
+        const prevYear = now1.getMonth() === 0 ? now1.getFullYear() - 1 : now1.getFullYear();
+        const prevObs = observations.filter(o => {
+          if (!o.date) return false;
+          const d = new Date(o.date);
+          return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
+        });
+        value = prevObs.length;
         label = 'Observations';
-        break;
+        trendText = 'Previous month';
+        trendClass = value > 0 ? '' : 'neutral';
+      } break;
       case 'kpi-schools': {
         const schools = new Set();
         visits.forEach(v => schools.add((v.school || '').toLowerCase().trim()));
