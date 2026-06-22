@@ -15685,7 +15685,8 @@ function getSchoolData() {
 
   // Convert sets to counts for easy access
   Object.values(schoolMap).forEach(s => {
-    s.totalVisitDays = s._dates.size;
+    s.totalVisitDays = s.visits.length;       // ALL visit records (each teacher visit counts separately)
+    s.uniqueVisitDays = s._dates.size;        // unique calendar days (for reference)
     s.teacherCount = s._teachers.size;
     s.teachers = [...s._teachers];
     delete s._dates;
@@ -15968,6 +15969,7 @@ function showSchoolDetail(encodedKey) {
  ${school.block ? `<p style="color:var(--text-muted);margin-bottom:20px;"><i class="fas fa-map-marker-alt" style="color:var(--amber);margin-right:6px;"></i>${escapeHtml(school.block)}</p>` : ''}
  <div class="school-detail-stats">
  <div class="school-detail-stat"><div class="stat-value">${school.totalVisitDays}</div><div class="stat-label">Total Visits</div></div>
+ <div class="school-detail-stat"><div class="stat-value">${school.uniqueVisitDays}</div><div class="stat-label">Unique Days</div></div>
  <div class="school-detail-stat"><div class="stat-value">${completedVisits}</div><div class="stat-label">Completed</div></div>
  <div class="school-detail-stat"><div class="stat-value">${plannedVisits}</div><div class="stat-label">Planned</div></div>
  <div class="school-detail-stat"><div class="stat-value">${school.observations.length}</div><div class="stat-label">Observations</div></div>
