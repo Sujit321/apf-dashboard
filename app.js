@@ -35463,12 +35463,25 @@ function _runPeriodComparison() {
   const aObs = inRange(observations, aStart, aEnd);
   const bObs = inRange(observations, bStart, bEnd);
 
-  // Unique schools from School Visits
+  // Unique schools from School Visits (Set deduplication)
   const aVisitSchools = new Set(aVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
   const bVisitSchools = new Set(bVisits.map(v => (v.school || '').toLowerCase().trim()).filter(Boolean));
 
-  // Teachers reached from visits: use teachersMet field directly
-  const sumTeachers = arr => arr.reduce((sum, v) => sum + (parseInt(v.teachersMet) || 0), 0);
+  // Unique teachers reached: deduplicate by peopleMet name; unnamed visits contribute teachersMet count
+  const uniqueTeachersReached = arr => {
+    const namedSet = new Set();
+    let unnamedCount = 0;
+    arr.forEach(v => {
+      const name = (v.peopleMet || '').trim().toLowerCase().split('(')[0].trim();
+      if (name) {
+        namedSet.add(name);
+      } else {
+        const n = parseInt(v.teachersMet);
+        if (!isNaN(n) && n > 0) unnamedCount += n;
+      }
+    });
+    return namedSet.size + unnamedCount;
+  };
 
   // Avg visit rating (1–5) from School Visits
   const avgRating = arr => {
@@ -35477,12 +35490,12 @@ function _runPeriodComparison() {
   };
 
   const metrics = [
-    { label: 'Visits (Unique Schools)', cur: aVisitSchools.size, prev: bVisitSchools.size, icon: 'fa-school' },
+    { label: 'Total Visits', cur: aVisits.length, prev: bVisits.length, icon: 'fa-school' },
+    { label: 'Schools Covered (Unique)', cur: aVisitSchools.size, prev: bVisitSchools.size, icon: 'fa-map-marker-alt' },
+    { label: 'Teachers Reached (Unique)', cur: uniqueTeachersReached(aVisits), prev: uniqueTeachersReached(bVisits), icon: 'fa-users' },
     { label: 'Trainings', cur: aTrainings.length, prev: bTrainings.length, icon: 'fa-chalkboard-teacher' },
-    { label: 'Observations', cur: aObs.length, prev: bObs.length, icon: 'fa-clipboard-list' },
-    { label: 'Schools Covered', cur: aVisits.length, prev: bVisits.length, icon: 'fa-map-marker-alt' },
-    { label: 'Teachers Reached', cur: sumTeachers(aVisits), prev: sumTeachers(bVisits), icon: 'fa-users' },
     { label: 'Training Attendees', cur: aTrainings.reduce((s, t) => s + (parseInt(t.attendees) || 0), 0), prev: bTrainings.reduce((s, t) => s + (parseInt(t.attendees) || 0), 0), icon: 'fa-chalkboard-teacher' },
+    { label: 'Observations', cur: aObs.length, prev: bObs.length, icon: 'fa-clipboard-list' },
     { label: 'Avg Visit Rating', cur: avgRating(aVisits), prev: avgRating(bVisits), decimal: true, icon: 'fa-star', suffix: '/5' },
   ];
 
