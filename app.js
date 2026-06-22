@@ -12966,21 +12966,39 @@ function renderVisitFrequency(visits) {
   const body = document.getElementById('visitFreqBody');
   if (!body) return;
 
-  // Count visits per school
+  // Count visits per school (by unique dates to represent Visit Days)
   const freq = {};
   visits.forEach(v => {
     const school = (v.school || '').trim();
     if (!school) return;
-    if (!freq[school]) freq[school] = { total: 0, completed: 0, planned: 0, cancelled: 0, lastDate: '', cluster: v.cluster || '', block: v.block || '' };
-    freq[school].total++;
-    if (v.status === 'completed') freq[school].completed++;
-    else if (v.status === 'planned') freq[school].planned++;
-    else if (v.status === 'cancelled') freq[school].cancelled++;
-    if (v.date && v.date > freq[school].lastDate) {
-      freq[school].lastDate = v.date;
-      if (v.cluster) freq[school].cluster = v.cluster;
-      if (v.block) freq[school].block = v.block;
+    if (!freq[school]) {
+      freq[school] = { 
+        total: 0, completed: 0, planned: 0, cancelled: 0, 
+        lastDate: '', cluster: v.cluster || '', block: v.block || '',
+        _dates: new Set(), _completedDates: new Set(), _plannedDates: new Set(), _cancelledDates: new Set()
+      };
     }
+    
+    if (v.date) {
+      freq[school]._dates.add(v.date);
+      if (v.status === 'completed') freq[school]._completedDates.add(v.date);
+      else if (v.status === 'planned') freq[school]._plannedDates.add(v.date);
+      else if (v.status === 'cancelled') freq[school]._cancelledDates.add(v.date);
+      
+      if (v.date > freq[school].lastDate) {
+        freq[school].lastDate = v.date;
+        if (v.cluster) freq[school].cluster = v.cluster;
+        if (v.block) freq[school].block = v.block;
+      }
+    }
+  });
+
+  // Convert Sets to counts
+  Object.values(freq).forEach(data => {
+    data.total = data._dates.size;
+    data.completed = data._completedDates.size;
+    data.planned = data._plannedDates.size;
+    data.cancelled = data._cancelledDates.size;
   });
 
   const sorted = Object.entries(freq).sort((a, b) => b[1].total - a[1].total);
@@ -12990,18 +13008,19 @@ function renderVisitFrequency(visits) {
   }
 
   const maxVisits = sorted[0][1].total;
+  const totalDays = sorted.reduce((sum, [_, data]) => sum + data.total, 0);
 
   let html = `<div class="vf-summary">
  <span class="vf-sum-item"><strong>${sorted.length}</strong> schools</span>
- <span class="vf-sum-item"><strong>${visits.length}</strong> total visits</span>
- <span class="vf-sum-item">Avg <strong>${(visits.length / sorted.length).toFixed(1)}</strong> visits/school</span>
+ <span class="vf-sum-item"><strong>${totalDays}</strong> total visit days</span>
+ <span class="vf-sum-item">Avg <strong>${(totalDays / sorted.length).toFixed(1)}</strong> days/school</span>
  </div>
  <table class="vf-table">
  <thead><tr>
  <th class="vf-rank">#</th>
  <th class="vf-school">School Name</th>
  <th class="vf-loc">Cluster / Block</th>
- <th class="vf-count">Visits</th>
+ <th class="vf-count">Visit Days</th>
  <th class="vf-comp">Completed</th>
  <th class="vf-plan">Planned</th>
  <th class="vf-date">Last Visit</th>

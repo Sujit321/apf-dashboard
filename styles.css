@@ -1384,9 +1384,44 @@ body.light-mode .howto-icon {
 
     /* compact the visit card slightly and improve touch targets */
     .visit-item {
-        padding: 14px;
-        gap: 12px;
+        padding: 12px;
+        gap: 10px;
         align-items: flex-start;
+        flex-wrap: wrap;            /* allow actions to drop to next row */
+    }
+
+    /* Date badge stays fixed width */
+    .visit-date-badge {
+        flex-shrink: 0;
+        min-width: 50px;
+    }
+
+    /* Info grows to fill remaining space */
+    .visit-info {
+        flex: 1 1 0;
+        min-width: 0;              /* prevent overflow */
+    }
+
+    /* Actions always drop to a FULL-WIDTH row below date+info */
+    .visit-actions {
+        width: 100%;
+        gap: 6px;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+        margin-top: 2px;
+    }
+
+    /* Push status badge + HM to the left, edit/delete to the right */
+    .visit-actions .badge,
+    .visit-actions .visit-hm-indicator {
+        flex: 0 0 auto;
+    }
+
+    /* Spacer between left badges and right buttons */
+    .visit-actions::after {
+        content: '';
+        flex: 1 1 auto;
     }
 
     .visit-select-chk input[type="checkbox"] {
@@ -1394,17 +1429,14 @@ body.light-mode .howto-icon {
         height: 20px;
     }
 
-    .visit-actions {
-        gap: 6px;
-    }
-
-    .visit-actions .btn {
-        padding: 8px 10px;
-    }
-
     .visit-meta {
         gap: 8px;
         flex-wrap: wrap;
+    }
+
+    /* Show all meta items on tablet */
+    .visit-meta span {
+        display: flex !important;
     }
 }
 
@@ -1428,53 +1460,83 @@ body.light-mode .howto-icon {
         min-width: 0;
     }
 
-    /* stack visit card content for narrow screens */
+    /* visit card: date badge left | info right, actions full-width below */
     .visit-item {
-        flex-direction: column;
-        padding: 12px;
-        position: relative;
-        padding-left: 56px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        gap: 10px;
     }
 
-    .visit-item .visit-date-badge {
-        order: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 46px;
+    .visit-date-badge {
+        flex: 0 0 48px;
+        min-width: 48px;
         padding: 6px;
     }
 
-    /* place checkbox over the card for easier tapping */
+    .visit-date-badge .day {
+        font-size: 20px;
+    }
+
+    .visit-date-badge .month {
+        font-size: 9px;
+    }
+
+    .visit-info {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .visit-info h4 {
+        font-size: 14px;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .visit-info p {
+        font-size: 12px;
+    }
+
+    .visit-meta {
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    /* Show all meta items on mobile — don't hide anything */
+    .visit-meta span {
+        display: flex !important;
+        font-size: 11px;
+    }
+
+    /* Actions full-width row */
+    .visit-actions {
+        width: 100%;
+        gap: 5px;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+    }
+
+    /* Icon-only buttons on small screens to save space */
+    .visit-actions .btn-sm {
+        padding: 7px 9px;
+        font-size: 12px;
+    }
+
+    /* hide text labels in action buttons, keep icons */
+    .visit-actions .btn-sm span,
+    .visit-actions .btn-sm .ai-label {
+        display: none;
+    }
+
     .visit-select-chk {
-        position: absolute;
-        left: 12px;
-        top: 12px;
-        z-index: 2;
+        position: static;
         background: transparent;
     }
 
     .visit-select-chk input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-    }
-
-    .visit-actions {
-        justify-content: flex-end;
-        margin-top: 8px;
-    }
-
-    /* hide less-critical metadata on very small screens */
-    .visit-meta span:nth-child(n+3) {
-        display: none;
-    }
-
-    .visit-info h4 {
-        font-size: 15px;
-    }
-
-    .visit-info p {
-        font-size: 13px;
+        width: 18px;
+        height: 18px;
     }
 }
 
