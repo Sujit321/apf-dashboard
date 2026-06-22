@@ -1588,20 +1588,28 @@ body.light-mode .howto-icon {
     display: flex;
     gap: 12px;
     margin-top: 6px;
+    flex-wrap: wrap;
 }
 
 .visit-meta span {
     font-size: 12px;
     color: var(--text-muted);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.visit-meta span:last-child {
+    white-space: normal;
+    word-break: break-word;
 }
 
 .visit-actions {
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .visit-followup-preview {
@@ -19182,6 +19190,8 @@ body.compact-mode .settings-card-header {
     margin-top: 2px;
 }
 
+
+
 .bch-stat-sub {
     font-size: 0.7rem;
     color: var(--text-muted);
@@ -24227,6 +24237,35 @@ button.vp-half-badge:hover {
     border-bottom: 1px solid var(--border, rgba(255,255,255,0.07));
     display: flex;
     align-items: center;
+}
+
+.visit-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+    flex-wrap: wrap; /* always wrap metadata items */
+}
+
+.visit-meta span {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap; /* keep icon and text together */
+}
+
+/* Allow the people/names metadata to truncate with ellipsis instead of wrapping */
+.visit-meta span:last-child {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.visit-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .vp-excel-menu-item {

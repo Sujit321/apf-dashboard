@@ -35515,8 +35515,10 @@ function _runPeriodComparison() {
     return rated.length ? rated.reduce((s, v) => s + parseFloat(v.rating), 0) / rated.length : 0;
   };
 
+  const uniqueVisitDays = arr => new Set(arr.filter(v => v.school && v.date).map(v => `${v.school.trim().toLowerCase()}|${v.date}`)).size;
+
   const metrics = [
-    { label: 'Total Visits', cur: aVisits.length, prev: bVisits.length, icon: 'fa-school' },
+    { label: 'Total Visit Days', cur: uniqueVisitDays(aVisits), prev: uniqueVisitDays(bVisits), icon: 'fa-school' },
     { label: 'Schools Covered (Unique)', cur: aVisitSchools.size, prev: bVisitSchools.size, icon: 'fa-map-marker-alt' },
     { label: 'Teachers Reached (Unique)', cur: uniqueTeachersReached(aVisits), prev: uniqueTeachersReached(bVisits), icon: 'fa-users' },
     { label: 'Trainings', cur: aTrainings.length, prev: bTrainings.length, icon: 'fa-chalkboard-teacher' },
