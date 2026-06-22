@@ -3793,7 +3793,7 @@ function openQuickAdd() {
 const WidgetBuilder = {
   // Widget Registry 
   registry: [
-    { id: 'kpi-visits', title: 'Total Visits', icon: 'fa-school', size: 'small', category: 'KPI', desc: 'Total school visits count' },
+    { id: 'kpi-visits', title: 'Total Visit Days', icon: 'fa-school', size: 'small', category: 'KPI', desc: 'Unique days spent at schools' },
     { id: 'kpi-trainings', title: 'Trainings Held', icon: 'fa-chalkboard-teacher', size: 'small', category: 'KPI', desc: 'Total training sessions' },
     { id: 'kpi-observations', title: 'Observations', icon: 'fa-eye', size: 'small', category: 'KPI', desc: 'Total observations recorded' },
     { id: 'kpi-schools', title: 'Schools Covered', icon: 'fa-map-marker-alt', size: 'small', category: 'KPI', desc: 'Unique schools visited' },
@@ -3803,7 +3803,7 @@ const WidgetBuilder = {
     { id: 'recent-activity', title: 'Recent Activity', icon: 'fa-clock', size: 'medium', category: 'Lists', desc: 'Latest actions across modules' },
     { id: 'upcoming-followups', title: 'Upcoming Follow-ups', icon: 'fa-tasks', size: 'medium', category: 'Lists', desc: 'Follow-ups due soon' },
     { id: 'week-glance', title: 'My Week at a Glance', icon: 'fa-calendar-week', size: 'medium', category: 'Insights', desc: '7-day overview of all activities' },
-    { id: 'top-schools', title: 'Top 5 Schools by Visits', icon: 'fa-trophy', size: 'medium', category: 'Insights', desc: 'Most visited schools ranking' },
+    { id: 'top-schools', title: 'Top 5 Schools by Visit Days', icon: 'fa-trophy', size: 'medium', category: 'Insights', desc: 'Most visited schools ranking' },
     { id: 'insight-cluster', title: 'Cluster Coverage', icon: 'fa-network-wired', size: 'medium', category: 'Insights', desc: 'Visits distributed by cluster' },
     { id: 'insight-training', title: 'Training Footprint', icon: 'fa-users', size: 'medium', category: 'Insights', desc: 'Teachers reached via trainings' },
     { id: 'insight-streak', title: 'Productivity Streak', icon: 'fa-fire', size: 'medium', category: 'Insights', desc: 'Active days streak analysis' },
@@ -3961,11 +3961,12 @@ const WidgetBuilder = {
     let value = 0, label = '', trendText = 'This month', trendClass = 'neutral';
 
     switch (w.id) {
-      case 'kpi-visits':
-        value = visits.length;
-        label = 'Total Visits';
+      case 'kpi-visits': {
+        const uniqueVisitDays = new Set(visits.filter(v => v.school && v.date).map(v => `${v.school.trim().toLowerCase()}|${v.date}`));
+        value = uniqueVisitDays.size;
+        label = 'Total Visit Days';
         trendClass = value > 0 ? '' : 'neutral';
-        break;
+      } break;
       case 'kpi-trainings':
         value = trainings.length;
         label = 'Trainings Held';
@@ -4148,10 +4149,16 @@ const WidgetBuilder = {
     const counts = {};
     visits.forEach(v => {
       const s = (v.school || '').trim();
-      if (s) counts[s] = (counts[s] || 0) + 1;
+      if (s && v.date) {
+        if (!counts[s]) counts[s] = new Set();
+        counts[s].add(v.date);
+      }
     });
 
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const sorted = Object.entries(counts)
+      .map(([s, dates]) => [s, dates.size])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
 
     if (sorted.length === 0) {
       return `<div class="empty-state small"><i class="fas fa-trophy"></i><p>Add visits to see top schools</p></div>`;
@@ -4161,7 +4168,7 @@ const WidgetBuilder = {
       `<div class="top-school-item">
  <span class="rank">#${i + 1}</span>
  <span class="school-name">${escapeHtml(name)}</span>
- <span class="school-count">${count} visit${count !== 1 ? 's' : ''}</span>
+ <span class="school-count">${count} visit day${count !== 1 ? 's' : ''}</span>
  </div>`
     ).join('')}</div>`;
   },
