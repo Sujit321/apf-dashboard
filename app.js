@@ -5399,9 +5399,23 @@ function renderVisitStats(visits) {
   const uniqueSchools = new Set(visits.map(v => (v.school || '').trim().toLowerCase())).size;
   const withFollowUp = visits.filter(v => v.followUp && v.followUp.trim()).length;
   const avgRating = visits.filter(v => v.rating).length > 0 ? (visits.filter(v => v.rating).reduce((s, v) => s + parseInt(v.rating), 0) / visits.filter(v => v.rating).length).toFixed(1) : '--';
-  // New stats — null = not entered, 0 = entered as zero, positive = actual count
+  // Unique teachers: deduplicate by peopleMet name; visits with no name contribute their teachersMet count
+  const _uniqueTeachers = (vArr) => {
+    const namedSet = new Set();
+    let unnamedCount = 0;
+    vArr.forEach(v => {
+      const name = (v.peopleMet || '').trim().toLowerCase().split('(')[0].trim(); // strip designation
+      if (name) {
+        namedSet.add(name);
+      } else {
+        const n = parseInt(v.teachersMet);
+        if (!isNaN(n) && n > 0) unnamedCount += n;
+      }
+    });
+    return namedSet.size + unnamedCount;
+  };
   const _tmNum = v => { const n = parseInt(v.teachersMet); return isNaN(n) ? 0 : n; };
-  const totalTeachersMet = visits.reduce((s, v) => s + _tmNum(v), 0);
+  const totalTeachersMet = _uniqueTeachers(visits);
   const visitsWithTeachers = visits.filter(v => v.teachersMet !== null && v.teachersMet !== undefined && v.teachersMet !== '' && _tmNum(v) > 0);
   const avgTeachers = visitsWithTeachers.length > 0
     ? (visitsWithTeachers.reduce((s, v) => s + _tmNum(v), 0) / visitsWithTeachers.length).toFixed(1)
@@ -12696,9 +12710,18 @@ function getGoalActuals(year, month) {
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
-  // Teachers reached = visit teachersMet + training attendees
-  // Use isNaN guard: parseInt(null/undefined/'') = NaN → 0; parseInt('5') = 5; parseInt(5) = 5
-  const teachersFromVisits = visits.reduce((sum, v) => { const n = parseInt(v.teachersMet); return sum + (isNaN(n) ? 0 : n); }, 0);
+  // Teachers reached = unique teachers from visits (by name) + training attendees
+  const _uniqueVisitTeachers = (vArr) => {
+    const namedSet = new Set();
+    let unnamedCount = 0;
+    vArr.forEach(v => {
+      const name = (v.peopleMet || '').trim().toLowerCase().split('(')[0].trim();
+      if (name) { namedSet.add(name); }
+      else { const n = parseInt(v.teachersMet); if (!isNaN(n) && n > 0) unnamedCount += n; }
+    });
+    return namedSet.size + unnamedCount;
+  };
+  const teachersFromVisits = _uniqueVisitTeachers(visits);
   const teachersReached = teachersFromVisits + trainings.reduce((sum, t) => sum + (t.attendees || 0), 0);
 
   const resources = DB.get('resources').filter(r => {
@@ -13072,9 +13095,18 @@ function renderAnalyticsInsights(visits, trainings, observations, allVisits, all
     });
   }
 
-  // Teacher reach: visits teachersMet + training attendees
-  const _safeInt = v => { const n = parseInt(v.teachersMet); return isNaN(n) ? 0 : n; };
-  const visitTeachers = visits.reduce((s, v) => s + _safeInt(v), 0);
+  // Teacher reach: unique teachers from visits (by name) + training attendees
+  const _utReach = (vArr) => {
+    const namedSet = new Set();
+    let unnamedCount = 0;
+    vArr.forEach(v => {
+      const name = (v.peopleMet || '').trim().toLowerCase().split('(')[0].trim();
+      if (name) { namedSet.add(name); }
+      else { const n = parseInt(v.teachersMet); if (!isNaN(n) && n > 0) unnamedCount += n; }
+    });
+    return namedSet.size + unnamedCount;
+  };
+  const visitTeachers = _utReach(visits);
   const trainingTeachers = trainings.reduce((s, t) => s + (t.attendees || 0), 0);
   const teachersReached = visitTeachers + trainingTeachers;
   if (teachersReached > 0) {
@@ -13106,9 +13138,18 @@ function renderAnalyticsKPIs(visits, trainings, observations) {
   const grid = document.getElementById('analyticsKpiGrid');
   const completed = visits.filter(v => v.status === 'completed').length;
   const totalHours = trainings.reduce((s, t) => s + (t.duration || 0), 0);
-  // Teachers reached = visit teachersMet + training attendees
-  const teachersReached = visits.reduce((s, v) => { const n = parseInt(v.teachersMet); return s + (isNaN(n) ? 0 : n); }, 0)
-    + trainings.reduce((s, t) => s + (t.attendees || 0), 0);
+  // Teachers reached = unique named teachers + unnamed count + training attendees
+  const _utKpi = (vArr) => {
+    const namedSet = new Set();
+    let unnamedCount = 0;
+    vArr.forEach(v => {
+      const name = (v.peopleMet || '').trim().toLowerCase().split('(')[0].trim();
+      if (name) { namedSet.add(name); }
+      else { const n = parseInt(v.teachersMet); if (!isNaN(n) && n > 0) unnamedCount += n; }
+    });
+    return namedSet.size + unnamedCount;
+  };
+  const teachersReached = _utKpi(visits) + trainings.reduce((s, t) => s + (t.attendees || 0), 0);
   const schools = new Set();
   visits.forEach(v => schools.add((v.school || '').toLowerCase().trim()));
   observations.forEach(o => schools.add((o.school || '').toLowerCase().trim()));
