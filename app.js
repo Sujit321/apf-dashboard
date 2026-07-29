@@ -1146,7 +1146,10 @@ function restoreFromLocalStorage() {
       const raw = localStorage.getItem('apf_data_' + key);
       if (raw) {
         const data = JSON.parse(raw);
-        if (Array.isArray(data) && data.length > 0) {
+        // FIX: also restore object-type keys (e.g. schoolStudentRecords is {} not [])
+        const hasArrayData = Array.isArray(data) && data.length > 0;
+        const hasObjectData = !Array.isArray(data) && data !== null && typeof data === 'object' && Object.keys(data).length > 0;
+        if (hasArrayData || hasObjectData) {
           _originalDBSet(key, data);
           restored++;
         }
@@ -16897,7 +16900,7 @@ function _ssrUpdatePreview() {
  `;
 }
 
-function saveSchoolStudentRecords(encodedKey) {
+async function saveSchoolStudentRecords(encodedKey) {
   const schoolKey = decodeURIComponent(encodedKey);
   const notes = (document.getElementById('ssrNotes')?.value || '').trim();
 
@@ -16910,10 +16913,10 @@ function saveSchoolStudentRecords(encodedKey) {
       c[l.key] = parseInt(document.getElementById(`ssrC${cls}_${l.key}`)?.value) || 0;
       rowTotal += c[l.key];
     });
-    if (rowTotal > 0) {
-      classes[cls] = c;
-      grandTotal += rowTotal;
-    }
+    // Always store the class row (even if all zeros) so partial edits don't silently erase classes.
+    // Only skip if the class was never touched AND not previously stored.
+    classes[cls] = c;
+    grandTotal += rowTotal;
   });
 
   if (grandTotal === 0) {
@@ -16950,8 +16953,33 @@ function saveSchoolStudentRecords(encodedKey) {
 
   allRecords[schoolKey] = { classes, notes, updatedAt: new Date().toISOString(), schoolName, block, cluster, history };
   DB.set('schoolStudentRecords', allRecords);
-  if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
-  showToast(`\u2705 Student records saved (${grandTotal} students, ${history.length} history entries)`);
+
+  // === FIX: Immediately flush to encrypted cache (IndexedDB) instead of relying on
+  // the 2-second debounced auto-save timer. This prevents data loss when the user
+  // closes/refreshes the page quickly after saving student records.
+  let persistOk = false;
+  if (_sessionPassword) {
+    try {
+      persistOk = await EncryptedCache.save(_sessionPassword);
+      if (persistOk) {
+        clearUnsavedChanges();
+        if (FileLink.isLinked()) {
+          FileLink.writeToFile(_sessionPassword).catch(e => console.warn('File sync after SSR save:', e));
+        }
+      }
+    } catch (e) {
+      console.error('Immediate SSR persist failed:', e);
+    }
+  }
+
+  if (!persistOk) {
+    // Fall back to debounced auto-save if immediate save was not possible
+    if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
+    showToast('\u2705 Student records saved locally (auto-save pending...)', 'success');
+  } else {
+    showToast(`\u2705 Student records saved & stored (${grandTotal} students, ${history.length} history entries)`, 'success');
+  }
+
   showSchoolDetail(encodeURIComponent(schoolKey));
 }
 
@@ -22304,13 +22332,29 @@ function exportAllDataToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, 'Feedback Reports');
   }
 
-  const schoolStudentRecords = DB.get('schoolStudentRecords') || [];
-  if (schoolStudentRecords.length > 0) {
-    const ws = XLSX.utils.json_to_sheet(schoolStudentRecords.map(r => ({
-      School: r.school || r.schoolName || '', Year: r.year || '', 'Total Students': r.totalStudents || r.total || 0,
-      Boys: r.boys || 0, Girls: r.girls || 0, 'Class': r.class || '', Enrollment: r.enrollment || '',
-      Attendance: r.attendance || '', Notes: r.notes || ''
-    })));
+  // FIX: schoolStudentRecords is a keyed object {schoolKey: {classes, notes, updatedAt,...}}
+  // not an array — previous code always skipped this export.
+  const schoolStudentRecordsRaw = DB.get('schoolStudentRecords') || {};
+  const ssrRows = Array.isArray(schoolStudentRecordsRaw)
+    ? [] // ignore corrupted old array format
+    : Object.entries(schoolStudentRecordsRaw).map(([key, sr]) => {
+        if (!sr || typeof sr !== 'object') return null;
+        const t = _ssrTotals(sr);
+        return {
+          School: sr.schoolName || key,
+          Block: sr.block || '',
+          Cluster: sr.cluster || '',
+          'Updated At': sr.updatedAt ? new Date(sr.updatedAt).toLocaleDateString('en-IN') : '',
+          'Total Students': t.total,
+          'LIG (Lagging)': t.lig,
+          'FLN': t.fln,
+          'PGL (Partial Grade Level)': t.pgl,
+          'GL (Grade Level)': t.gl,
+          Notes: sr.notes || ''
+        };
+      }).filter(Boolean);
+  if (ssrRows.length > 0) {
+    const ws = XLSX.utils.json_to_sheet(ssrRows);
     XLSX.utils.book_append_sheet(wb, ws, 'Student Records');
   }
 
