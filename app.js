@@ -2612,6 +2612,7 @@ function refreshSection(section) {
     case 'planner': renderPlanner(); break;
     case 'goals': renderGoals(); break;
     case 'analytics': renderAnalytics(); break;
+    case 'recordinsights': renderRecordInsights(); break;
     case 'dataquality': renderDataQualityCenter(); break;
     case 'followups': renderFollowups(); break;
     case 'ideas': renderIdeas(); break;
@@ -12833,46 +12834,98 @@ function renderGoals() {
   document.getElementById('goalTeachers').value = targets.teachers;
   document.getElementById('goalResources').value = targets.resources;
 
-  // Render progress cards
   const metrics = [
-    { key: 'visits', label: 'School Visits', icon: 'fa-school', cls: 'visits' },
-    { key: 'trainings', label: 'Training Sessions', icon: 'fa-chalkboard-teacher', cls: 'trainings' },
-    { key: 'observations', label: 'Observations', icon: 'fa-clipboard-check', cls: 'observations' },
-    { key: 'teachers', label: 'Teachers Reached', icon: 'fa-users', cls: 'teachers' },
-    { key: 'resources', label: 'Resources Created', icon: 'fa-book-open', cls: 'resources' },
+    { key: 'visits', label: 'School Visits', icon: 'fa-school', color: '#3b82f6' },
+    { key: 'trainings', label: 'Training Sessions', icon: 'fa-chalkboard-teacher', color: '#8b5cf6' },
+    { key: 'observations', label: 'Observations', icon: 'fa-clipboard-check', color: '#10b981' },
+    { key: 'teachers', label: 'Teachers Reached', icon: 'fa-users', color: '#f59e0b' },
+    { key: 'resources', label: 'Resources Created', icon: 'fa-book-open', color: '#ec4899' },
   ];
 
-  const gridEl = document.getElementById('goalsProgressGrid');
-  gridEl.innerHTML = metrics.map(m => {
+  // Compute per-metric stats
+  let achievedCount = 0;
+  let weightedSum = 0;
+  let best = null;
+  const stats = metrics.map(m => {
     const actual = actuals[m.key] || 0;
-    const target = targets[m.key] || 1;
-    const pct = Math.min(Math.round((actual / target) * 100), 200);
-    const displayPct = Math.min(pct, 100);
+    const target = targets[m.key] || 0;
+    const pct = target > 0 ? Math.round((actual / target) * 100) : (actual > 0 ? 100 : 0);
+    const capped = Math.min(pct, 100);
+    if (pct >= 100) achievedCount++;
+    weightedSum += Math.min(capped, 100);
+    if (!best || pct > best.pct) best = { ...m, pct, actual, target };
+    return { ...m, actual, target, pct, capped };
+  });
 
-    let statusClass, statusText;
-    if (pct >= 100) {
-      statusClass = 'exceeded';
-      statusText = pct === 100 ? '100% ' : `${pct}% `;
-    } else if (pct >= 60) {
-      statusClass = 'on-track';
-      statusText = `${pct}%`;
-    } else {
-      statusClass = 'behind';
-      statusText = `${pct}%`;
-    }
+  const overallPct = metrics.length ? Math.round(weightedSum / metrics.length) : 0;
 
-    return `<div class="goal-progress-card">
- <div class="goal-icon ${m.cls}"><i class="fas ${m.icon}"></i></div>
- <div class="goal-label">${m.label}</div>
- <div class="goal-numbers">
- <span class="goal-current">${actual}</span>
- <span class="goal-target">/ ${target}</span>
- </div>
- <span class="goal-percent ${statusClass}">${statusText}</span>
- <div class="goal-progress-bar">
- <div class="goal-progress-bar-fill ${m.cls}" style="width: ${displayPct}%"></div>
- </div>
- </div>`;
+  // Header badge
+  const badge = document.getElementById('gtOverallBadge');
+  if (badge) {
+    badge.textContent = overallPct + '%';
+    badge.style.background = overallPct >= 100 ? 'rgba(16,185,129,0.12)' : overallPct >= 60 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.10)';
+    badge.style.borderColor = overallPct >= 100 ? 'rgba(16,185,129,0.25)' : overallPct >= 60 ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.2)';
+    badge.style.color = overallPct >= 100 ? '#059669' : overallPct >= 60 ? '#d97706' : '#dc2626';
+  }
+
+  // Editor month label
+  const editorMonthEl = document.getElementById('gtEditorMonth');
+  if (editorMonthEl) {
+    editorMonthEl.innerHTML = `<i class="fas fa-calendar"></i> ${new Date(year, month, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}`;
+  }
+
+  // Summary KPI strip
+  const kpiStrip = document.getElementById('goalKpiStrip');
+  if (kpiStrip) {
+    const now = new Date();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
+    const dayOfMonth = isCurrentMonth ? now.getDate() : daysInMonth;
+    const monthProgress = Math.round((dayOfMonth / daysInMonth) * 100);
+    const paceDelta = overallPct - monthProgress;
+    const paceText = isCurrentMonth
+      ? (paceDelta >= 0 ? `ahead by ${paceDelta}%` : `${Math.abs(paceDelta)}% behind pace`)
+      : 'month closed';
+    const kpis = [
+      { label: 'Overall', value: overallPct + '%', sub: 'of all targets', icon: 'fa-bullseye', color: 'var(--accent)', bar: overallPct },
+      { label: 'Achieved', value: `${achievedCount}/${metrics.length}`, sub: best ? `best: ${best.label} ${best.pct}%` : '', icon: 'fa-trophy', color: '#f59e0b', bar: Math.round((achievedCount / metrics.length) * 100) },
+      { label: 'Month Pace', value: monthProgress + '%', sub: paceText, icon: 'fa-hourglass-half', color: '#3b82f6', bar: monthProgress },
+      { label: 'Days Left', value: isCurrentMonth ? String(daysInMonth - dayOfMonth) : '—', sub: isCurrentMonth ? 'to finish targets' : 'past month', icon: 'fa-calendar-week', color: '#8b5cf6', bar: 100 - monthProgress }
+    ];
+    kpiStrip.innerHTML = kpis.map(k => `
+      <div class="swh-kpi gtl-kpi">
+        <span class="swh-kpi-icon" style="background:${k.color === 'var(--accent)' ? 'var(--accent-light)' : k.color + '14'};color:${k.color}"><i class="fas ${k.icon}"></i></span>
+        <div class="swh-kpi-body">
+          <span class="swh-kpi-value">${k.value}</span>
+          <span class="swh-kpi-label">${k.label}</span>
+        </div>
+        <span class="gtl-kpi-right">
+          <span class="swh-kpi-sub">${k.sub}</span>
+          <span class="gtl-mini-bar"><span style="width:${Math.min(k.bar || 0, 100)}%;background:${k.color}"></span></span>
+        </span>
+      </div>`).join('');
+  }
+
+  // Render progress cards
+  const gridEl = document.getElementById('goalsProgressGrid');
+  gridEl.innerHTML = stats.map(m => {
+    const done = m.pct >= 100;
+    const statusClass = done ? 'exceeded' : m.pct >= 60 ? 'on-track' : 'behind';
+    const statusIcon = done ? 'fa-circle-check' : m.pct >= 60 ? 'fa-arrow-trend-up' : 'fa-clock';
+    const ring = `conic-gradient(${m.color} ${m.capped * 3.6}deg, var(--border) 0deg)`;
+    return `<div class="goal-progress-card" style="--gc:${m.color}">
+      ${done ? '<span class="gtl-achieved-flag"><i class="fas fa-check"></i> Done</span>' : ''}
+      <div class="gtl-ring" style="background:${ring}">
+        <div class="gtl-ring-inner">
+          <strong>${m.actual}</strong>
+          <small>/ ${m.target}</small>
+        </div>
+      </div>
+      <div class="gtl-card-info">
+        <div class="goal-label"><i class="fas ${m.icon}" style="color:${m.color}"></i> ${m.label}</div>
+        <span class="goal-percent ${statusClass}"><i class="fas ${statusIcon}"></i> ${m.pct}%</span>
+      </div>
+    </div>`;
   }).join('');
 
   // Render trend chart
@@ -12963,6 +13016,221 @@ function renderGoalTrendChart() {
       },
     },
   });
+}
+
+// ===== RECORD INSIGHTS — one graph per record type =====
+const RI_MODULES = [
+  { key: 'visits', label: 'School Visits', icon: 'fa-school', color: '#3b82f6', dateFields: ['date'] },
+  { key: 'trainings', label: 'Trainings', icon: 'fa-chalkboard-user', color: '#8b5cf6', dateFields: ['date'] },
+  { key: 'observations', label: 'Observations', icon: 'fa-clipboard-check', color: '#10b981', dateFields: ['date', 'responseDate'] },
+  { key: 'schoolWork', label: 'School Work', icon: 'fa-chalkboard', color: '#f59e0b', dateFields: ['date'] },
+  { key: 'meetings', label: 'Meetings', icon: 'fa-handshake', color: '#ec4899', dateFields: ['date', 'meetingDate'] },
+  { key: 'resources', label: 'Resources', icon: 'fa-book-open', color: '#06b6d4', dateFields: ['createdAt', 'date'] },
+  { key: 'notes', label: 'Quick Notes', icon: 'fa-note-sticky', color: '#eab308', dateFields: ['createdAt', 'updatedAt', 'date'] },
+  { key: 'ideas', label: 'Ideas', icon: 'fa-lightbulb', color: '#a78bfa', dateFields: ['createdAt', 'updatedAt', 'date'] },
+  { key: 'contacts', label: 'Contacts', icon: 'fa-address-book', color: '#14b8a6', dateFields: ['createdAt', 'date'] },
+  { key: 'reflections', label: 'Reflections', icon: 'fa-feather', color: '#fb7185', dateFields: ['createdAt', 'date'] }
+];
+
+window._riCharts = {};
+
+function _riGetDate(rec, fields) {
+  for (const f of fields) {
+    const v = rec[f];
+    if (!v) continue;
+    if (typeof v === 'string' && /^\d{4}-\d{2}$/.test(v)) return v + '-01';
+    const d = parseLocalDate(v);
+    if (d && !isNaN(d)) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+  }
+  return null;
+}
+
+function renderRecordInsights() {
+  const gridEl = document.getElementById('riModuleGrid');
+  if (!gridEl) return;
+
+  const monthsBack = parseInt(document.getElementById('riRange')?.value || '6', 10);
+  const now = new Date();
+  const monthKeys = [];
+  const monthLabels = [];
+  for (let i = monthsBack - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    monthLabels.push(d.toLocaleDateString('en', { month: 'short' }));
+  }
+  const thisMonthKey = monthKeys[monthKeys.length - 1];
+  const prevMonthKey = monthKeys[monthKeys.length - 2] || null;
+  const cutoff90 = new Date(now.getTime() - 90 * 86400000).toISOString().slice(0, 10);
+
+  // Compute per-module stats
+  const stats = RI_MODULES.map(m => {
+    const records = DB.get(m.key) || [];
+    const perMonth = {};
+    monthKeys.forEach(k => perMonth[k] = 0);
+    let lastDate = null;
+    records.forEach(r => {
+      const ds = _riGetDate(r, m.dateFields);
+      if (!ds) return;
+      const mk = ds.slice(0, 7);
+      if (perMonth.hasOwnProperty(mk)) perMonth[mk]++;
+      if (!lastDate || ds > lastDate) lastDate = ds;
+    });
+    const total = records.length;
+    const thisMonth = perMonth[thisMonthKey] || 0;
+    const prevMonth = prevMonthKey ? (perMonth[prevMonthKey] || 0) : 0;
+    const delta = thisMonth - prevMonth;
+    let health, healthColor;
+    if (total === 0) { health = 'Empty'; healthColor = '#94a3b8'; }
+    else if (thisMonth > 0) { health = 'Active'; healthColor = '#10b981'; }
+    else if (lastDate && lastDate >= cutoff90) { health = 'Recent'; healthColor = '#3b82f6'; }
+    else { health = 'Stale'; healthColor = '#f59e0b'; }
+    return { ...m, total, perMonth: monthKeys.map(k => perMonth[k]), thisMonth, prevMonth, delta, lastDate, health, healthColor };
+  });
+
+  const totalRecords = stats.reduce((s, m) => s + m.total, 0);
+  const activeTypes = stats.filter(m => m.thisMonth > 0).length;
+  const thisMonthEntries = stats.reduce((s, m) => s + m.thisMonth, 0);
+  const needsAttention = stats.filter(m => m.total > 0 && m.health === 'Stale').length;
+
+  // Badge
+  const badge = document.getElementById('riTotalBadge');
+  if (badge) badge.textContent = totalRecords;
+
+  // KPI strip
+  const kpiStrip = document.getElementById('riKpiStrip');
+  if (kpiStrip) {
+    const kpis = [
+      { label: 'Total Records', value: totalRecords, sub: `across ${stats.filter(m => m.total > 0).length} types`, icon: 'fa-database', color: 'var(--accent)' },
+      { label: 'Active Types', value: `${activeTypes}/${stats.length}`, sub: 'with entries this month', icon: 'fa-bolt', color: '#10b981' },
+      { label: 'This Month', value: thisMonthEntries, sub: 'new entries logged', icon: 'fa-calendar-plus', color: '#3b82f6' },
+      { label: 'Needs Attention', value: needsAttention, sub: 'no entry in 90+ days', icon: 'fa-triangle-exclamation', color: needsAttention ? '#ef4444' : '#94a3b8' }
+    ];
+    kpiStrip.innerHTML = kpis.map(k => `
+      <div class="swh-kpi">
+        <span class="swh-kpi-icon" style="background:${k.color === 'var(--accent)' ? 'var(--accent-light)' : k.color + '14'};color:${k.color}"><i class="fas ${k.icon}"></i></span>
+        <div class="swh-kpi-body">
+          <span class="swh-kpi-value">${k.value}</span>
+          <span class="swh-kpi-label">${k.label}</span>
+        </div>
+        <span class="swh-kpi-sub">${k.sub}</span>
+      </div>`).join('');
+  }
+
+  // Module cards
+  gridEl.innerHTML = stats.map((m, idx) => `
+    <div class="ri-card" style="--c:${m.color}" data-key="${m.key}">
+      <div class="ri-card-head">
+        <span class="ri-card-icon"><i class="fas ${m.icon}"></i></span>
+        <div class="ri-card-title">
+          <strong>${m.label}</strong>
+          <small>${m.total} record${m.total === 1 ? '' : 's'}</small>
+        </div>
+        <span class="ri-health" style="color:${m.healthColor};background:${m.healthColor}14;border-color:${m.healthColor}30">${m.health}</span>
+      </div>
+      <div class="ri-spark"><canvas id="riSpark_${m.key}"></canvas></div>
+      <div class="ri-card-foot">
+        <span title="${m.thisMonth} this month"><i class="fas fa-calendar-plus"></i>${m.thisMonth} mo</span>
+        <span class="${m.delta > 0 ? 'up' : m.delta < 0 ? 'down' : ''}" title="vs previous month"><i class="fas ${m.delta > 0 ? 'fa-arrow-up' : m.delta < 0 ? 'fa-arrow-down' : 'fa-minus'}"></i>${Math.abs(m.delta)}</span>
+        <span title="Last entry"><i class="fas fa-clock"></i>${m.lastDate ? new Date(m.lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
+      </div>
+    </div>`).join('');
+
+  // Destroy old charts
+  Object.values(window._riCharts).forEach(c => { try { c.destroy(); } catch {} });
+  window._riCharts = {};
+
+  if (typeof Chart === 'undefined') {
+    gridEl.insertAdjacentHTML('afterbegin', '<div class="empty-state"><h3>Chart library not loaded</h3></div>');
+    return;
+  }
+
+  const gridLine = () => document.body.classList.contains('light-mode') ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+  const tickColor = () => document.body.classList.contains('light-mode') ? '#64748b' : '#8b93a7';
+
+  // Master stacked chart
+  const masterCanvas = document.getElementById('riMasterChart');
+  if (masterCanvas) {
+    const withData = stats.filter(m => m.total > 0);
+    window._riCharts.master = new Chart(masterCanvas, {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: withData.map(m => ({
+          label: m.label,
+          data: m.perMonth,
+          backgroundColor: m.color + 'cc',
+          borderRadius: 4,
+          maxBarThickness: 34
+        }))
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: tickColor(), boxWidth: 10, boxHeight: 10, font: { family: 'Inter', size: 11 } } }
+        },
+        scales: {
+          x: { stacked: true, ticks: { color: tickColor() }, grid: { display: false } },
+          y: { stacked: true, beginAtZero: true, ticks: { color: tickColor(), precision: 0 }, grid: { color: gridLine() } }
+        }
+      }
+    });
+  }
+
+  // Sparklines
+  stats.forEach(m => {
+    const cv = document.getElementById('riSpark_' + m.key);
+    if (!cv) return;
+    const hasData = m.perMonth.some(v => v > 0);
+    window._riCharts[m.key] = new Chart(cv, {
+      type: 'line',
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          data: m.perMonth,
+          borderColor: m.color,
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          backgroundColor: m.color + '18',
+          pointRadius: hasData ? 2.5 : 0,
+          pointBackgroundColor: m.color,
+          pointHoverRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: hasData, displayColors: false, callbacks: { label: ctx => `${ctx.parsed.y} in ${ctx.label}` } } },
+        scales: {
+          x: { ticks: { display: monthsBack <= 6 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { display: false, precision: 0 }, grid: { color: gridLine() }, suggestedMax: Math.max(4, ...m.perMonth) }
+        }
+      }
+    });
+  });
+}
+
+function exportRecordInsightsExcel() {
+  try {
+    const rows = RI_MODULES.map(m => {
+      const records = DB.get(m.key) || [];
+      return {
+        'Record Type': m.label,
+        'Total Records': records.length,
+        'With Date': records.filter(r => _riGetDate(r, m.dateFields)).length,
+        'First Entry': records.reduce((min, r) => { const d = _riGetDate(r, m.dateFields); return d && (!min || d < min) ? d : min; }, null) || '',
+        'Last Entry': records.reduce((max, r) => { const d = _riGetDate(r, m.dateFields); return d && (!max || d > max) ? d : max; }, null) || ''
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Record Insights');
+    XLSX.writeFile(wb, `APF_RecordInsights_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showToast('Summary exported', 'success');
+  } catch (e) { showToast('Export failed: ' + e.message, 'error'); }
 }
 
 // ===== ANALYTICS =====
@@ -19715,7 +19983,7 @@ function renderSchoolWork() {
   const heroKpiEl = document.getElementById('swHeroKpis');
   if (heroKpiEl) {
     const kpis = [
-      { label: 'Total', value: total, sub: 'activities logged', icon: 'fa-layer-group', color: '#6366f1' },
+      { label: 'Total', value: total, sub: 'activities logged', icon: 'fa-layer-group', color: 'var(--accent)' },
       { label: 'Completed', value: completedRate + '%', sub: `${statusCounts.completed} of ${total}`, icon: 'fa-circle-check', color: '#10b981' },
       { label: 'Schools', value: uniqueSchools, sub: 'covered so far', icon: 'fa-school', color: '#f59e0b' },
       { label: 'This Month', value: thisMonthCount, sub: `${last30Count} in 30 days`, icon: 'fa-calendar-check', color: '#ec4899' }

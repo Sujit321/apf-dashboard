@@ -302,6 +302,10 @@
             data-tooltip="Data Quality Center">
             <i class="fas fa-database"></i><span>Data Quality Center</span>
           </a>
+          <a href="#" class="nav-item" data-section="recordinsights" id="nav-recordinsights"
+            data-tooltip="Record Insights">
+            <i class="fas fa-chart-column"></i><span>Record Insights</span>
+          </a>
           <a href="#" class="nav-item" data-section="excel" id="nav-excel" data-tooltip="Excel Analytics">
             <i class="fas fa-file-excel"></i><span>Excel Analytics</span>
           </a>
@@ -1554,66 +1558,97 @@
       <div class="planner-grid" id="plannerGrid"></div>
     </section>
 
-    <!-- ==================== GOAL TRACKER SECTION ==================== -->
+    <!-- ==================== GOAL TRACKER SECTION — MODERN ==================== -->
     <section class="content-section" id="section-goals">
-      <div class="section-header">
-        <div>
-          <h1><i class="fas fa-bullseye"></i> Goal Tracker</h1>
-          <p class="section-subtitle">Set and track your monthly targets for field activities</p>
+      <!-- Header row -->
+      <div class="swh-head">
+        <div class="swh-head-left">
+          <div class="swh-title-wrap">
+            <span class="swh-title-icon"><i class="fas fa-bullseye"></i></span>
+            <h1>Goal Tracker</h1>
+            <span class="swh-count-badge" id="gtOverallBadge">0%</span>
+          </div>
+          <p class="swh-sub">Set and track your monthly targets for field activities</p>
         </div>
-        <div class="header-actions">
+        <div class="swh-head-actions">
           <button class="btn btn-outline ai-action-btn" id="aiGoalInsightsBtn" onclick="generateAIGoalInsights()"
             style="display:none">
             <i class="fas fa-robot"></i> AI Insights
           </button>
-          <select id="goalMonth" class="filter-select" onchange="renderGoals()"></select>
-          <button class="btn btn-primary" onclick="saveGoalTargets()">
+          <select id="goalMonth" onchange="renderGoals()"></select>
+          <button class="swh-btn swh-btn--primary" onclick="saveGoalTargets()">
             <i class="fas fa-save"></i> Save Targets
           </button>
         </div>
       </div>
 
-      <!-- Goal Progress Cards -->
+      <!-- Summary strip -->
+      <div class="gtl-kpis" id="goalKpiStrip"></div>
+
+      <!-- Progress cards -->
       <div class="goals-progress-grid" id="goalsProgressGrid"></div>
 
-      <!-- Goal Inputs -->
-      <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-          <h3><i class="fas fa-sliders-h"></i> Set Monthly Targets</h3>
-        </div>
-        <div class="card-body">
-          <div class="goal-targets-form" id="goalTargetsForm">
-            <div class="goal-target-row">
-              <label><i class="fas fa-school"></i> School Visits</label>
-              <input type="number" id="goalVisits" min="0" max="100" value="15" placeholder="Target visits">
-            </div>
-            <div class="goal-target-row">
-              <label><i class="fas fa-chalkboard-teacher"></i> Training Sessions</label>
-              <input type="number" id="goalTrainings" min="0" max="50" value="4" placeholder="Target trainings">
-            </div>
-            <div class="goal-target-row">
-              <label><i class="fas fa-clipboard-check"></i> Observations</label>
-              <input type="number" id="goalObservations" min="0" max="100" value="10" placeholder="Target observations">
-            </div>
-            <div class="goal-target-row">
-              <label><i class="fas fa-users"></i> Teachers Reached</label>
-              <input type="number" id="goalTeachers" min="0" max="500" value="50" placeholder="Target teachers">
-            </div>
-            <div class="goal-target-row">
-              <label><i class="fas fa-book-open"></i> Resources Created</label>
-              <input type="number" id="goalResources" min="0" max="50" value="5" placeholder="Target resources">
+      <!-- Targets editor + trend -->
+      <div class="gtl-lower">
+        <div class="card gtl-editor-card">
+          <div class="card-header">
+            <h3><i class="fas fa-sliders-h"></i> Set Monthly Targets</h3>
+            <span class="gtl-editor-month" id="gtEditorMonth"></span>
+          </div>
+          <div class="card-body">
+            <div class="goal-targets-form" id="goalTargetsForm">
+              <div class="gtl-target-row">
+                <span class="gtl-target-icon" style="--tc:#3b82f6"><i class="fas fa-school"></i></span>
+                <div class="gtl-target-info">
+                  <label for="goalVisits">School Visits</label>
+                  <small>Completed school visits this month</small>
+                </div>
+                <input type="number" id="goalVisits" min="0" max="100" value="15" placeholder="0">
+              </div>
+              <div class="gtl-target-row">
+                <span class="gtl-target-icon" style="--tc:#8b5cf6"><i class="fas fa-chalkboard-teacher"></i></span>
+                <div class="gtl-target-info">
+                  <label for="goalTrainings">Training Sessions</label>
+                  <small>Workshops &amp; teacher trainings</small>
+                </div>
+                <input type="number" id="goalTrainings" min="0" max="50" value="4" placeholder="0">
+              </div>
+              <div class="gtl-target-row">
+                <span class="gtl-target-icon" style="--tc:#10b981"><i class="fas fa-clipboard-check"></i></span>
+                <div class="gtl-target-info">
+                  <label for="goalObservations">Observations</label>
+                  <small>Classroom observations documented</small>
+                </div>
+                <input type="number" id="goalObservations" min="0" max="100" value="10" placeholder="0">
+              </div>
+              <div class="gtl-target-row">
+                <span class="gtl-target-icon" style="--tc:#f59e0b"><i class="fas fa-users"></i></span>
+                <div class="gtl-target-info">
+                  <label for="goalTeachers">Teachers Reached</label>
+                  <small>Unique teachers engaged</small>
+                </div>
+                <input type="number" id="goalTeachers" min="0" max="500" value="50" placeholder="0">
+              </div>
+              <div class="gtl-target-row">
+                <span class="gtl-target-icon" style="--tc:#ec4899"><i class="fas fa-book-open"></i></span>
+                <div class="gtl-target-info">
+                  <label for="goalResources">Resources Created</label>
+                  <small>TLM, worksheets &amp; materials</small>
+                </div>
+                <input type="number" id="goalResources" min="0" max="50" value="5" placeholder="0">
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Monthly Activity Chart -->
-      <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-          <h3><i class="fas fa-chart-line"></i> Monthly Activity Trend</h3>
-        </div>
-        <div class="card-body">
-          <canvas id="goalTrendChart" style="min-height:300px;"></canvas>
+        <div class="card gtl-chart-card">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Monthly Activity Trend</h3>
+            <span class="gtl-chart-hint">Last 6 months actuals</span>
+          </div>
+          <div class="card-body">
+            <canvas id="goalTrendChart" style="min-height:300px;"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -1705,6 +1740,47 @@
         </div>
         <div class="card-body" id="activityTimeline" style="max-height:500px;overflow-y:auto;"></div>
       </div>
+    </section>
+
+    <!-- ==================== RECORD INSIGHTS SECTION (graphs per module) ==================== -->
+    <section class="content-section" id="section-recordinsights">
+      <!-- Header -->
+      <div class="swh-head">
+        <div class="swh-head-left">
+          <div class="swh-title-wrap">
+            <span class="swh-title-icon"><i class="fas fa-chart-column"></i></span>
+            <h1>Record Insights</h1>
+            <span class="swh-count-badge" id="riTotalBadge">0</span>
+          </div>
+          <p class="swh-sub">One graph per record type — spot growth, gaps &amp; stale areas at a glance</p>
+        </div>
+        <div class="swh-head-actions">
+          <select id="riRange" onchange="renderRecordInsights()">
+            <option value="6">Last 6 months</option>
+            <option value="12">Last 12 months</option>
+            <option value="3">Last 3 months</option>
+          </select>
+          <button class="swh-btn swh-btn--icon" onclick="exportRecordInsightsExcel()" title="Export summary to Excel">
+            <i class="fas fa-file-export"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary KPI strip -->
+      <div class="gtl-kpis" id="riKpiStrip"></div>
+
+      <!-- Combined activity chart -->
+      <div class="card ri-master-card">
+        <div class="card-header">
+          <h3><i class="fas fa-layer-group"></i> All Records — Monthly Activity</h3>
+          <span class="gtl-chart-hint">Stacked entries per month</span>
+        </div>
+        <div class="card-body"><canvas id="riMasterChart" style="min-height:280px;"></canvas></div>
+      </div>
+
+      <!-- Per-module graph cards -->
+      <h3 class="ri-subhead"><i class="fas fa-chart-simple"></i> By Record Type</h3>
+      <div class="ri-grid" id="riModuleGrid"></div>
     </section>
 
     <!-- ==================== DATA QUALITY CENTER SECTION ==================== -->
@@ -3311,6 +3387,7 @@
       <div class="swh-head">
         <div class="swh-head-left">
           <div class="swh-title-wrap">
+            <span class="swh-title-icon"><i class="fas fa-chalkboard"></i></span>
             <h1>School-Based Work</h1>
             <span class="swh-count-badge" id="swHeroLiveCount">0</span>
           </div>
