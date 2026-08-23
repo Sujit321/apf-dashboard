@@ -273,7 +273,7 @@
       var y = d.getFullYear(), m = d.getMonth();
       var monthObs = observations.filter(function (o) {
         if (!o.date) return false;
-        var od = new Date(o.date);
+        var od = (typeof parseLocalDate === 'function') ? parseLocalDate(o.date) : new Date(o.date);
         return od.getFullYear() === y && od.getMonth() === m;
       });
       var engaged = monthObs.filter(function (o) {
@@ -615,7 +615,7 @@ function saveReport() {
   if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
   closeModal('reportWritingModal');
   renderReports();
-  if (typeof showToast === 'function') showToast('Report saved! ✅', 'success');
+  if (typeof showToast === 'function') showToast('Report saved! ', 'success');
 }
 
 function deleteReport(id) {
@@ -673,7 +673,7 @@ function renderReports() {
 
   container.innerHTML = filtered.map(function (r) {
     var color = typeColor[r.type] || '#6b7280';
-    var date  = r.date ? new Date(r.date).toLocaleDateString('en', { day:'numeric', month:'short', year:'numeric' }) : '—';
+    var date  = r.date ? ((typeof parseLocalDate === 'function') ? parseLocalDate(r.date) : new Date(r.date)).toLocaleDateString('en', { day:'numeric', month:'short', year:'numeric' }) : '—';
     var preview = (r.content || '').substring(0, 140);
     if ((r.content || '').length > 140) preview += '…';
     return '<div class="report-card">' +
@@ -783,7 +783,7 @@ function saveParentContact() {
   if (typeof markUnsavedChanges === 'function') markUnsavedChanges();
   closeModal('parentContactModal');
   renderParentContacts();
-  if (typeof showToast === 'function') showToast('Contact saved! ✅', 'success');
+  if (typeof showToast === 'function') showToast('Contact saved! ', 'success');
 }
 
 function deleteParentContact(id) {
@@ -1070,7 +1070,7 @@ function exportParentContactsExcel() {
   function _sendPushNotification(title, body) {
     if (Notification.permission !== 'granted') { return; }
     try {
-      var n = new Notification('⏰ APF Reminder: ' + title, {
+      var n = new Notification(' APF Reminder: ' + title, {
         body: body.substring(0, 200) || 'Your scheduled note reminder.',
         icon: './icon-192.png',
         badge: './icon-192.png',
@@ -1134,7 +1134,7 @@ function exportParentContactsExcel() {
     Notification.requestPermission().then(function (result) {
       _updatePushStatusBadge();
       if (result === 'granted' && typeof showToast === 'function') {
-        showToast('Push notifications enabled! ✅', 'success');
+        showToast('Push notifications enabled! ', 'success');
       }
     });
   };
@@ -1145,7 +1145,7 @@ function exportParentContactsExcel() {
     if (!el) return;
     var p = Notification.permission;
     var colors = { granted: '#10b981', denied: '#ef4444', default: '#f59e0b' };
-    var labels = { granted: 'Enabled ✅', denied: 'Blocked ❌ (reset in browser settings)', default: 'Not set — click Enable' };
+    var labels = { granted: 'Enabled ', denied: 'Blocked  (reset in browser settings)', default: 'Not set — click Enable' };
     el.innerHTML = '<span style="color:' + (colors[p]||'#6b7280') + ';font-size:12px;font-weight:600">' + (labels[p]||p) + '</span>';
     if (btn) btn.style.display = (p === 'granted') ? 'none' : '';
   }
@@ -1155,18 +1155,18 @@ function exportParentContactsExcel() {
     rsSet('emailGasUrl', document.getElementById('rsGasUrl').value.trim());
     rsSet('emailTo',     document.getElementById('rsEmailTo').value.trim());
     closeModal('reminderSettingsModal');
-    if (typeof showToast === 'function') showToast('Reminder settings saved! ✅', 'success');
+    if (typeof showToast === 'function') showToast('Reminder settings saved! ', 'success');
   };
 
   // ── Test helpers ──────────────────────────────────────────────────
   window.testTelegramReminder = function () {
     var cfg = _getTgCfg();
     if (!cfg || !cfg.token || !cfg.chatId) {
-      if (typeof showToast === 'function') showToast('Telegram not configured in APF Settings ❌', 'error');
+      if (typeof showToast === 'function') showToast('Telegram not configured in APF Settings ', 'error');
       return;
     }
-    _sendTelegramReminder('Test Reminder 🔔', 'This is a test from your APF Dashboard!', new Date().toISOString());
-    if (typeof showToast === 'function') showToast('Test message sent to Telegram! ✅', 'success');
+    _sendTelegramReminder('Test Reminder ', 'This is a test from your APF Dashboard!', new Date().toISOString());
+    if (typeof showToast === 'function') showToast('Test message sent to Telegram! ', 'success');
   };
 
   window.testEmailReminder = function () {

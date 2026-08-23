@@ -830,11 +830,11 @@ const GoogleDriveSync = {
         if (r.ok) {
           if (r.changed !== 0) {
             const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-            showToast(`☁️ Auto-backup saved to Google Drive · ${now}`, 'success');
+            showToast(` Auto-backup saved to Google Drive · ${now}`, 'success');
           }
         } else {
           console.warn('Auto-backup failed:', r.error);
-          showToast(`☁️ Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
+          showToast(` Auto-backup failed: ${r.error || 'Unknown error'}`, 'error');
         }
       });
     }, 10000); // 10 seconds debounce
@@ -1698,9 +1698,9 @@ const OBJ_STATUS_MAP = {
 };
 
 const OBJ_RATING_MAP = {
-  'exceeds': { label: 'Exceeds Expectations', icon: '⭐', color: '#f59e0b' },
-  'meets': { label: 'Meets Expectations', icon: '✅', color: '#10b981' },
-  'below': { label: 'Below Expectations', icon: '⚠ï¸', color: '#ef4444' }
+  'exceeds': { label: 'Exceeds Expectations', icon: '', color: '#f59e0b' },
+  'meets': { label: 'Meets Expectations', icon: '', color: '#10b981' },
+  'below': { label: 'Below Expectations', icon: '', color: '#ef4444' }
 };
 
 // ---- Render Objectives ----
@@ -1743,13 +1743,52 @@ function renderObjectives() {
   const completedAP = filtered.reduce((s, o) => s + (o.actionPoints || []).filter(a => a.status === 'done').length, 0);
 
   if (statsBar) {
+    const pct = Math.min(100, Math.max(0, avgProgress));
+    const circumference = 2 * Math.PI * 52;
     statsBar.innerHTML = `
-      <div class="obj-stat-pill"><i class="fas fa-flag"></i> <strong>${total}</strong> Objectives</div>
-      <div class="obj-stat-pill"><i class="fas fa-spinner" style="color:#f59e0b"></i> <strong>${inProgress}</strong> In Progress</div>
-      <div class="obj-stat-pill"><i class="fas fa-check-circle" style="color:#10b981"></i> <strong>${completed}</strong> Completed</div>
-      <div class="obj-stat-pill"><i class="fas fa-chart-line" style="color:#6366f1"></i> <strong>${avgProgress}%</strong> Avg Progress</div>
-      <div class="obj-stat-pill"><i class="fas fa-tasks" style="color:#8b5cf6"></i> <strong>${completedAP}/${totalAP}</strong> Actions Done</div>
-    `;
+      <div class="obj-kpi obj-kpi-total">
+        <div class="obj-kpi-icon"><i class="fas fa-flag"></i></div>
+        <div class="obj-kpi-body">
+          <strong>${total}</strong>
+          <span>Objectives</span>
+        </div>
+      </div>
+      <div class="obj-kpi obj-kpi-progress">
+        <div class="obj-kpi-icon"><i class="fas fa-spinner"></i></div>
+        <div class="obj-kpi-body">
+          <strong>${inProgress}</strong>
+          <span>In Progress</span>
+        </div>
+      </div>
+      <div class="obj-kpi obj-kpi-done">
+        <div class="obj-kpi-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="obj-kpi-body">
+          <strong>${completed}</strong>
+          <span>Completed</span>
+        </div>
+      </div>
+      <div class="obj-kpi obj-kpi-avg">
+        <div class="obj-kpi-icon"><i class="fas fa-chart-line"></i></div>
+        <div class="obj-kpi-body">
+          <strong>${avgProgress}%</strong>
+          <span>Avg Progress</span>
+        </div>
+      </div>
+      <div class="obj-kpi obj-kpi-actions">
+        <div class="obj-kpi-icon"><i class="fas fa-tasks"></i></div>
+        <div class="obj-kpi-body">
+          <strong>${completedAP}<small>/${totalAP}</small></strong>
+          <span>Actions Done</span>
+        </div>
+      </div>`;
+    // Drive the hero progress ring
+    const ring = document.getElementById('objRingFill');
+    const ringPct = document.getElementById('objRingPct');
+    if (ring) {
+      ring.style.strokeDasharray = `${circumference}`;
+      ring.style.strokeDashoffset = `${circumference * (1 - pct / 100)}`;
+    }
+    if (ringPct) ringPct.textContent = `${pct}%`;
   }
 
   if (!filtered.length) {
@@ -1851,7 +1890,7 @@ function renderObjectives() {
             <div class="obj-comment-item">
               <div class="obj-comment-meta">
                 <span class="obj-comment-type"><i class="fas ${c.type === 'review' ? 'fa-star' : c.type === 'observation' ? 'fa-eye' : 'fa-comment'}"></i> ${c.type || 'comment'}</span>
-                <span class="obj-comment-date">${c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</span>
+                <span class="obj-comment-date">${c.date ? parseLocalDate(c.date).toLocaleDateString('en-IN') : ''}</span>
                 <button class="obj-ap-del" onclick="event.stopPropagation();deleteComment('${obj.id}','${c.id}')" title="Remove"><i class="fas fa-times"></i></button>
               </div>
               <p>${escapeHtml(c.text)}</p>
@@ -1862,7 +1901,7 @@ function renderObjectives() {
             <div class="obj-comment-add-row">
               <select id="cmType-${obj.id}">
                 <option value="comment">ðŸ’¬ Comment</option>
-                <option value="review">⭐ Review Note</option>
+                <option value="review"> Review Note</option>
                 <option value="observation">ðŸ‘ï¸ Observation</option>
               </select>
               <button onclick="addComment('${obj.id}')" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Add</button>
@@ -2097,19 +2136,19 @@ function generatePerformanceReview(objId) {
       ${rating ? `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:${rating.color}22;color:${rating.color};margin-left:6px">${rating.icon} ${rating.label}</span>` : ''}
     </div>
 
-    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📋 Objective Description</h3>
+    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px"> Objective Description</h3>
     <div style="white-space:pre-wrap;color:#475569;font-size:13px;line-height:1.7;background:#f8fafc;padding:12px;border-radius:8px">${escapeHtml(obj.description || 'No description provided')}</div>
 
-    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📊 Progress: ${obj.progress || 0}%</h3>
+    <h3 style="color:#334155;font-size:14px;margin:16px 0 8px"> Progress: ${obj.progress || 0}%</h3>
     <div style="background:#e2e8f0;border-radius:8px;height:12px;overflow:hidden;margin-bottom:8px">
       <div style="background:${st.color};height:100%;width:${obj.progress || 0}%;border-radius:8px;transition:width 0.3s"></div>
     </div>`;
 
   if (apTotal > 0) {
-    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">✅ Action Points (${apDone}/${apTotal} completed)</h3>
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px"> Action Points (${apDone}/${apTotal} completed)</h3>
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <tr style="background:#f1f5f9"><th style="padding:8px;text-align:left;border-bottom:1px solid #e2e8f0">Action</th><th style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;width:80px">Status</th></tr>
-      ${(obj.actionPoints || []).map(ap => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${escapeHtml(ap.text)}</td><td style="padding:8px;text-align:center;border-bottom:1px solid #f1f5f9;color:${ap.status === 'done' ? '#10b981' : '#f59e0b'}">${ap.status === 'done' ? '✅ Done' : '⏳ Pending'}</td></tr>`).join('')}
+      ${(obj.actionPoints || []).map(ap => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9">${escapeHtml(ap.text)}</td><td style="padding:8px;text-align:center;border-bottom:1px solid #f1f5f9;color:${ap.status === 'done' ? '#10b981' : '#f59e0b'}">${ap.status === 'done' ? ' Done' : ' Pending'}</td></tr>`).join('')}
     </table>`;
   }
 
@@ -2117,14 +2156,14 @@ function generatePerformanceReview(objId) {
     html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">ðŸ’¬ Comments & Review Notes</h3>`;
     (obj.comments || []).forEach(c => {
       html += `<div style="background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:6px;border-left:3px solid ${c.type === 'review' ? '#f59e0b' : c.type === 'observation' ? '#6366f1' : '#94a3b8'}">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${c.type || 'comment'} — ${c.date ? new Date(c.date).toLocaleDateString('en-IN') : ''}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${c.type || 'comment'} — ${c.date ? parseLocalDate(c.date).toLocaleDateString('en-IN') : ''}</div>
         <div style="font-size:13px;color:#334155">${escapeHtml(c.text)}</div>
       </div>`;
     });
   }
 
   if (obj.reviewNotes) {
-    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px">📝 Review Notes</h3>
+    html += `<h3 style="color:#334155;font-size:14px;margin:16px 0 8px"> Review Notes</h3>
     <div style="white-space:pre-wrap;color:#475569;font-size:13px;background:#fffbeb;padding:12px;border-radius:8px;border-left:3px solid #f59e0b">${escapeHtml(obj.reviewNotes)}</div>`;
   }
 
@@ -3981,7 +4020,7 @@ const WidgetBuilder = {
         const prevYear = now1.getMonth() === 0 ? now1.getFullYear() - 1 : now1.getFullYear();
         const prevObs = observations.filter(o => {
           if (!o.date) return false;
-          const d = new Date(o.date);
+          const d = parseLocalDate(o.date);
           return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
         });
         value = prevObs.length;
@@ -4013,9 +4052,9 @@ const WidgetBuilder = {
         if (currentGoal && currentGoal.targets) {
           const t = currentGoal.targets;
           const metrics = [];
-          if (t.visits) metrics.push({ actual: visits.filter(v => { const d = new Date(v.date); return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth(); }).length, target: t.visits });
-          if (t.trainings) metrics.push({ actual: trainings.filter(tr => { const d = new Date(tr.date); return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth(); }).length, target: t.trainings });
-          if (t.observations) metrics.push({ actual: observations.filter(o => { const d = new Date(o.date); return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth(); }).length, target: t.observations });
+          if (t.visits) metrics.push({ actual: visits.filter(v => { const d = parseLocalDate(v.date); return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth(); }).length, target: t.visits });
+          if (t.trainings) metrics.push({ actual: trainings.filter(tr => { const d = parseLocalDate(tr.date); return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth(); }).length, target: t.trainings });
+          if (t.observations) metrics.push({ actual: observations.filter(o => { const d = parseLocalDate(o.date); return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth(); }).length, target: t.observations });
           const avgPct = metrics.length > 0 ? Math.round(metrics.reduce((s, m) => s + Math.min(100, (m.actual / m.target) * 100), 0) / metrics.length) : 0;
           value = `${avgPct}%`;
           label = 'Goals Progress';
@@ -4062,15 +4101,15 @@ const WidgetBuilder = {
     const visits = DB.get('visits') || [];
     const now = new Date();
     const upcoming = visits
-      .filter(v => v.status === 'planned' && new Date(v.date) >= new Date(now.toDateString()))
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .filter(v => v.status === 'planned' && parseLocalDate(v.date) >= new Date(now.toDateString()))
+      .sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date))
       .slice(0, 5);
 
     if (upcoming.length === 0) {
       return `<div class="empty-state small"><i class="fas fa-calendar-plus"></i><p>No upcoming visits scheduled</p></div>`;
     }
     return `<div class="widget-list-container">${upcoming.map(v => {
-      const d = new Date(v.date);
+      const d = parseLocalDate(v.date);
       return `<div class="upcoming-item">
  <div class="upcoming-date">${d.getDate()}<br>${d.toLocaleString('en', { month: 'short' })}</div>
  <div class="upcoming-info"><h4>${escapeHtml(v.school)}</h4><p>${escapeHtml(v.purpose || '')}</p></div>
@@ -4105,7 +4144,7 @@ const WidgetBuilder = {
 
   _renderUpcomingFollowups() {
     const allFollowups = this._collectFollowups();
-    const pending = allFollowups.filter(f => !f.done).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
+    const pending = allFollowups.filter(f => !f.done).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)).slice(0, 6);
 
     if (pending.length === 0) {
       return `<div class="empty-state small"><i class="fas fa-check-circle" style="color:var(--success)"></i><p>All follow-ups completed!</p></div>`;
@@ -4305,9 +4344,9 @@ const WidgetBuilder = {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
       labels.push(d.toLocaleDateString('en', { month: 'short' }));
       const y = d.getFullYear(), m = d.getMonth();
-      vData.push(visits.filter(v => { const vd = new Date(v.date); return vd.getFullYear() === y && vd.getMonth() === m; }).length);
-      tData.push(trainings.filter(t => { const td = new Date(t.date); return td.getFullYear() === y && td.getMonth() === m; }).length);
-      oData.push(observations.filter(o => { const od = new Date(o.date); return od.getFullYear() === y && od.getMonth() === m; }).length);
+      vData.push(visits.filter(v => { const vd = parseLocalDate(v.date); return vd.getFullYear() === y && vd.getMonth() === m; }).length);
+      tData.push(trainings.filter(t => { const td = parseLocalDate(t.date); return td.getFullYear() === y && td.getMonth() === m; }).length);
+      oData.push(observations.filter(o => { const od = parseLocalDate(o.date); return od.getFullYear() === y && od.getMonth() === m; }).length);
     }
     this._charts.monthly = new Chart(canvas, {
       type: 'line',
@@ -4853,9 +4892,9 @@ function renderDashboardCharts(visits, trainings, observations) {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
       labels.push(d.toLocaleDateString('en', { month: 'short' }));
       const y = d.getFullYear(), m = d.getMonth();
-      vData.push(visits.filter(v => { const vd = new Date(v.date); return vd.getFullYear() === y && vd.getMonth() === m; }).length);
-      tData.push(trainings.filter(t => { const td = new Date(t.date); return td.getFullYear() === y && td.getMonth() === m; }).length);
-      oData.push(observations.filter(o => { const od = new Date(o.date); return od.getFullYear() === y && od.getMonth() === m; }).length);
+      vData.push(visits.filter(v => { const vd = parseLocalDate(v.date); return vd.getFullYear() === y && vd.getMonth() === m; }).length);
+      tData.push(trainings.filter(t => { const td = parseLocalDate(t.date); return td.getFullYear() === y && td.getMonth() === m; }).length);
+      oData.push(observations.filter(o => { const od = parseLocalDate(o.date); return od.getFullYear() === y && od.getMonth() === m; }).length);
     }
     dashboardCharts.monthly = new Chart(monthlyCanvas, {
       type: 'line',
@@ -5194,7 +5233,7 @@ function renderVisits() {
     if (dateTo && v.date > dateTo) return false;
     if (search && !(v.school || '').toLowerCase().includes(search) && !(v.block || '').toLowerCase().includes(search) && !(v.cluster || '').toLowerCase().includes(search) && !(v.purpose || '').toLowerCase().includes(search)) return false;
     return true;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   // Render stats
   renderVisitStats(visits);
@@ -5210,7 +5249,7 @@ function renderVisits() {
   const pg = getPaginatedItems(filtered, 'visits', getPageSize(20));
 
   container.innerHTML = pg.items.map(v => {
-    const d = new Date(v.date);
+    const d = parseLocalDate(v.date);
     const day = d.getDate();
     const month = d.toLocaleString('en', { month: 'short' });
     const badgeClass = `badge-${v.status}`;
@@ -5291,7 +5330,7 @@ function getFilteredVisits() {
     if (dateTo && v.date > dateTo) return false;
     if (search && !(v.school || '').toLowerCase().includes(search) && !(v.block || '').toLowerCase().includes(search) && !(v.cluster || '').toLowerCase().includes(search) && !(v.purpose || '').toLowerCase().includes(search)) return false;
     return true;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 }
 
 // Toggle selection for an individual visit checkbox
@@ -5443,7 +5482,7 @@ function renderVisitStats(visits) {
   const hmVisits = visits.filter(v => v.hmPresent);
   const hmRate = hmVisits.length > 0 ? Math.round(hmVisits.filter(v => v.hmPresent === 'Yes').length / hmVisits.length * 100) : '--';
 
-  const upcomingVisits = visits.filter(v => v.status === 'planned' && v.date >= now.toISOString().split('T')[0]).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const upcomingVisits = visits.filter(v => v.status === 'planned' && v.date >= now.toISOString().split('T')[0]).sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
   const nextVisit = upcomingVisits[0];
 
   dash.innerHTML = `
@@ -5465,7 +5504,7 @@ function renderVisitStats(visits) {
  </div>
  <div class="vs-card" style="border-left:3px solid #06b6d4;"><div class="vs-icon" style="color:#06b6d4;"><i class="fas fa-user-tie"></i></div><div class="vs-val">${hmRate}${hmRate !== '--' ? '%' : ''}</div><div class="vs-lbl">HM Available</div></div>
  <div class="vs-card" style="border-left:3px solid #f59e0b;"><div class="vs-icon" style="color:#f59e0b;"><i class="fas fa-redo-alt"></i></div><div class="vs-val">${withFollowUp}</div><div class="vs-lbl">With Follow-up</div></div>
- ${nextVisit ? `<div class="vs-card next" onclick="openVisitModal('${nextVisit.id}')"><div class="vs-icon"><i class="fas fa-arrow-right"></i></div><div class="vs-val-sm">${escapeHtml(nextVisit.school).substring(0, 18)}</div><div class="vs-lbl">Next: ${new Date(nextVisit.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div></div>` : ''}
+ ${nextVisit ? `<div class="vs-card next" onclick="openVisitModal('${nextVisit.id}')"><div class="vs-icon"><i class="fas fa-arrow-right"></i></div><div class="vs-val-sm">${escapeHtml(nextVisit.school).substring(0, 18)}</div><div class="vs-lbl">Next: ${parseLocalDate(nextVisit.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div></div>` : ''}
  `;
 }
 
@@ -5617,7 +5656,7 @@ function renderVisitCalendar() {
       else if (from && to && dk > from && dk < to) cls.push('in-range');
       cells += `<div class="vdr-cell ${cls.join(' ')}" onclick="VDR._pick('${dk}')">${d}</div>`;
     }
-    const picking = S.singleMode ? '▶ Select a date' : (S.picking === 'from' ? '▶ Select start date' : '▶ Select end date');
+    const picking = S.singleMode ? ' Select a date' : (S.picking === 'from' ? ' Select start date' : ' Select end date');
     const hasRange = S.fromVal && S.toVal;
     const fromDisp = S.fromVal ? fmt(S.fromVal) : '—';
     const toDisp = S.toVal ? fmt(S.toVal) : '—';
@@ -5842,7 +5881,7 @@ function toggleVisitDetailPanel(id) {
   const v = visits.find(x => x.id === id);
   if (!v) return;
 
-  const d = new Date(v.date);
+  const d = parseLocalDate(v.date);
   const acts = v.activities || [];
   const ratingStars = v.rating ? ''.repeat(parseInt(v.rating)) + ` (${v.rating}/5)` : '';
 
@@ -6015,12 +6054,14 @@ function importVisitsExcel(event) {
           nextDate: (r['Next Visit Date'] || r['nextDate'] || '').toString().trim(),
           createdAt: new Date().toISOString(),
         };
-        // Normalize date to YYYY-MM-DD
-        if (data.date && !data.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          try {
-            const pd = new Date(data.date);
-            if (!isNaN(pd.getTime())) data.date = pd.toISOString().split('T')[0];
-          } catch (e) { /* keep original */ }
+        // Normalize date to YYYY-MM-DD (Excel dates are DD/MM/YYYY - day first)
+        if (data.date) {
+          const nd = parseDMTDate(data.date);
+          if (nd) data.date = nd;
+        }
+        if (data.nextDate) {
+          const nn = parseDMTDate(data.nextDate);
+          if (nn) data.nextDate = nn;
         }
         visits.push(data);
         imported++;
@@ -6043,7 +6084,7 @@ function printVisitReport(id) {
   const v = visits.find(x => x.id === id);
   if (!v) return;
 
-  const d = new Date(v.date);
+  const d = parseLocalDate(v.date);
   const acts = v.activities || [];
   const ratingStars = v.rating ? ''.repeat(parseInt(v.rating)) + ` (${v.rating}/5)` : '';
   const profile = DB.get('userProfile') || {};
@@ -6194,7 +6235,7 @@ function renderTrainings() {
     if (statusFilter !== 'all' && t.status !== statusFilter) return false;
     if (search && !t.title.toLowerCase().includes(search) && !(t.topic || '').toLowerCase().includes(search)) return false;
     return true;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   if (filtered.length === 0) {
     container.innerHTML = `<div class="empty-state"><i class="fas fa-chalkboard-teacher"></i><h3>No training sessions found</h3><p>${trainings.length === 0 ? 'Create your first training by clicking "New Training"' : 'Try adjusting your filters'}</p></div>`;
@@ -6204,7 +6245,7 @@ function renderTrainings() {
   const pg = getPaginatedItems(filtered, 'trainings', getPageSize(15));
 
   container.innerHTML = pg.items.map(t => {
-    const d = new Date(t.date);
+    const d = parseLocalDate(t.date);
     const badgeClass = `badge-${t.status}`;
     return `<div class="training-card" onclick="openTrainingModal('${t.id}')">
  <div class="training-card-header">
@@ -6242,7 +6283,7 @@ function openTrainingAttendance(trainingId) {
   document.getElementById('attModalTitle').innerHTML = `<i class="fas fa-clipboard-list"></i> Attendance ${escapeHtml(t.title)}`;
   document.getElementById('attTrainingInfo').innerHTML = `
  <div style="display:flex;flex-wrap:wrap;gap:12px;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);">
- <span><i class="fas fa-calendar"></i> ${new Date(t.date).toLocaleDateString('en-IN')}</span>
+ <span><i class="fas fa-calendar"></i> ${parseLocalDate(t.date).toLocaleDateString('en-IN')}</span>
  <span><i class="fas fa-clock"></i> ${t.duration}h</span>
  ${t.venue ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(t.venue)}</span>` : ''}
  <span><i class="fas fa-user-tag"></i> ${escapeHtml(t.target || 'Teachers')}</span>
@@ -6869,7 +6910,7 @@ function showTrainingAttendanceReport() {
 
   // Per-training summary
   const trainingSummaries = withAttendance
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date))
     .map(t => ({
       title: t.title,
       date: t.date,
@@ -6929,7 +6970,7 @@ function showTrainingAttendanceReport() {
  <tbody>
  ${trainingSummaries.map(s => `<tr>
  <td><strong>${escapeHtml(s.title)}</strong></td>
- <td>${s.date ? new Date(s.date).toLocaleDateString('en-IN') : ''}</td>
+ <td>${s.date ? parseLocalDate(s.date).toLocaleDateString('en-IN') : ''}</td>
  <td>${escapeHtml(s.venue) || ''}</td>
  <td><strong>${s.count}</strong></td>
  <td>${s.schools}</td>
@@ -7068,7 +7109,7 @@ function exportAttendanceReport() {
   XLSX.utils.book_append_sheet(wb, ws1, 'Teacher Attendance');
 
   // Sheet 2: Training-wise summary
-  const trainingSummary = withAtt.sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => ({
+  const trainingSummary = withAtt.sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)).map(t => ({
     'Training': t.title,
     'Date': t.date,
     'Venue': t.venue || '',
@@ -7111,13 +7152,33 @@ function exportAttendanceReport() {
   showToast('Attendance report exported to Excel', 'success');
 }
 
-// Date parser for DMT Excel - DD-MM-YYYY format only.
+// Canonical date parser for ALL Excel imports - DD/MM/YYYY format (day first).
+// Handles 'DD/MM/YYYY', 'DD-MM-YYYY', 'DD.MM.YYYY', 2-digit years, Excel serial
+// numbers, Date objects and existing ISO strings. Always returns 'YYYY-MM-DD'.
 function parseDMTDate(raw) {
   if (!raw) return '';
+  if (raw instanceof Date) {
+    if (isNaN(raw.getTime())) return '';
+    return raw.getFullYear() + '-' + String(raw.getMonth() + 1).padStart(2, '0') + '-' + String(raw.getDate()).padStart(2, '0');
+  }
   const s = String(raw).trim();
-  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (!s) return '';
+  // Already ISO
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return iso[1] + '-' + String(parseInt(iso[2], 10)).padStart(2, '0') + '-' + String(parseInt(iso[3], 10)).padStart(2, '0');
+  // Excel serial number (raw cell value)
+  if (/^\d{5}$/.test(s)) {
+    const serial = parseInt(s, 10);
+    if (serial > 30000 && serial < 60000) {
+      const d = new Date(Math.round((serial - 25569) * 86400000));
+      return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+    }
+  }
+  // Day-first DD/MM/YYYY (also accepts - and . separators), 2 or 4-digit year
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2}|\d{4})$/);
   if (m) {
-    const day = parseInt(m[1]), month = parseInt(m[2]), year = parseInt(m[3]);
+    let day = parseInt(m[1], 10), month = parseInt(m[2], 10), year = parseInt(m[3], 10);
+    if (year < 100) year += year > 50 ? 1900 : 2000;
     return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
   }
   return s;
@@ -7321,9 +7382,9 @@ function saveObservation(e) {
       });
 
       if (dup) {
-        const dupDate = dup.date ? new Date(dup.date).toLocaleDateString('en-IN') : 'N/A';
+        const dupDate = dup.date ? parseLocalDate(dup.date).toLocaleDateString('en-IN') : 'N/A';
         const proceed = confirm(
-          `⚠ï¸ Possible duplicate found!\n\n` +
+          ` Possible duplicate found!\n\n` +
           `An observation already exists with:\n` +
           `• Phone: ${dup.teacherPhone}\n` +
           `• Practice Serial: ${dup.practiceSerial}\n` +
@@ -7451,7 +7512,7 @@ function renderObservations() {
       if (!hay.includes(search)) return false;
     }
     return true;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   updateObsStats(filtered);
 
@@ -7475,7 +7536,7 @@ function renderObservations() {
   const showing = filtered.slice(startIdx, startIdx + PAGE_SIZE);
 
   container.innerHTML = showing.map(o => {
-    const d = new Date(o.date);
+    const d = parseLocalDate(o.date);
     const engClass = o.engagementLevel === 'More Engaged' ? 'engagement-high' :
       o.engagementLevel === 'Engaged' ? 'engagement-mid' : 'engagement-low';
     const obsStatusClass = o.observationStatus === 'Yes' ? 'obs-yes' :
@@ -8586,7 +8647,7 @@ function analyzeObservationData(obs) {
     if (o.practice) t.practices.add(o.practice);
     const engMap = { 'More Engaged': 3, 'Engaged': 2, 'Not Engaged': 1 };
     if (o.engagementLevel && engMap[o.engagementLevel]) t.engagementScores.push(engMap[o.engagementLevel]);
-    const d = new Date(o.date);
+    const d = parseLocalDate(o.date);
     if (!isNaN(d) && (!t.lastVisit || d > t.lastVisit)) t.lastVisit = d;
   });
 
@@ -8604,7 +8665,7 @@ function analyzeObservationData(obs) {
     if (o.teacher) s.teachers.add(o.teacher);
     const engMap = { 'More Engaged': 3, 'Engaged': 2, 'Not Engaged': 1 };
     if (o.engagementLevel && engMap[o.engagementLevel]) s.engagementScores.push(engMap[o.engagementLevel]);
-    const d = new Date(o.date);
+    const d = parseLocalDate(o.date);
     if (!isNaN(d) && (!s.lastVisit || d > s.lastVisit)) s.lastVisit = d;
   });
 
@@ -8721,7 +8782,7 @@ function analyzeObservationData(obs) {
   // ===== Trend Data =====
   const monthlyData = {};
   obs.forEach(o => {
-    const d = new Date(o.date);
+    const d = parseLocalDate(o.date);
     if (isNaN(d)) return;
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     if (!monthlyData[key]) monthlyData[key] = { total: 0, engaged: 0, notEngaged: 0 };
@@ -10294,7 +10355,7 @@ function renderObsAnalytics() {
     if (!o.date) return;
     let m = o.date.substring(0, 7); // YYYY-MM
     if (!/^\d{4}-\d{2}/.test(m)) {
-      const d = new Date(o.date);
+      const d = parseLocalDate(o.date);
       if (!isNaN(d.getTime())) {
         m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       } else {
@@ -10534,19 +10595,19 @@ function _reportFilterByPeriod(items, monthVal, year) {
     if (monthVal === 'all') return [...items];
     const month = parseInt(monthVal);
     return items.filter(item => {
-      const d = new Date(item.date);
+      const d = parseLocalDate(item.date);
       return d.getMonth() === month;
     });
   }
   if (monthVal === 'all') {
     return items.filter(item => {
-      const d = new Date(item.date);
+      const d = parseLocalDate(item.date);
       return d.getFullYear() === year;
     });
   }
   const month = parseInt(monthVal);
   return items.filter(item => {
-    const d = new Date(item.date);
+    const d = parseLocalDate(item.date);
     return d.getMonth() === month && d.getFullYear() === year;
   });
 }
@@ -10690,14 +10751,14 @@ function generateMonthlyReport(output, visits, trainings, observations, monthVal
     visitsHTML = '<h3><i class="fas fa-school"></i> School Visits Detailed</h3>' +
       _reportTableHTML(
         ['#', 'Date', 'School', 'Block / Cluster', 'Purpose', 'Time', 'Broader Plan / Objective', 'People Met', 'Key Observations', 'Follow-up', 'Status'],
-        monthVisits.sort(function (a, b) { return new Date(a.date) - new Date(b.date); }).map(function (v, i) {
+        monthVisits.sort(function (a, b) { return parseLocalDate(a.date) - parseLocalDate(b.date); }).map(function (v, i) {
           var notes = (v.notes || '').substring(0, 150);
           if ((v.notes || '').length > 150) notes += '';
           var fu = (v.followUp || '').substring(0, 100);
           if ((v.followUp || '').length > 100) fu += '';
           return [
             i + 1,
-            new Date(v.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+            parseLocalDate(v.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
             '<strong>' + escapeHtml(v.school) + '</strong>',
             escapeHtml([v.block, v.cluster].filter(Boolean).join(' / ') || ''),
             escapeHtml(v.purpose || ''),
@@ -10718,12 +10779,12 @@ function generateMonthlyReport(output, visits, trainings, observations, monthVal
     trainingsHTML = '<h3><i class="fas fa-chalkboard-teacher"></i> Training Sessions Detailed</h3>' +
       _reportTableHTML(
         ['#', 'Date', 'Title', 'Venue', 'Duration', 'Attendees', 'Target Group', 'Topics Covered', 'Status'],
-        monthTrainings.sort(function (a, b) { return new Date(a.date) - new Date(b.date); }).map(function (t, i) {
+        monthTrainings.sort(function (a, b) { return parseLocalDate(a.date) - parseLocalDate(b.date); }).map(function (t, i) {
           var topics = (t.topics || t.notes || '').substring(0, 120);
           if ((t.topics || t.notes || '').length > 120) topics += '';
           return [
             i + 1,
-            new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+            parseLocalDate(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
             '<strong>' + escapeHtml(t.title) + '</strong>',
             escapeHtml(t.venue || ''),
             t.duration + 'h',
@@ -10742,10 +10803,10 @@ function generateMonthlyReport(output, visits, trainings, observations, monthVal
     obsHTML = '<h3><i class="fas fa-clipboard-check"></i> Classroom Observations Detailed</h3>' +
       _reportTableHTML(
         ['#', 'Date', 'School', 'Teacher', 'Subject', 'Class', 'Engagement', 'Practice Type', 'Teacher Stage', 'Key Focus'],
-        monthObs.sort(function (a, b) { return new Date(a.date) - new Date(b.date); }).map(function (o, i) {
+        monthObs.sort(function (a, b) { return parseLocalDate(a.date) - parseLocalDate(b.date); }).map(function (o, i) {
           return [
             i + 1,
-            new Date(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+            parseLocalDate(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
             escapeHtml(o.school),
             escapeHtml(o.teacher || ''),
             escapeHtml(o.subject || ''),
@@ -10769,7 +10830,7 @@ function generateMonthlyReport(output, visits, trainings, observations, monthVal
         followUps.map(function (v) {
           return [
             escapeHtml(v.school),
-            new Date(v.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+            parseLocalDate(v.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
             escapeHtml(v.followUp)
           ];
         })
@@ -10943,13 +11004,13 @@ function generateClusterReport(output, visits, trainings, observations, monthVal
   const monthlyTrend = {};
   [...filteredVisits, ...filteredObs, ...filteredTrainings].forEach(item => {
     if (!item.date) return;
-    const d = new Date(item.date);
+    const d = parseLocalDate(item.date);
     const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     if (!monthlyTrend[key]) monthlyTrend[key] = { visits: 0, observations: 0, trainings: 0 };
   });
-  filteredVisits.forEach(v => { if (!v.date) return; const d = new Date(v.date); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (monthlyTrend[key]) monthlyTrend[key].visits++; });
-  filteredObs.forEach(o => { if (!o.date) return; const d = new Date(o.date); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (monthlyTrend[key]) monthlyTrend[key].observations++; });
-  filteredTrainings.forEach(t => { if (!t.date) return; const d = new Date(t.date); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (monthlyTrend[key]) monthlyTrend[key].trainings++; });
+  filteredVisits.forEach(v => { if (!v.date) return; const d = parseLocalDate(v.date); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (monthlyTrend[key]) monthlyTrend[key].visits++; });
+  filteredObs.forEach(o => { if (!o.date) return; const d = parseLocalDate(o.date); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (monthlyTrend[key]) monthlyTrend[key].observations++; });
+  filteredTrainings.forEach(t => { if (!t.date) return; const d = parseLocalDate(t.date); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); if (monthlyTrend[key]) monthlyTrend[key].trainings++; });
 
   output.innerHTML = `<div class="report-content">
  ${_reportHeader('Cluster Report', periodLabel)}
@@ -11085,8 +11146,8 @@ function generateClusterReport(output, visits, trainings, observations, monthVal
 
  ${filteredVisits.length > 0 ? `<h3>School Visits Detail</h3>
  ${_reportTableHTML(['Date', 'School', 'Cluster', 'Purpose', 'People Met', 'Status'],
-    filteredVisits.sort((a, b) => new Date(a.date) - new Date(b.date)).map(v => [
-      new Date(v.date).toLocaleDateString('en-IN'),
+    filteredVisits.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(v => [
+      parseLocalDate(v.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(v.school || '-')}</strong>`,
       escapeHtml(v.cluster || '-'),
       escapeHtml(v.purpose || '-'),
@@ -11097,8 +11158,8 @@ function generateClusterReport(output, visits, trainings, observations, monthVal
 
  ${filteredTrainings.length > 0 ? `<h3>Training Sessions</h3>
  ${_reportTableHTML(['Date', 'Title', 'Venue', 'Attendees', 'Duration', 'Target', 'Status'],
-    filteredTrainings.sort((a, b) => new Date(a.date) - new Date(b.date)).map(t => [
-      new Date(t.date).toLocaleDateString('en-IN'),
+    filteredTrainings.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(t => [
+      parseLocalDate(t.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(t.title)}</strong>`,
       escapeHtml(t.venue || '-'),
       t.attendees || '-',
@@ -11212,8 +11273,8 @@ function generateBlockReport(output, visits, trainings, observations, monthVal, 
 
  ${fTrainings.length > 0 ? `<h3>Training Sessions</h3>
  ${_reportTableHTML(['Date', 'Title', 'Venue', 'Attendees', 'Duration', 'Target', 'Status'],
-    fTrainings.sort((a, b) => new Date(a.date) - new Date(b.date)).map(t => [
-      new Date(t.date).toLocaleDateString('en-IN'),
+    fTrainings.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(t => [
+      parseLocalDate(t.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(t.title)}</strong>`,
       escapeHtml(t.venue || '-'),
       t.attendees || '-',
@@ -11271,13 +11332,13 @@ function generateDistrictReport(output, visits, trainings, observations, monthVa
   // Monthly trend
   const monthlyTrend = {};
   [...fVisits, ...fObs, ...fTrainings].forEach(item => {
-    const d = new Date(item.date);
+    const d = parseLocalDate(item.date);
     const key = d.toLocaleString('en', { month: 'short', year: 'numeric' });
     if (!monthlyTrend[key]) monthlyTrend[key] = { visits: 0, observations: 0, trainings: 0 };
   });
-  fVisits.forEach(v => { const k = new Date(v.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].visits++; });
-  fObs.forEach(o => { const k = new Date(o.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].observations++; });
-  fTrainings.forEach(t => { const k = new Date(t.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].trainings++; });
+  fVisits.forEach(v => { const k = parseLocalDate(v.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].visits++; });
+  fObs.forEach(o => { const k = parseLocalDate(o.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].observations++; });
+  fTrainings.forEach(t => { const k = parseLocalDate(t.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].trainings++; });
 
   const p = getProfile();
   output.innerHTML = `<div class="report-content">
@@ -11527,8 +11588,8 @@ function generateHealthReport(output, visits, trainings, observations, monthVal,
 
  ${fTrainings.length > 0 ? `<h3>Training Sessions</h3>
  ${_reportTableHTML(['Date', 'Title', 'Venue', 'Attendees', 'Duration', 'Target', 'Status'],
-    fTrainings.sort((a, b) => new Date(a.date) - new Date(b.date)).map(t => [
-      new Date(t.date).toLocaleDateString('en-IN'),
+    fTrainings.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(t => [
+      parseLocalDate(t.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(t.title)}</strong>`,
       escapeHtml(t.venue || '-'),
       t.attendees || '-',
@@ -11677,8 +11738,8 @@ function generateVisitsReport(output, visits, monthVal, year) {
 
  ${fTrainings.length > 0 ? `<h3>Training Sessions Conducted</h3>
  ${_reportTableHTML(['Date', 'Title', 'Duration', 'Attendees', 'Target', 'Venue', 'Status'],
-    fTrainings.sort((a, b) => new Date(a.date) - new Date(b.date)).map(t => [
-      new Date(t.date).toLocaleDateString('en-IN'),
+    fTrainings.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(t => [
+      parseLocalDate(t.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(t.title)}</strong>`,
       t.duration + 'h',
       t.attendees || '-',
@@ -11689,11 +11750,11 @@ function generateVisitsReport(output, visits, monthVal, year) {
   )}` : ''}
 
  ${fVisits.length > 0 ? `<h3>All School Visits Full Details</h3>
- ${fVisits.sort((a, b) => new Date(a.date) - new Date(b.date)).map((v, idx) => {
+ ${fVisits.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map((v, idx) => {
     const stars = v.rating ? ''.repeat(parseInt(v.rating)) : '';
     // Short fields inside the compact table
     const tableFields = [
-      [' Date', v.date ? new Date(v.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : null],
+      [' Date', v.date ? parseLocalDate(v.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : null],
       [' School', v.school || null],
       [' Block', v.block || null],
       [' Cluster', v.cluster || null],
@@ -11724,7 +11785,7 @@ function generateVisitsReport(output, visits, monthVal, year) {
     ].filter(([, val]) => val && val.toString().trim());
     return `<div class="rpt-visit-card">
  <div class="rpt-visit-card-header">
- <span>${idx + 1}. ${escapeHtml(v.school || 'School Visit')} &nbsp; ${v.date ? new Date(v.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
+ <span>${idx + 1}. ${escapeHtml(v.school || 'School Visit')} &nbsp; ${v.date ? parseLocalDate(v.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
  <span class="rpt-visit-card-status">${escapeHtml(v.status || '')}</span>
  </div>
  ${tableFields.length > 0 ? `<table class="rpt-visit-table">
@@ -11742,8 +11803,8 @@ function generateVisitsReport(output, visits, monthVal, year) {
 
  ${fObs.length > 0 ? `<h3>Classroom Observations</h3>
  ${_reportTableHTML(['Date', 'School', 'Teacher', 'Subject', 'Class', 'Engagement', 'Practice Type'],
-    fObs.sort((a, b) => new Date(a.date) - new Date(b.date)).map(o => [
-      new Date(o.date).toLocaleDateString('en-IN'),
+    fObs.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(o => [
+      parseLocalDate(o.date).toLocaleDateString('en-IN'),
       escapeHtml(o.school || '-'),
       escapeHtml(o.teacher || '-'),
       escapeHtml(o.subject || '-'),
@@ -11868,8 +11929,8 @@ function generateTrainingReport(output, trainings, monthVal, year) {
 
  ${fTrainings.length > 0 ? `<h3>All Training Sessions</h3>
  ${_reportTableHTML(['Date', 'Title', 'Topic', 'Duration', 'Attendees', 'Target', 'Venue', 'Status'],
-    fTrainings.sort((a, b) => new Date(a.date) - new Date(b.date)).map(t => [
-      new Date(t.date).toLocaleDateString('en-IN'),
+    fTrainings.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(t => [
+      parseLocalDate(t.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(t.title)}</strong>`,
       escapeHtml(t.topic || '-'),
       t.duration + 'h',
@@ -11882,8 +11943,8 @@ function generateTrainingReport(output, trainings, monthVal, year) {
 
  ${fVisits.length > 0 ? `<h3>School Visits</h3>
  ${_reportTableHTML(['Date', 'School', 'Cluster', 'Purpose', 'People Met', 'Status'],
-    fVisits.sort((a, b) => new Date(a.date) - new Date(b.date)).map(v => [
-      new Date(v.date).toLocaleDateString('en-IN'),
+    fVisits.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(v => [
+      parseLocalDate(v.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(v.school || '-')}</strong>`,
       escapeHtml(v.cluster || '-'),
       escapeHtml(v.purpose || '-'),
@@ -11894,8 +11955,8 @@ function generateTrainingReport(output, trainings, monthVal, year) {
 
  ${fObs.length > 0 ? `<h3>Classroom Observations</h3>
  ${_reportTableHTML(['Date', 'School', 'Teacher', 'Subject', 'Class', 'Engagement', 'Practice Type'],
-    fObs.sort((a, b) => new Date(a.date) - new Date(b.date)).map(o => [
-      new Date(o.date).toLocaleDateString('en-IN'),
+    fObs.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date)).map(o => [
+      parseLocalDate(o.date).toLocaleDateString('en-IN'),
       escapeHtml(o.school || '-'),
       escapeHtml(o.teacher || '-'),
       escapeHtml(o.subject || '-'),
@@ -11918,7 +11979,7 @@ function generateSchoolReport(output, visits, trainings, observations) {
     schoolMap[key].visits++;
     if (v.status === 'completed') schoolMap[key].completedVisits++;
     if (v.purpose) schoolMap[key].purposes.add(v.purpose);
-    const d = new Date(v.date);
+    const d = parseLocalDate(v.date);
     if (!schoolMap[key].lastVisit || d > schoolMap[key].lastVisit) schoolMap[key].lastVisit = d;
     if (v.cluster && !schoolMap[key].cluster) schoolMap[key].cluster = v.cluster;
     if (v.block && !schoolMap[key].block) schoolMap[key].block = v.block;
@@ -12006,8 +12067,8 @@ function generateSchoolReport(output, visits, trainings, observations) {
 
  ${trainings.length > 0 ? `<h3>Training Sessions</h3>
  ${_reportTableHTML(['Date', 'Title', 'Venue', 'Attendees', 'Duration', 'Target', 'Status'],
-    trainings.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 30).map(t => [
-      new Date(t.date).toLocaleDateString('en-IN'),
+    trainings.sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)).slice(0, 30).map(t => [
+      parseLocalDate(t.date).toLocaleDateString('en-IN'),
       `<strong>${escapeHtml(t.title)}</strong>`,
       escapeHtml(t.venue || '-'),
       t.attendees || '-',
@@ -12069,13 +12130,13 @@ function generateSummaryReport(output, visits, trainings, observations) {
   const monthlyTrend = {};
   [...visits, ...observations, ...trainings].forEach(item => {
     if (!item.date) return;
-    const d = new Date(item.date);
+    const d = parseLocalDate(item.date);
     const key = d.toLocaleString('en', { month: 'short', year: 'numeric' });
     if (!monthlyTrend[key]) monthlyTrend[key] = { visits: 0, observations: 0, trainings: 0, sortKey: d.getFullYear() * 100 + d.getMonth() };
   });
-  visits.forEach(v => { if (!v.date) return; const k = new Date(v.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].visits++; });
-  observations.forEach(o => { if (!o.date) return; const k = new Date(o.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].observations++; });
-  trainings.forEach(t => { if (!t.date) return; const k = new Date(t.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].trainings++; });
+  visits.forEach(v => { if (!v.date) return; const k = parseLocalDate(v.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].visits++; });
+  observations.forEach(o => { if (!o.date) return; const k = parseLocalDate(o.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].observations++; });
+  trainings.forEach(t => { if (!t.date) return; const k = parseLocalDate(t.date).toLocaleString('en', { month: 'short', year: 'numeric' }); if (monthlyTrend[k]) monthlyTrend[k].trainings++; });
 
   output.innerHTML = `<div class="report-content">
  <h2>Overall Summary Report</h2>
@@ -12714,19 +12775,19 @@ function getGoalTargets(monthKey) {
 
 function getGoalActuals(year, month) {
   const visits = DB.get('visits').filter(v => {
-    const d = new Date(v.date);
+    const d = parseLocalDate(v.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
   const completedVisits = visits.filter(v => v.status === 'completed').length;
 
   const trainings = DB.get('trainings').filter(t => {
-    const d = new Date(t.date);
+    const d = parseLocalDate(t.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
   const completedTrainings = trainings.filter(t => t.status === 'completed').length;
 
   const observations = DB.get('observations').filter(o => {
-    const d = new Date(o.date);
+    const d = parseLocalDate(o.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
@@ -13102,7 +13163,7 @@ function renderAnalyticsInsights(visits, trainings, observations, allVisits, all
   allVisits.forEach(v => {
     const key = (v.school || '').toLowerCase().trim();
     if (!key) return;
-    const d = new Date(v.date);
+    const d = parseLocalDate(v.date);
     if (!schoolLastVisit[key] || d > schoolLastVisit[key].date) {
       schoolLastVisit[key] = { date: d, name: v.school };
     }
@@ -13414,7 +13475,7 @@ function renderTrainingImpactChart(trainings) {
   const canvas = document.getElementById('chartTrainingImpact');
   if (!canvas) return;
 
-  const sorted = [...trainings].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const sorted = [...trainings].sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
   if (sorted.length === 0) {
     canvas.style.display = 'none';
     if (!canvas.parentElement.querySelector('.empty-state')) canvas.insertAdjacentHTML('afterend', '<div class="empty-state small"><i class="fas fa-users"></i><p>No trainings in this period</p></div>');
@@ -13452,7 +13513,7 @@ function renderWeeklyHeatmapChart(visits, trainings, observations) {
   const dayCounts = [0, 0, 0, 0, 0, 0, 0];
 
   [...visits, ...trainings, ...observations].forEach(item => {
-    const d = new Date(item.date);
+    const d = parseLocalDate(item.date);
     if (!isNaN(d)) dayCounts[d.getDay()]++;
   });
 
@@ -13496,7 +13557,7 @@ function renderActivityTimeline(visits, trainings, observations) {
     ...visits.map(v => ({ type: 'visit', icon: 'fa-school', cls: 'tl-visit', title: v.school, detail: v.purpose || '', status: v.status, date: v.date, time: v.createdAt || v.date })),
     ...trainings.map(t => ({ type: 'training', icon: 'fa-chalkboard-teacher', cls: 'tl-training', title: t.title, detail: `${t.attendees || 0} attendees · ${t.duration || 0}h`, status: t.status, date: t.date, time: t.createdAt || t.date })),
     ...observations.map(o => ({ type: 'observation', icon: 'fa-clipboard-check', cls: 'tl-observation', title: `${o.school} ${o.subject}`, detail: o.teacher ? `Teacher: ${o.teacher}` : '', status: '', date: o.date, time: o.createdAt || o.date })),
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  ].sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   countEl.textContent = `${items.length} activities`;
 
@@ -13506,7 +13567,7 @@ function renderActivityTimeline(visits, trainings, observations) {
   }
 
   container.innerHTML = items.map(item => {
-    const d = new Date(item.date);
+    const d = parseLocalDate(item.date);
     const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     return `<div class="timeline-item">
  <div class="timeline-dot ${item.cls}"><i class="fas ${item.icon}"></i></div>
@@ -13544,12 +13605,28 @@ function normalizeDateOnly(dateValue) {
   if (!dateValue) return '';
   const v = String(dateValue).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  // App convention: ambiguous d/m/y strings are DAY-FIRST (dd/mm/yyyy)
+  const dmy = v.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (dmy) {
+    const day = parseInt(dmy[1], 10), month = parseInt(dmy[2], 10), year = parseInt(dmy[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    }
+  }
   const d = new Date(v);
   if (isNaN(d.getTime())) return '';
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+// Parses a stored date string as a LOCAL date. Date-only 'YYYY-MM-DD' strings are
+// parsed as local midnight so they never shift a day via UTC (unlike new Date(str)).
+function parseLocalDate(dateValue) {
+  if (!dateValue) return new Date(NaN);
+  const s = String(dateValue).trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00:00') : new Date(s);
 }
 
 function dateOnlyToMs(dateValue) {
@@ -14711,7 +14788,7 @@ function _renderFollowupCard(f) {
   const dateStr = sourceMs !== null ? new Date(sourceMs).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date';
   const sourceLabel = ACTION_CLOSURE_SOURCE_LABELS[f.source] || (f.source === 'manual' ? 'Manual' : 'Action');
   const sourceCls = f.source === 'visit' ? 'followup-visit' : f.source === 'observation' ? 'followup-obs' : f.source === 'manual' ? 'followup-manual' : 'followup-meeting';
-  const dueText = f.dueDate ? new Date(f.dueDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No SLA';
+  const dueText = f.dueDate ? parseLocalDate(f.dueDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No SLA';
   const dueClass = f.isOverdue ? 'overdue' : (f.dueInDays !== null && f.dueInDays <= 2 && !f.done ? 'soon' : '');
   const slaText = f.dueInDays === null ? 'No SLA' : f.dueInDays < 0 ? `Overdue ${Math.abs(f.dueInDays)}d` : f.dueInDays === 0 ? 'Due today' : `Due in ${f.dueInDays}d`;
   const suggestHigh = !f.done && f.detectedPriority === 'high' && f.priority !== 'high';
@@ -14812,7 +14889,7 @@ function _renderFollowupKanban(followups) {
  <div class="fu-kc-meta">
  <span style="color:${pc};font-size:10px;font-weight:700">${(f.priority || 'medium').toUpperCase()}</span>
  ${ds ? `<span style="font-size:10px;color:var(--text-muted)">${ds}</span>` : ''}
- ${f.isOverdue ? `<span style="color:#ef4444;font-size:10px;font-weight:700">⚠ Overdue ${Math.abs(f.dueInDays || 0)}d</span>` : (f.dueInDays !== null && f.dueInDays <= 3 && !f.done ? `<span style="color:#f59e0b;font-size:10px">Due ${f.dueInDays}d</span>` : '')}
+ ${f.isOverdue ? `<span style="color:#ef4444;font-size:10px;font-weight:700"> Overdue ${Math.abs(f.dueInDays || 0)}d</span>` : (f.dueInDays !== null && f.dueInDays <= 3 && !f.done ? `<span style="color:#f59e0b;font-size:10px">Due ${f.dueInDays}d</span>` : '')}
  </div>
  <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)">
  <option value="pending" ${col.key === 'pending' ? 'selected' : ''}>Pending</option>
@@ -15311,13 +15388,13 @@ function extractSchoolProfilesFromRows(rows) {
     if (!s.district && row['District Name']) s.district = (row['District Name'] || '').trim();
     if (!s.state && row['State']) s.state = (row['State'] || '').trim();
 
-    const rawDate = row['Response Date'];
-    if (rawDate instanceof Date) {
-      s.dates.push(rawDate.toISOString().split('T')[0]);
-    } else if (typeof rawDate === 'string' && rawDate) {
-      const parsed = new Date(rawDate);
-      if (!isNaN(parsed)) s.dates.push(parsed.toISOString().split('T')[0]);
-    }
+const rawDate = row['Response Date'];
+if (rawDate instanceof Date) {
+s.dates.push(rawDate.toISOString().split('T')[0]);
+} else if (typeof rawDate === 'string' && rawDate) {
+const parsed = parseDMTDate(rawDate);
+if (parsed && /^\d{4}-\d{2}-\d{2}$/.test(parsed)) s.dates.push(parsed);
+}
   });
 
   // Convert Sets to arrays and sort
@@ -15916,7 +15993,7 @@ function renderSchoolProfiles() {
  </div>
  ${studentBar}
  <div class="school-card-footer">
- <div class="school-last-visit"><i class="fas fa-clock"></i> ${lastDate ? new Date(lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No activity'}</div>
+ <div class="school-last-visit"><i class="fas fa-clock"></i> ${lastDate ? formatDateSetting(lastDate) : 'No activity'}</div>
  ${avgRating ? `<div class="school-rating"><i class="fas fa-star"></i> ${avgRating}/5</div>` : ''}
  </div>
  </div>
@@ -16054,7 +16131,7 @@ function showSchoolDetail(encodedKey) {
  ${a.fields.length > 0 ? `<div class="tl-expanded-details">${detailRows}</div>` : ''}
  </div>
  <div class="school-timeline-right">
- <div class="school-timeline-date">${new Date(a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+ <div class="school-timeline-date">${parseLocalDate(a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
  <i class="fas fa-chevron-down tl-expand-icon"></i>
  </div>
  </div>`;
@@ -16257,14 +16334,20 @@ function renderClusterProfiles() {
     const lastDate = allDates.length > 0 ? allDates[allDates.length - 1] : null;
     const safeKey = encodeURIComponent(cluster.name.trim().toLowerCase()).replace(/'/g, '%27');
 
-    // Engagement level distribution for mini-indicator
-    const engLevels = {};
+    // Engagement by TEACHER: each teacher counted once using their most recent observation's level
+    const teacherLatestLevel = {};
     cluster.observations.forEach(o => {
+      const tch = (o.teacher || '').trim();
       const lvl = (o.engagementLevel || '').trim();
-      if (lvl) engLevels[lvl] = (engLevels[lvl] || 0) + 1;
+      if (!tch || !lvl) return;
+      const d = (o.date || '');
+      if (!teacherLatestLevel[tch] || d >= teacherLatestLevel[tch].d) teacherLatestLevel[tch] = { d, level: lvl };
     });
-    const engBar = Object.keys(engLevels).length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${Object.entries(engLevels).map(([lvl, cnt]) => {
-      const color = lvl.toLowerCase().includes('high') ? '#10b981' : lvl.toLowerCase().includes('medium') ? '#f59e0b' : lvl.toLowerCase().includes('low') ? '#ef4444' : '#6366f1';
+    const engLevels = {};
+    Object.values(teacherLatestLevel).forEach(v => { engLevels[v.level] = (engLevels[v.level] || 0) + 1; });
+    const engBar = Object.keys(engLevels).length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;" title="Teachers by engagement level (latest observation per teacher)">${Object.entries(engLevels).map(([lvl, cnt]) => {
+      const lc = lvl.toLowerCase();
+      const color = lc.includes('more') ? '#10b981' : lc === 'engaged' || lc.includes('medium') ? '#3b82f6' : lc.includes('less') || lc.includes('low') ? '#f59e0b' : '#ef4444';
       return `<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:${color}22;color:${color};font-weight:600;">${escapeHtml(lvl)} ${cnt}</span>`;
     }).join('')}</div>` : '';
 
@@ -16281,7 +16364,7 @@ function renderClusterProfiles() {
  </div>
  ${engBar}
  <div class="school-card-footer">
- <div class="school-last-visit"><i class="fas fa-clock"></i> ${lastDate ? new Date(lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No activity'}</div>
+ <div class="school-last-visit"><i class="fas fa-clock"></i> ${lastDate ? formatDateSetting(lastDate) : 'No activity'}</div>
  <div style="font-size:11px;color:var(--text-muted);">${cluster.totalActivityDays} days active</div>
  </div>
  </div>
@@ -16360,7 +16443,6 @@ function showClusterDetail(encodedKey) {
 
   cluster.observations.forEach(o => {
     const el = (o.engagementLevel || '').trim();
-    if (el) engLevelCount[el] = (engLevelCount[el] || 0) + 1;
     const pt = (o.practiceType || '').trim();
     if (pt) practiceTypeCount[pt] = (practiceTypeCount[pt] || 0) + 1;
     const sub = (o.subject || '').trim();
@@ -16385,6 +16467,20 @@ function showClusterDetail(encodedKey) {
       if (pt) teacherObsMap[tch].practices.add(pt);
       if (sch) teacherObsMap[tch].school = sch;
     }
+  });
+
+  // Engagement levels counted by TEACHER (not by observation):
+  // each teacher is bucketed once, using their most recent observation's level
+  const teacherLatestLevel = {};
+  cluster.observations.forEach(o => {
+    const tch = (o.teacher || '').trim();
+    const el = (o.engagementLevel || '').trim();
+    if (!tch || !el) return;
+    const d = (o.date || '');
+    if (!teacherLatestLevel[tch] || d >= teacherLatestLevel[tch].d) teacherLatestLevel[tch] = { d, level: el };
+  });
+  Object.values(teacherLatestLevel).forEach(v => {
+    engLevelCount[v.level] = (engLevelCount[v.level] || 0) + 1;
   });
 
   // Visit purpose breakdown
@@ -16413,9 +16509,10 @@ function showClusterDetail(encodedKey) {
   const engMax = Math.max(...Object.values(engLevelCount), 1);
   const engBarHTML = Object.keys(engLevelCount).length > 0 ? `
  <div class="report-chart-section">
- <h4><i class="fas fa-signal" style="color:#8b5cf6;margin-right:6px;"></i>Engagement Level Distribution</h4>
+ <h4><i class="fas fa-signal" style="color:#8b5cf6;margin-right:6px;"></i>Engagement Level Distribution <span style="font-weight:500;font-size:11px;color:var(--text-muted);">(teachers — latest observation per teacher)</span></h4>
  <div class="report-bar-chart">${Object.entries(engLevelCount).sort((a, b) => b[1] - a[1]).map(([lvl, cnt]) => {
-    const color = lvl.toLowerCase().includes('high') ? '#10b981' : lvl.toLowerCase().includes('medium') ? '#f59e0b' : lvl.toLowerCase().includes('low') ? '#ef4444' : '#6366f1';
+    const lc = lvl.toLowerCase();
+    const color = lc.includes('more') ? '#10b981' : lc === 'engaged' || lc.includes('medium') ? '#3b82f6' : lc.includes('less') || lc.includes('low') ? '#f59e0b' : '#ef4444';
     return `<div class="report-bar-item"><span class="report-bar-label">${escapeHtml(lvl)}</span><div class="report-bar-track"><div class="report-bar-fill" style="width:${(cnt / engMax * 100).toFixed(1)}%;background:${color};">${cnt}</div></div></div>`;
   }).join('')}</div>
  </div>` : '';
@@ -16487,7 +16584,9 @@ function showClusterDetail(encodedKey) {
  <div class="report-table-wrap"><table class="report-table"><thead><tr><th>Month</th><th>Visits</th><th>Observations</th><th>Total</th></tr></thead><tbody>
  ${monthKeys.map(m => {
     const d = monthlyTrend[m];
-    return `<tr><td>${m}</td><td>${d.visits}</td><td>${d.obs}</td><td>${d.visits + d.obs}</td></tr>`;
+    const [yy, mm] = m.split('-');
+    const monthName = new Date(parseInt(yy, 10), parseInt(mm, 10) - 1, 1).toLocaleDateString('en-IN', { month: 'short' });
+    return `<tr><td>${monthName} ${escapeHtml(yy)}</td><td>${d.visits}</td><td>${d.obs}</td><td>${d.visits + d.obs}</td></tr>`;
   }).join('')}
  </tbody></table></div>
  </div>` : '';
@@ -16562,7 +16661,7 @@ function showClusterDetail(encodedKey) {
  ${a.fields.length > 0 ? `<div class="tl-expanded-details">${detailRows}</div>` : ''}
  </div>
  <div class="school-timeline-right">
- <div class="school-timeline-date">${a.date ? new Date(a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</div>
+ <div class="school-timeline-date">${a.date ? formatDateSetting(a.date) : ''}</div>
  <i class="fas fa-chevron-down tl-expand-icon"></i>
  </div>
  </div>`;
@@ -17047,7 +17146,7 @@ function renderMeetings() {
  <div class="meeting-card">
  <div class="meeting-card-header">
  <span class="meeting-type-badge" style="background:${color}20;color:${color};border:1px solid ${color}40;">${escapeHtml(m.type || 'Meeting')}</span>
- <span class="meeting-date"><i class="fas fa-calendar-alt"></i> ${m.date ? new Date(m.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
+ <span class="meeting-date"><i class="fas fa-calendar-alt"></i> ${m.date ? parseLocalDate(m.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
  <div class="meeting-card-actions">
  <button class="btn-icon-sm" onclick="openMeetingModal('${m.id}')" title="Edit"><i class="fas fa-edit"></i></button>
  <button class="btn-icon-sm" onclick="deleteMeeting('${m.id}')" title="Delete"><i class="fas fa-trash"></i></button>
@@ -17317,7 +17416,7 @@ function printSchoolHealthCard(encodedKey) {
 </div>
 <div class="meta-row">
  <div><strong>Block:</strong> ${escapeHtml(school.block || 'N/A')} &nbsp;&bull;&nbsp; <strong>RP:</strong> ${escapeHtml(profile.name || 'N/A')} &nbsp;&bull;&nbsp; <strong>District:</strong> ${escapeHtml(profile.district || 'N/A')}</div>
- <div><strong>Generated:</strong> ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} &nbsp;&bull;&nbsp; <strong>Last Visit:</strong> ${lastVisit ? new Date(lastVisit.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</div>
+ <div><strong>Generated:</strong> ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} &nbsp;&bull;&nbsp; <strong>Last Visit:</strong> ${lastVisit ? parseLocalDate(lastVisit.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</div>
 </div>
 <div class="stats-grid">
  <div class="stat-box"><div class="val">${school.visits.length}</div><div class="lbl">Total Visits</div></div>
@@ -17338,7 +17437,7 @@ ${teacherRows ? `<h3> Teacher-wise Summary</h3>
 ${strengths.length > 0 ? `<h3> Strengths Observed</h3><div class="section-block"><ul>${strengths.slice(0, 5).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div>` : ''}
 ${areas.length > 0 ? `<h3> Areas for Improvement</h3><div class="section-block"><ul>${areas.slice(0, 5).map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div>` : ''}
 
-${pendingFollowups.length > 0 ? `<h3> Pending Follow-ups (${pendingFollowups.length})</h3>${pendingFollowups.slice(0, 5).map(f => `<div class="followup-item"><strong>${f.source} (${new Date(f.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}):</strong> ${escapeHtml(f.text)}</div>`).join('')}` : ''}
+${pendingFollowups.length > 0 ? `<h3> Pending Follow-ups (${pendingFollowups.length})</h3>${pendingFollowups.slice(0, 5).map(f => `<div class="followup-item"><strong>${f.source} (${parseLocalDate(f.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}):</strong> ${escapeHtml(f.text)}</div>`).join('')}` : ''}
 
 ${subjects.length > 0 ? `<div style="margin-top:8px;"><strong style="font-size:10px;">Subjects covered:</strong> <span style="font-size:10px;color:#64748b;">${escapeHtml(subjects.join(', '))}</span></div>` : ''}
 
@@ -18449,8 +18548,8 @@ function importTeacherRecordsExcel(event) {
           if (raw instanceof Date) {
             joinDate = raw.toISOString().split('T')[0];
           } else if (typeof raw === 'string' && raw.trim()) {
-            const d = new Date(raw.trim());
-            if (!isNaN(d.getTime())) joinDate = d.toISOString().split('T')[0];
+            const jd = parseDMTDate(raw);
+            if (jd && /^\d{4}-\d{2}-\d{2}$/.test(jd)) joinDate = jd;
           }
         }
 
@@ -18769,7 +18868,7 @@ function generateMaraiPlan(teacherKey) {
   let daysInStage = 0;
   if (stageRecords.length > 0) {
     const earliest = stageRecords[stageRecords.length - 1];
-    daysInStage = Math.floor((Date.now() - new Date(earliest.date).getTime()) / 86400000);
+    daysInStage = Math.floor((Date.now() - parseLocalDate(earliest.date).getTime()) / 86400000);
   }
 
   // Determine visit frequency gaps
@@ -18939,7 +19038,7 @@ function renderMaraiTracking() {
     if (t._latest) {
       const stageRecords = sorted.filter(r => r.stage === t._currentStage);
       const earliest = stageRecords[stageRecords.length - 1];
-      t._daysInStage = earliest ? Math.floor((now - new Date(earliest.date).getTime()) / 86400000) : 0;
+      t._daysInStage = earliest ? Math.floor((now - parseLocalDate(earliest.date).getTime()) / 86400000) : 0;
     } else { t._daysInStage = 0; }
     // Low engagement from observations
     t._lowEngagement = obsForTeacher.filter(o => o.engagementLevel && o.engagementLevel !== 'More Engaged' && o.engagementLevel !== 'Engaged').length;
@@ -19073,7 +19172,7 @@ function renderMaraiTracking() {
     }).join('<div class="marai-connector"></div>');
 
     const lastNote = latest?.notes || '';
-    const lastDate = latest ? new Date(latest.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not tracked';
+    const lastDate = latest ? parseLocalDate(latest.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not tracked';
     const teacherKey = encodeURIComponent(t.name.trim().toLowerCase());
 
     // Generate quick suggestion snippet
@@ -19104,7 +19203,7 @@ function renderMaraiTracking() {
       const s = MARAI_STAGES.find(st => st.key === r.stage);
       return `<div class="marai-history-item">
  <span class="marai-history-badge" style="background:${s?.color || '#6b7280'}20;color:${s?.color || '#6b7280'}">${s?.emoji || ''} ${s?.label || r.stage}</span>
- <span class="marai-history-date">${new Date(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+ <span class="marai-history-date">${parseLocalDate(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
  ${r.notes ? `<span class="marai-history-note">${escapeHtml(r.notes)}</span>` : ''}
  <button class="btn-icon-sm" onclick="deleteMaraiRecord('${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
  </div>`;
@@ -19560,7 +19659,7 @@ function renderSchoolWork() {
  <h4 class="sw-card-title">${escapeHtml(r.title || typeInfo.label)}</h4>
  <div class="sw-card-meta">
  <span><i class="fas fa-school"></i> ${escapeHtml(r.school || 'Not specified')}</span>
- <span><i class="fas fa-calendar-alt"></i> ${r.date ? new Date(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
+ <span><i class="fas fa-calendar-alt"></i> ${r.date ? parseLocalDate(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
  ${r.participants ? `<span><i class="fas fa-users"></i> ${r.participants} participants</span>` : ''}
  ${r.block ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(r.block)}</span>` : ''}
  ${r.photos ? `<span><i class="fas fa-camera"></i> ${r.photos} photo(s)</span>` : ''}
@@ -19760,7 +19859,7 @@ async function vpLinkExcel() {
       _vpParseWorkbook(data);
       _vpUpdateLinkedUI(handle.name, true);
       const isMacroFile = handle.name.toLowerCase().endsWith('.xlsm');
-      showToast('✅ ' + (isMacroFile ? 'Macro Excel (.xlsm)' : 'Excel') + ' linked! Changes auto-save to file.');
+      showToast(' ' + (isMacroFile ? 'Macro Excel (.xlsm)' : 'Excel') + ' linked! Changes auto-save to file.');
       return;
     } catch (err) {
       if (err.name === 'AbortError') return;
@@ -19782,7 +19881,7 @@ async function vpLinkExcel() {
         _vpParseWorkbook(new Uint8Array(ev.target.result));
         _vpUpdateLinkedUI(file.name, false);
         const isMacroFb = file.name.toLowerCase().endsWith('.xlsm');
-        showToast('✅ ' + (isMacroFb ? 'Macro Excel (.xlsm)' : 'Excel') + ' loaded! For auto-save back to file, use Chrome or Edge.');
+        showToast(' ' + (isMacroFb ? 'Macro Excel (.xlsm)' : 'Excel') + ' loaded! For auto-save back to file, use Chrome or Edge.');
       } catch (err) {
         showToast(' Error: ' + err.message);
       }
@@ -19829,7 +19928,7 @@ function vpDownloadMacroExcel() {
   var prevDate = null;
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i];
-    var dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(new Date(e.date)) : '');
+    var dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(parseLocalDate(e.date)) : '');
     var showDate = dateVal !== prevDate ? dateVal : '';
     prevDate = dateVal;
     dataRows.push([showDate,e.day,e.time,e.domain,e.stakeholderType,e.cluster,e.venue,
@@ -19956,12 +20055,12 @@ function _vpShowMacroGuideModal() {
   overlay.id = 'vpMacroGuideOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
   var steps = [
-    { icon:'💾', n:1, title:'Save as .xlsm', desc:'<strong>File &rarr; Save As</strong> &rarr; select <strong>Excel Macro-Enabled Workbook (*.xlsm)</strong>' },
-    { icon:'⌨️', n:2, title:'Open VBA Editor', desc:'Press <strong>Alt&nbsp;+&nbsp;F11</strong> to open Visual Basic for Applications' },
-    { icon:'📄', n:3, title:'Insert Module', desc:'Right-click your project in left panel &rarr; <strong>Insert &rarr; Module</strong>' },
-    { icon:'📋', n:4, title:'Paste VBA Code', desc:'Copy code from <strong>&quot;Macro Setup Guide&quot;</strong> sheet (between the === lines) and paste into the module' },
-    { icon:'▶️', n:5, title:'Run SetupMacroButton', desc:'Press <strong>Alt&nbsp;+&nbsp;F8</strong> &rarr; select <strong>SetupMacroButton</strong> &rarr; click <strong>Run</strong>' },
-    { icon:'🔗', n:6, title:'Link in APF App', desc:'Visit Plan &rarr; click <strong>arrow on Link Excel button</strong> &rarr; <strong>Link Excel (.xlsx/.xlsm)</strong> &rarr; select your .xlsm file' },
+    { icon:'', n:1, title:'Save as .xlsm', desc:'<strong>File &rarr; Save As</strong> &rarr; select <strong>Excel Macro-Enabled Workbook (*.xlsm)</strong>' },
+    { icon:'', n:2, title:'Open VBA Editor', desc:'Press <strong>Alt&nbsp;+&nbsp;F11</strong> to open Visual Basic for Applications' },
+    { icon:'', n:3, title:'Insert Module', desc:'Right-click your project in left panel &rarr; <strong>Insert &rarr; Module</strong>' },
+    { icon:'', n:4, title:'Paste VBA Code', desc:'Copy code from <strong>&quot;Macro Setup Guide&quot;</strong> sheet (between the === lines) and paste into the module' },
+    { icon:'', n:5, title:'Run SetupMacroButton', desc:'Press <strong>Alt&nbsp;+&nbsp;F8</strong> &rarr; select <strong>SetupMacroButton</strong> &rarr; click <strong>Run</strong>' },
+    { icon:'', n:6, title:'Link in APF App', desc:'Visit Plan &rarr; click <strong>arrow on Link Excel button</strong> &rarr; <strong>Link Excel (.xlsx/.xlsm)</strong> &rarr; select your .xlsm file' },
   ];
   var stepsHtml = steps.map(function(s){
     return '<div style="display:flex;gap:12px;align-items:flex-start;background:var(--bg-secondary,rgba(255,255,255,0.04));border-radius:12px;padding:11px 14px;border:1px solid var(--border-color,rgba(255,255,255,0.07));">'
@@ -20002,11 +20101,11 @@ function vpToggleAutoSync() {
   window._vpAutoSyncEnabled = !window._vpAutoSyncEnabled;
   _vpUpdateAutoSyncUI();
   if (window._vpAutoSyncEnabled) {
-    showToast('⚠ï¸ Auto-sync ON — changes will overwrite linked Excel', 'warning');
+    showToast(' Auto-sync ON — changes will overwrite linked Excel', 'warning');
     // Immediately sync once when turned on
     _vpSyncToExcel();
   } else {
-    showToast('✅ Auto-sync OFF — Excel file is protected', 'success');
+    showToast(' Auto-sync OFF — Excel file is protected', 'success');
   }
 }
 
@@ -20080,7 +20179,7 @@ async function _vpSyncToExcel() {
     const dataRows = [header];
     let prevDate = null;
     for (const e of entries) {
-      const dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(new Date(e.date)) : '');
+      const dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(parseLocalDate(e.date)) : '');
       const showDate = dateVal !== prevDate ? dateVal : '';
       prevDate = dateVal;
       dataRows.push([showDate, e.day, e.time, e.domain, e.stakeholderType, e.cluster, e.venue,
@@ -20258,7 +20357,9 @@ function _vpParseSheet(wb, sheetName) {
     let dateVal = row[0];
     if (dateVal && !isNaN(dateVal)) { lastDate = Number(dateVal); }
     else if (dateVal && typeof dateVal === 'string' && dateVal.trim()) {
-      const parsed = new Date(dateVal);
+      // Excel convention: DD/MM/YYYY - parse day-first
+      const iso = parseDMTDate(dateVal);
+      const parsed = (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) ? new Date(iso + 'T00:00:00') : new Date(dateVal);
       if (!isNaN(parsed)) lastDate = _vpJSDateToExcel(parsed);
     }
     const time = String(row[2] || '').trim();
@@ -20347,7 +20448,7 @@ function _vpParseSheet(wb, sheetName) {
   if (cntAdded) mergeParts.push(`${cntAdded} added`);
   if (cntReplaced) mergeParts.push(`${cntReplaced} planned updated`);
   if (cntPreserved) mergeParts.push(`${cntPreserved} executed preserved`);
-  showToast(`✅ Imported from "${sheetName}" — ${mergeParts.join(', ')}${skipParts.length ? ' | ' + skipParts.join(' | ') : ''}`);
+  showToast(` Imported from "${sheetName}" — ${mergeParts.join(', ')}${skipParts.length ? ' | ' + skipParts.join(' | ') : ''}`);
 }
 
 function _vpExcelDateToJS(serial) {
@@ -20382,7 +20483,7 @@ function importVisitPlanExcel(event) {
       _vpParseWorkbook(data);
     } catch (err) {
       console.error('Excel Import Error:', err);
-      showToast('❌ Error importing Excel: ' + err.message);
+      showToast(' Error importing Excel: ' + err.message);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -20403,7 +20504,7 @@ function exportVisitPlanExcel() {
   const dataRows = [header];
   let prevDate = null;
   for (const e of entries) {
-    const dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(new Date(e.date)) : '');
+    const dateVal = e.dateSerial || (e.date ? _vpJSDateToExcel(parseLocalDate(e.date)) : '');
     const showDate = dateVal !== prevDate ? dateVal : '';
     prevDate = dateVal;
     dataRows.push([showDate, e.day, e.time, e.domain, e.stakeholderType, e.cluster, e.venue,
@@ -20521,7 +20622,7 @@ function _vpPopulateDropdowns() {
     const cur = monthEl.value;
     const months = [...new Set(entries.map(e => {
       if (!e.date) return null;
-      const d = new Date(e.date);
+      const d = parseLocalDate(e.date);
       return isNaN(d) ? null : d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }).filter(Boolean))];
     monthEl.innerHTML = '<option value="all"> All Months</option>';
@@ -20683,7 +20784,7 @@ async function vpBulkAddHalfToVisits(half) {
     if (e.status === 'empty') return false;
     if (e.domain === 'TLC') return false; // skip TLC
     if ((e.venue || '').trim().toUpperCase() === 'TLC') return false; // skip TLC venue
-    if (e.date && new Date(e.date).getDay() === 0) return false; // skip Sunday
+    if (e.date && parseLocalDate(e.date).getDay() === 0) return false; // skip Sunday
     return true;
   });
   if (halfEntries.length === 0) {
@@ -20952,7 +21053,7 @@ async function vpBulkClear() {
     if (monthF !== 'all') {
       if (!e.date) { match = false; }
       else {
-        const d = new Date(e.date);
+        const d = parseLocalDate(e.date);
         const m = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         if (m !== monthF) match = false;
       }
@@ -20981,7 +21082,7 @@ async function vpBulkClear() {
 function _vpAddVisitFromPlanEntry(entry, allEntries) {
   if (!entry) return { added: false, reason: 'missing' };
   // Block Sunday dates
-  if (entry.date && new Date(entry.date).getDay() === 0) return { added: false, reason: 'sunday' };
+  if (entry.date && parseLocalDate(entry.date).getDay() === 0) return { added: false, reason: 'sunday' };
   // Block TLC domain or TLC venue
   if (entry.domain === 'TLC' || (entry.venue || '').trim().toUpperCase() === 'TLC') return { added: false, reason: 'tlc' };
   const visits = DB.get('visits') || [];
@@ -21077,7 +21178,7 @@ function vpSendToSchoolVisits(id) {
   if (res.added) {
     DB.set('visitPlanEntries', entries);
     renderVisitPlan();
-    showToast('✅ Added to School Visits!', 'success');
+    showToast(' Added to School Visits!', 'success');
     setTimeout(() => _vpSyncToExcel(), 200);
   } else if (res.reason === 'sunday') {
     showToast('Cannot add — Sunday entries are not allowed in School Visits', 'error');
@@ -21420,7 +21521,7 @@ function renderVisitPlan() {
       if (statusF !== 'all' && e.status !== statusF) return false;
       if (monthF !== 'all') {
         if (!e.date) return false;
-        const d = new Date(e.date);
+        const d = parseLocalDate(e.date);
         const m = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         if (m !== monthF) return false;
       }
@@ -21974,7 +22075,7 @@ async function bchClearCache() {
     setTimeout(function() { if (resultEl) resultEl.style.display = 'none'; }, 6000);
   }
 
-  showToast(cleared.length > 0 ? '✅ Browser cache cleared — ' + cleared.length + ' cache(s) removed' : 'ℹ No cache to clear', 'success');
+  showToast(cleared.length > 0 ? ' Browser cache cleared — ' + cleared.length + ' cache(s) removed' : ' No cache to clear', 'success');
   setTimeout(function() { bchRefreshHealth(); }, 800);
 }
 
@@ -22477,7 +22578,7 @@ function getDefaultSettings() {
     defaultCluster: '',
     defaultDistrict: '',
     defaultState: '',
-    dateFormat: 'dd-mmm-yyyy',
+    dateFormat: 'dd/mm/yyyy',
     smartAlerts: true,
     dashCharts: true,
     recentActivity: true,
@@ -22568,7 +22669,7 @@ function saveAppSettings() {
     defaultCluster: (document.getElementById('settingDefaultCluster')?.value || '').trim(),
     defaultDistrict: (document.getElementById('settingDefaultDistrict')?.value || '').trim(),
     defaultState: (document.getElementById('settingDefaultState')?.value || '').trim(),
-    dateFormat: document.getElementById('settingDateFormat')?.value || 'dd-mmm-yyyy',
+    dateFormat: document.getElementById('settingDateFormat')?.value || 'dd/mm/yyyy',
     smartAlerts: document.getElementById('settingSmartAlerts')?.checked ?? true,
     dashCharts: document.getElementById('settingDashCharts')?.checked ?? true,
     recentActivity: document.getElementById('settingRecentActivity')?.checked ?? true,
@@ -23228,7 +23329,9 @@ function getSettingValue(key) {
 function formatDateSetting(dateStr) {
   if (!dateStr) return '';
   const format = getAppSettings().dateFormat;
-  const d = new Date(dateStr);
+  const s = String(dateStr).trim();
+  // Parse date-only ISO strings as LOCAL midnight to avoid UTC day-shift
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00:00') : new Date(s);
   if (isNaN(d.getTime())) return dateStr;
 
   const day = String(d.getDate()).padStart(2, '0');
@@ -25435,11 +25538,11 @@ function renderLPAnalytics() {
     const followObs = observations.find(o =>
       (o.teacher || '').toLowerCase() === teacher &&
       (o.subject || '').toLowerCase() === subject &&
-      new Date(o.date) >= planDate && new Date(o.date) <= windowEnd
+      parseLocalDate(o.date) >= planDate && parseLocalDate(o.date) <= windowEnd
     );
     const followVisit = visits.find(v =>
       v.status === 'completed' &&
-      new Date(v.date) >= planDate && new Date(v.date) <= windowEnd
+      parseLocalDate(v.date) >= planDate && parseLocalDate(v.date) <= windowEnd
     );
     const hasFollow = !!(followObs || followVisit);
     followupRows.push({
@@ -26388,7 +26491,7 @@ function buildInsightPrompt(type) {
       const notVisited = Object.entries(schoolLastVisit).filter(([s, d]) => d < thirtyDaysAgo);
       const pendingFU = followups.filter(f => f.status === 'Pending' || f.status === 'pending');
       const overdueFU = pendingFU.filter(f => f.dueDate && f.dueDate < new Date().toISOString().split('T')[0]);
-      return `Generate risk alerts for this APF Resource Person's cluster.\n\nData:\n${context}\n\nSchools NOT visited in the last 30 days (${notVisited.length}):\n${notVisited.slice(0, 15).map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All schools visited recently'}\n\nOverdue follow-ups (${overdueFU.length}):\n${overdueFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate})`).join('\n') || 'None'}\n\nTotal pending follow-ups: ${pendingFU.length}\n\nProvide: 1) 🔴 HIGH RISK items requiring immediate action, 2) 🟡 MEDIUM RISK items to address this week, 3) 🟢 LOW RISK items to monitor, 4) For each risk: what could go wrong if not addressed, 5) Recommended action with timeline.`;
+      return `Generate risk alerts for this APF Resource Person's cluster.\n\nData:\n${context}\n\nSchools NOT visited in the last 30 days (${notVisited.length}):\n${notVisited.slice(0, 15).map(([s, d]) => `- ${s}: last visited ${d}`).join('\n') || 'All schools visited recently'}\n\nOverdue follow-ups (${overdueFU.length}):\n${overdueFU.slice(0, 10).map(f => `- ${f.teacher || f.school || 'Unknown'}: ${f.item || f.description || 'N/A'} (due: ${f.dueDate})`).join('\n') || 'None'}\n\nTotal pending follow-ups: ${pendingFU.length}\n\nProvide: 1)  HIGH RISK items requiring immediate action, 2)  MEDIUM RISK items to address this week, 3)  LOW RISK items to monitor, 4) For each risk: what could go wrong if not addressed, 5) Recommended action with timeline.`;
     }
     case 'time-allocation': {
       const purposeCount = {};
@@ -27416,11 +27519,11 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 📋, 🏫, ⚠️, 📊, 💪, ✅, 🔔).`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. , , , , , , ).`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- 🏫 Your point here".' },
+      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "-  Your point here".' },
       { role: 'user', content: prompt }
     ], { temperature: 0.7, max_tokens: 1500 });
     const reply = res.choices?.[0]?.message?.content || 'No digest available.';
@@ -29102,10 +29205,10 @@ function renderWorkLog() {
   const daysInMonth = new Date(year, month, 0).getDate();
 
   // Get all data for this month
-  const visits = DB.get('visits').filter(v => { const d = new Date(v.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
-  const trainings = DB.get('trainings').filter(t => { const d = new Date(t.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
-  const observations = DB.get('observations').filter(o => { const d = new Date(o.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
-  const worklog = DB.get('worklog').filter(w => { const d = new Date(w.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
+  const visits = DB.get('visits').filter(v => { const d = parseLocalDate(v.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
+  const trainings = DB.get('trainings').filter(t => { const d = parseLocalDate(t.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
+  const observations = DB.get('observations').filter(o => { const d = parseLocalDate(o.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
+  const worklog = DB.get('worklog').filter(w => { const d = parseLocalDate(w.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
 
   // Build day-by-day log
   const dayMap = {};
@@ -29150,7 +29253,7 @@ function renderWorkLog() {
 
 
   // Auto-populate from meetings
-  const meetingsMonth = DB.get('meetings').filter(m => { const d = new Date(m.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
+  const meetingsMonth = DB.get('meetings').filter(m => { const d = parseLocalDate(m.date); return d.getMonth() + 1 === month && d.getFullYear() === year; });
   meetingsMonth.forEach(m => {
     const dateStr = m.date?.substring(0, 10);
     if (dayMap[dateStr]) {
@@ -29702,7 +29805,7 @@ function renderDashboardAlerts() {
 
   // 2. Upcoming visits this week
   const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
-  const upcomingThisWeek = visits.filter(v => v.status === 'planned' && new Date(v.date) >= now && new Date(v.date) <= weekEnd);
+  const upcomingThisWeek = visits.filter(v => v.status === 'planned' && parseLocalDate(v.date) >= now && parseLocalDate(v.date) <= weekEnd);
   if (upcomingThisWeek.length > 0) {
     alerts.push({
       icon: 'fa-calendar-day', color: '#3b82f6', rgb: '59,130,246',
@@ -29716,7 +29819,7 @@ function renderDashboardAlerts() {
   observations.forEach(o => {
     const key = (o.teacher || '').toLowerCase().trim();
     if (!key) return;
-    const d = new Date(o.date);
+    const d = parseLocalDate(o.date);
     if (!teacherLastObs[key] || d > teacherLastObs[key]) teacherLastObs[key] = d;
   });
   const staleTeachers = Object.entries(teacherLastObs).filter(([_, d]) => (now - d) / 86400000 > 30);
@@ -29769,7 +29872,7 @@ function renderDashboardAlerts() {
     });
   } else {
     const latestGrowth = growthAssessments.sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
-    const daysSince = Math.floor((now - new Date(latestGrowth.date)) / 86400000);
+    const daysSince = Math.floor((now - parseLocalDate(latestGrowth.date)) / 86400000);
     if (daysSince > 30) {
       alerts.push({
         icon: 'fa-seedling', color: '#10b981', rgb: '16,185,129',
@@ -29960,8 +30063,8 @@ function _buildTeacherProfiles() {
     // Compare obs frequency in recent half vs older half of the active period
     if (t.totalObs >= 2 && t.firstDate && t.lastDate) {
       const midDate = new Date((new Date(t.firstDate).getTime() + new Date(t.lastDate).getTime()) / 2);
-      const olderObs = t.observations.filter(o => new Date(o.date) < midDate).length;
-      const newerObs = t.observations.filter(o => new Date(o.date) >= midDate).length;
+      const olderObs = t.observations.filter(o => parseLocalDate(o.date) < midDate).length;
+      const newerObs = t.observations.filter(o => parseLocalDate(o.date) >= midDate).length;
       const freqRatio = olderObs > 0 ? (newerObs / olderObs) : (newerObs > 0 ? 2 : 1);
       const freqSignal = Math.max(-1, Math.min(1, (freqRatio - 1))); // -1 to +1
       trendScore += freqSignal * 15;
@@ -30406,7 +30509,7 @@ function tgLoadMoreHistory(idx, btn) {
           : '<span style="color:var(--text-muted);font-size:0.75rem"></span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `
- <td style="white-space:nowrap">${new Date(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
+ <td style="white-space:nowrap">${parseLocalDate(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
  <td>${escapeHtml(o.subject || '')}</td>
  <td style="font-family:monospace;font-size:0.78rem;color:#84cc16">${escapeHtml(o.practiceSerial || '')}</td>
  <td style="text-align:center">${obsBadge}</td>
@@ -30989,7 +31092,7 @@ function printTeacherSummary(idx) {
  <table><thead><tr><th>Date</th><th>Subject</th><th>Practice Serial</th><th>Observation</th><th>Comments</th></tr></thead><tbody>
  ${t.observations.slice().reverse().map(o => {
     const obsStat = o.observationStatus === 'Yes' ? 'Yes' : o.observationStatus === 'Not_Observed' ? 'Not Observed' : o.observationStatus === 'No' ? 'No' : '';
-    return `<tr><td>${new Date(o.date).toLocaleDateString('en-IN')}</td><td>${escapeHtml(o.subject || '')}</td><td>${escapeHtml(o.practiceSerial || '')}</td><td>${obsStat}</td><td style="max-width:250px;word-wrap:break-word">${escapeHtml(o.notes || '')}</td></tr>`;
+    return `<tr><td>${parseLocalDate(o.date).toLocaleDateString('en-IN')}</td><td>${escapeHtml(o.subject || '')}</td><td>${escapeHtml(o.practiceSerial || '')}</td><td>${obsStat}</td><td style="max-width:250px;word-wrap:break-word">${escapeHtml(o.notes || '')}</td></tr>`;
   }).join('')}
  </tbody></table>
  <div class="footer">Generated by ${escapeHtml(profile.name || 'APF Resource Person')} APF Dashboard</div>
@@ -31982,7 +32085,7 @@ function renderTpAnalytics(teacherFilter) {
             obsForSubject.forEach(o => {
               if ((o.practiceSerial || '').trim() !== serial) return;
               if ((o.observationStatus || '') !== 'Yes') return;
-              const d = new Date(o.date);
+              const d = parseLocalDate(o.date);
               if (d.getFullYear() === m.year && d.getMonth() === m.month && o.teacher) {
                 teachers.add(o.teacher.toLowerCase());
               }
@@ -32078,7 +32181,7 @@ function togglePracticeDrillDown(serial, subject, btn) {
     const serialMatch = (o.practiceSerial || '').trim().toLowerCase() === serial.trim().toLowerCase();
     const subjectMatch = !subject || (o.subject || '').trim().toLowerCase() === subject.trim().toLowerCase();
     return serialMatch && subjectMatch;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   if (observations.length === 0) {
     panel.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:var(--text-muted)"><i class="fas fa-info-circle"></i> No observations linked to this practice.</div>';
@@ -32090,7 +32193,7 @@ function togglePracticeDrillDown(serial, subject, btn) {
   let rows = observations.map(o => {
     const statusColor = (o.observationStatus || '').toLowerCase() === 'yes' ? '#10b981' : ((o.observationStatus || '').toLowerCase() === 'no' ? '#f59e0b' : '#94a3b8');
     const statusLabel = (o.observationStatus || '').toLowerCase() === 'yes' ? ' Yes' : ((o.observationStatus || '').toLowerCase() === 'no' ? ' No' : '');
-    const dateStr = o.date ? new Date(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+    const dateStr = o.date ? parseLocalDate(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
     return `<tr style="border-bottom:1px solid var(--border)">
  <td style="padding:6px 10px;font-size:11px;white-space:nowrap">${dateStr}</td>
  <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.teacher || '')}</td>
@@ -32591,7 +32694,7 @@ function toggleOutcomeDrillDown(serial, subject, btn) {
     const serialMatch = getObsLOSerial(o, _loSerialSet).toLowerCase() === serial.trim().toLowerCase();
     const subjectMatch = !subject || (o.subject || '').trim().toLowerCase() === subject.trim().toLowerCase();
     return serialMatch && subjectMatch;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   if (observations.length === 0) {
     panel.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:var(--text-muted)"><i class="fas fa-info-circle"></i> No observations linked to this outcome. When recording observations, enter this outcome serial in the "Outcome Serial" field.</div>';
@@ -32603,7 +32706,7 @@ function toggleOutcomeDrillDown(serial, subject, btn) {
   const rows = observations.map(o => {
     const statusColor = (o.observationStatus || '').toLowerCase() === 'yes' ? '#10b981' : ((o.observationStatus || '').toLowerCase() === 'no' ? '#f59e0b' : '#94a3b8');
     const statusLabel = (o.observationStatus || '').toLowerCase() === 'yes' ? ' Yes' : ((o.observationStatus || '').toLowerCase() === 'no' ? ' No' : '');
-    const dateStr = o.date ? new Date(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+    const dateStr = o.date ? parseLocalDate(o.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
     return `<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:6px 10px;font-size:11px;white-space:nowrap">${dateStr}</td>
       <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.teacher || '')}</td>
@@ -34432,7 +34535,7 @@ function generateTeacherJourneyReport(idx) {
  </div>
  ${teacherTrainings.length > 0 ? `<p style="font-size:12px;margin:10px 0 4px"><strong>Training Sessions Attended:</strong></p>
  <table><thead><tr><th>Date</th><th>Training</th><th>Venue</th><th>Duration</th></tr></thead><tbody>
- ${teacherTrainings.map(tr => `<tr><td>${tr.date ? new Date(tr.date).toLocaleDateString('en-IN') : ''}</td><td>${escapeHtml(tr.title || '')}</td><td>${escapeHtml(tr.venue || '')}</td><td>${tr.duration || ''}h</td></tr>`).join('')}
+ ${teacherTrainings.map(tr => `<tr><td>${tr.date ? parseLocalDate(tr.date).toLocaleDateString('en-IN') : ''}</td><td>${escapeHtml(tr.title || '')}</td><td>${escapeHtml(tr.venue || '')}</td><td>${tr.duration || ''}h</td></tr>`).join('')}
  </tbody></table>` : ''}
  </div>` : ''}
 
@@ -35004,7 +35107,7 @@ function renderTeacherJourney() {
   // 2. SCHOOL VISIT INTERACTIONS
   html += sectionBox('', `School Visit Interactions (${schoolVisits.length})`, schoolVisits.length > 0 ? `
  <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">All visits to <strong>${escapeHtml(t.school)}</strong> showing purpose, observations, and follow-up actions</p>
- ${schoolVisits.sort((a, b) => new Date(b.date) - new Date(a.date)).map((v, vi) => {
+ ${schoolVisits.sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)).map((v, vi) => {
     const longFields = [
       [' Notes / Observations', v.notes],
       [' Broader Plan / Objective', v.broaderPlan],
@@ -35049,7 +35152,7 @@ function renderTeacherJourney() {
  <th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-muted);border-bottom:2px solid var(--border)">Duration</th>
  <th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-muted);border-bottom:2px solid var(--border)">Participants</th>
  </tr></thead>
- <tbody>${teacherTrainings.sort((a, b) => new Date(b.date) - new Date(a.date)).map((tr, i) => `<tr style="background:${i % 2 === 0 ? 'transparent' : 'var(--bg-secondary,#f8fafc)'}">
+ <tbody>${teacherTrainings.sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)).map((tr, i) => `<tr style="background:${i % 2 === 0 ? 'transparent' : 'var(--bg-secondary,#f8fafc)'}">
  <td style="padding:7px 10px;border-bottom:1px solid var(--border)">${fmtDateShort(tr.date)}</td>
  <td style="padding:7px 10px;border-bottom:1px solid var(--border);font-weight:500">${escapeHtml(tr.title || '')}</td>
  <td style="padding:7px 10px;border-bottom:1px solid var(--border)">${escapeHtml(tr.venue || '')}</td>
@@ -35345,7 +35448,7 @@ function printObsFeedback(id) {
   const o = observations.find(x => x.id === id);
   if (!o) { showToast('Observation not found', 'error'); return; }
 
-  const d = new Date(o.date);
+  const d = parseLocalDate(o.date);
   const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const engColor = o.engagementLevel === 'More Engaged' ? '#10b981' : o.engagementLevel === 'Engaged' ? '#f59e0b' : '#ef4444';
 
@@ -35520,7 +35623,7 @@ function _runPeriodComparison() {
   const inRange = (arr, start, end) => {
     const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T23:59:59');
     return arr.filter(item => {
-      const d = new Date(item.date + 'T00:00:00');
+      const d = parseLocalDate(item.date + 'T00:00:00');
       return d >= s && d <= e;
     });
   };
@@ -35640,12 +35743,12 @@ const SmartNotifications = {
     // file:// protocol — Notification API silently fails
     if (this.isFileProtocol()) {
       this.showFileProtocolWarning(true);
-      showToast('⚠ï¸ Notifications require localhost — run: npm run serve', 'error', 7000);
+      showToast(' Notifications require localhost — run: npm run serve', 'error', 7000);
       return false;
     }
     if (Notification.permission === 'granted') return true;
     if (Notification.permission === 'denied') {
-      showToast('Notifications blocked — click the 🔒 lock icon in the address bar to allow, then retry.', 'error', 6000);
+      showToast('Notifications blocked — click the  lock icon in the address bar to allow, then retry.', 'error', 6000);
       return false;
     }
     const perm = await Notification.requestPermission();
@@ -35703,12 +35806,12 @@ const SmartNotifications = {
     if (total === 0) return;
 
     let body = [];
-    if (tasks.length) body.push(`📋 ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}`);
+    if (tasks.length) body.push(` ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}`);
     if (followups.length) body.push(`ðŸ” ${followups.length} pending follow-up${followups.length > 1 ? 's' : ''}`);
-    if (goals.length) body.push(`🎯 ${goals.length} goal${goals.length > 1 ? 's' : ''} behind schedule`);
+    if (goals.length) body.push(` ${goals.length} goal${goals.length > 1 ? 's' : ''} behind schedule`);
 
     this.fire(
-      `⚠ï¸ APF Dashboard — ${total} item${total > 1 ? 's' : ''} need attention`,
+      ` APF Dashboard — ${total} item${total > 1 ? 's' : ''} need attention`,
       body.join('\n'),
       'apf-overdue-' + new Date().toDateString()
     );
@@ -35731,7 +35834,7 @@ const SmartNotifications = {
       // Permission denied or not supported
       const deniedByBrowser = 'Notification' in window && Notification.permission === 'denied';
       if (deniedByBrowser) {
-        showToast('Notifications blocked — please click the 🔒 lock icon in your browser address bar and allow notifications, then try again.', 'error', 6000);
+        showToast('Notifications blocked — please click the  lock icon in your browser address bar and allow notifications, then try again.', 'error', 6000);
       } else {
         showToast('Notification permission denied.', 'error');
       }
@@ -35741,8 +35844,8 @@ const SmartNotifications = {
     }
     this.setEnabled(true);
     this.start();
-    this.fire('✅ APF Dashboard', 'Smart Notifications enabled! You will be alerted for overdue tasks.', 'apf-enable');
-    showToast('Local notifications enabled ✅', 'success');
+    this.fire(' APF Dashboard', 'Smart Notifications enabled! You will be alerted for overdue tasks.', 'apf-enable');
+    showToast('Local notifications enabled ', 'success');
     updateNotifUI();
   },
 
@@ -35867,7 +35970,7 @@ const CloudAutomation = {
       if (data.success || data.status === 'ok') {
         this.setLastSync(new Date().toISOString());
         updateCloudAutomationUI();
-        if (!silent) showToast('☁ï¸ Cloud summary synced! Automation data updated.', 'success');
+        if (!silent) showToast(' Cloud summary synced! Automation data updated.', 'success');
         return { ok: true };
       } else {
         if (!silent) showToast('Cloud sync error: ' + (data.error || 'Unknown'), 'error');
@@ -36023,32 +36126,32 @@ async function checkOverdueNow() {
 
   if (total === 0) {
     SmartNotifications.fire(
-      '✅ APF Dashboard — All Clear!',
+      ' APF Dashboard — All Clear!',
       'No overdue tasks, follow-ups, or goals. Great job!',
       'apf-check-' + Date.now()
     );
-    showToast('All clear — no overdue items found ✅', 'success');
+    showToast('All clear — no overdue items found ', 'success');
     return;
   }
 
   // Fire individual notifications for each category
   if (items.tasks?.length) {
     SmartNotifications.fire(
-      `⚠ï¸ ${items.tasks.length} Overdue Planner Task${items.tasks.length > 1 ? 's' : ''}`,
+      ` ${items.tasks.length} Overdue Planner Task${items.tasks.length > 1 ? 's' : ''}`,
       items.tasks.slice(0, 3).map(t => `• ${t.title || 'Unnamed'} (due ${t.dueDate})`).join('\n'),
       'apf-overdue-tasks-' + Date.now()
     );
   }
   if (items.followups?.length) {
     SmartNotifications.fire(
-      `⚠ï¸ ${items.followups.length} Overdue Follow-up${items.followups.length > 1 ? 's' : ''}`,
+      ` ${items.followups.length} Overdue Follow-up${items.followups.length > 1 ? 's' : ''}`,
       items.followups.slice(0, 3).map(f => `• ${f.name || f.teacherName || 'Unnamed'}`).join('\n'),
       'apf-overdue-followups-' + Date.now()
     );
   }
   if (items.goals?.length) {
     SmartNotifications.fire(
-      `⚠ï¸ ${items.goals.length} Goal${items.goals.length > 1 ? 's' : ''} Behind Schedule`,
+      ` ${items.goals.length} Goal${items.goals.length > 1 ? 's' : ''} Behind Schedule`,
       items.goals.slice(0, 3).map(g => `• ${g.title || 'Unnamed'}`).join('\n'),
       'apf-overdue-goals-' + Date.now()
     );
@@ -36100,8 +36203,8 @@ async function sendTestCloudAlert() {
 
     if (data.success || data.telegramSent || data.emailSent) {
       const channels = [];
-      if (data.telegramSent) channels.push('Telegram ✅');
-      if (data.emailSent) channels.push('Email ✅');
+      if (data.telegramSent) channels.push('Telegram ');
+      if (data.emailSent) channels.push('Email ');
       showToast('Test alert sent → ' + (channels.length ? channels.join(' & ') : 'Cloud script reached!'), 'success', 6000);
       CloudAutomation.setLastSync(new Date().toISOString());
       updateCloudAutomationUI();
@@ -36257,7 +36360,7 @@ function initApp() {
   [DB.get('visits'), DB.get('observations'), DB.get('trainings')].forEach(arr => {
     (arr || []).forEach(item => {
       if (item.date) {
-        const y = new Date(item.date).getFullYear();
+        const y = parseLocalDate(item.date).getFullYear();
         if (y > 2000 && y <= currentYear + 1) dataYears.add(y);
       }
     });
@@ -36655,10 +36758,10 @@ function openReflectiveReport(type, id) {
   // Context banner
   const banner = document.getElementById('rrContextBanner');
   if (type === 'training') {
-    banner.innerHTML = `<div class="rr-context"><i class="fas fa-chalkboard-teacher" style="color:#8b5cf6"></i><div><strong>${escapeHtml(entry.title)}</strong><span>${new Date(entry.date).toLocaleDateString('en-IN')} ${entry.duration || ''}h ${entry.attendees || '?'} attendees${entry.venue ? ' ' + escapeHtml(entry.venue) : ''}</span></div></div>`;
+    banner.innerHTML = `<div class="rr-context"><i class="fas fa-chalkboard-teacher" style="color:#8b5cf6"></i><div><strong>${escapeHtml(entry.title)}</strong><span>${parseLocalDate(entry.date).toLocaleDateString('en-IN')} ${entry.duration || ''}h ${entry.attendees || '?'} attendees${entry.venue ? ' ' + escapeHtml(entry.venue) : ''}</span></div></div>`;
     document.getElementById('rrModalTitle').innerHTML = '<i class="fas fa-file-signature"></i> Training Reflective Report';
   } else {
-    const visitDate = new Date(entry.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    const visitDate = parseLocalDate(entry.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
     const ratingStars = entry.rating ? ''.repeat(parseInt(entry.rating)) : '';
     banner.innerHTML = `<div class="rr-context"><i class="fas fa-school" style="color:#6366f1"></i><div><strong>${escapeHtml(entry.school || 'School Visit')}</strong><span>${visitDate} ${escapeHtml(entry.purpose || '')}${entry.block ? ' ' + escapeHtml(entry.block) : ''}</span></div></div>
  <div class="rr-visit-details">
@@ -36747,7 +36850,7 @@ function exportReflectiveReportPDF() {
   const profile = DB.get('userProfile') || {};
   const userName = profile.name || 'Resource Person';
   const entryTitle = type === 'training' ? entry.title : (entry.school || 'School Visit');
-  const entryDate = new Date(entry.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const entryDate = parseLocalDate(entry.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
   const stars = rr.impactRating ? ''.repeat(parseInt(rr.impactRating)) : 'N/A';
 
   // Build teacher table for PDF
@@ -36840,7 +36943,7 @@ function renderCapacityBuilding() {
     if (_cbActiveTab !== 'all' && e.type !== _cbActiveTab) return false;
     if (statusFilter !== 'all' && e.status !== statusFilter) return false;
     if (monthFilter !== 'all') {
-      const d = new Date(e.date);
+      const d = parseLocalDate(e.date);
       if (d.getMonth() !== parseInt(monthFilter)) return false;
     }
     if (search) {
@@ -36851,7 +36954,7 @@ function renderCapacityBuilding() {
   });
 
   // Sort by date descending
-  filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+  filtered.sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   if (!filtered.length) {
     const tabLabel = _cbActiveTab === 'all' ? '' : _cbActiveTab;
@@ -36878,7 +36981,7 @@ function renderCapacityBuilding() {
   container.innerHTML = filtered.map(e => {
     const tc = typeConfig[e.type] || typeConfig.other;
     const sc = statusConfig[e.status] || statusConfig['in-progress'];
-    const d = new Date(e.date);
+    const d = parseLocalDate(e.date);
     const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
     let extraHTML = '';

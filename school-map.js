@@ -124,7 +124,7 @@ const SchoolMap = {
   popupHtml(name, stats, locData) {
     const safeName = name.replace(/'/g, "\\'");
     return `<div class="smap-popup">
-      <div class="smap-popup-name">🏫 ${name}</div>
+      <div class="smap-popup-name"> ${name}</div>
       <div class="smap-popup-meta">
         <div><b>Cluster:</b> ${locData.cluster || stats.cluster || '—'}</div>
         <div><b>Total Visits:</b> ${stats.total}</div>
@@ -395,7 +395,7 @@ function schoolMapToggleHotspot(on) {
     SchoolMap._hotspotLayers.push(outer, inner);
   });
 
-  if (typeof showToast === 'function') showToast('🔥 Hotspot mode: showing visit intensity circles', 'info');
+  if (typeof showToast === 'function') showToast(' Hotspot mode: showing visit intensity circles', 'info');
 }
 
 // ---- Search autocomplete ----
@@ -429,7 +429,7 @@ function schoolMapSearchInput(query) {
     return '<div class="smap-drop-item" onclick="schoolMapSelectResult(\'' + safeName + '\')">' +
       '<span class="smap-drop-item-dot" style="background:' + dotColor + ';"></span>' +
       '<span class="smap-drop-item-name">' + s.name + '</span>' +
-      '<span class="smap-drop-item-meta">' + (s.cluster ? s.cluster + ' • ' : '') + (hasPinned ? '📍 Pinned' : 'Not pinned') + '</span>' +
+      '<span class="smap-drop-item-meta">' + (s.cluster ? s.cluster + ' • ' : '') + (hasPinned ? ' Pinned' : 'Not pinned') + '</span>' +
     '</div>';
   }).join('');
   drop.style.display = 'block';
@@ -691,7 +691,7 @@ function exportSchoolMapImage() {
       String(now.getDate()).padStart(2, '0') + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
-    if (typeof showToast === 'function') showToast('✅ Map exported as PNG', 'success');
+    if (typeof showToast === 'function') showToast(' Map exported as PNG', 'success');
 
   }).catch(function(err) {
     if (typeof showToast === 'function') showToast('Export failed: ' + err.message, 'error');
@@ -740,7 +740,7 @@ function schoolMapFlyToMyLocation() {
         iconSize: [14, 14],
         iconAnchor: [7, 7]
       })
-    }).addTo(SchoolMap._map).bindPopup('<b>📍 Your Current Location</b>').openPopup();
+    }).addTo(SchoolMap._map).bindPopup('<b> Your Current Location</b>').openPopup();
   }, function(err) {
     if (typeof showToast === 'function') showToast('GPS error: ' + err.message, 'error');
   });
@@ -823,7 +823,7 @@ function smapSaveHome() {
   localStorage.setItem(SMAP_HOME_KEY, JSON.stringify(home));
   _smapUpdateHomeButton(home);
   _smapUpdatePlusCodeRef(home);
-  if (typeof showToast === 'function') showToast('✅ Home base saved: ' + [block, dist, state].filter(Boolean).join(', '), 'success');
+  if (typeof showToast === 'function') showToast(' Home base saved: ' + [block, dist, state].filter(Boolean).join(', '), 'success');
 
   // Fly to the new home
   if (SchoolMap._map) SchoolMap._map.flyTo([lat, lng], home.zoom || 11, { duration: 1.5 });
@@ -883,7 +883,7 @@ function schoolMapGoHome() {
   var home = smapGetHome();
   map.flyTo([home.lat, home.lng], home.zoom || 11, { duration: 1.5 });
   var loc = [home.block, home.district, home.state].filter(Boolean).join(', ');
-  if (typeof showToast === 'function') showToast('🏠 Navigating to ' + (loc || 'home base'), 'info');
+  if (typeof showToast === 'function') showToast(' Navigating to ' + (loc || 'home base'), 'info');
 }
 
 function _smapInitHome() {
@@ -915,7 +915,7 @@ function _smapPlaceHomeMarker(home) {
       iconAnchor: [14, 14]
     }),
     zIndexOffset: 1000 // Always on top
-  }).addTo(map).bindTooltip('<b>🏠 Home Base</b><br>' + [home.block, home.district].filter(Boolean).join(', '), { direction: 'top' });
+  }).addTo(map).bindTooltip('<b> Home Base</b><br>' + [home.block, home.district].filter(Boolean).join(', '), { direction: 'top' });
 }
 
 // ---- Routing System ----
@@ -988,7 +988,7 @@ function smapShowRoute(schoolName) {
       document.getElementById('smapRouteEta').innerHTML = '<i class="far fa-clock"></i> ' + timeStr;
       
       document.getElementById('smapRoutePanel').style.display = 'block';
-      if (typeof showToast === 'function') showToast('✅ Route found: ' + distKm + ' km (' + timeStr + ')', 'success');
+      if (typeof showToast === 'function') showToast(' Route found: ' + distKm + ' km (' + timeStr + ')', 'success');
       
     })
     .catch(function(err) {
@@ -1122,9 +1122,9 @@ function renderSchoolMapTable(filter) {
     var statusClass = 'smap-status-unpinned';
     var statusText = '— Not pinned';
     if (hasPinned) {
-      if (color === 'green') { statusClass = 'smap-status-green'; statusText = '🟢 This month'; }
-      else if (color === 'yellow') { statusClass = 'smap-status-yellow'; statusText = '🟡 Visited'; }
-      else { statusClass = 'smap-status-red'; statusText = '🔴 Never'; }
+      if (color === 'green') { statusClass = 'smap-status-green'; statusText = ' This month'; }
+      else if (color === 'yellow') { statusClass = 'smap-status-yellow'; statusText = ' Visited'; }
+      else { statusClass = 'smap-status-red'; statusText = ' Never'; }
     }
     var safeName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     return '<tr>' +
@@ -1436,7 +1436,7 @@ function slmDecodePlusCode() {
       var precLngM = decoded.longitudeWidth !== undefined ? decoded.longitudeWidth : (decoded.longitudeHi - decoded.longitudeLo);
       var precLat = isFinite(precLatM) ? Math.round(precLatM * 111000) : '—';
       var precLng = isFinite(precLngM) ? Math.round(precLngM * 111000) : '—';
-      resultEl.innerHTML = '✅ <b>Decoded:</b> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) +
+      resultEl.innerHTML = ' <b>Decoded:</b> ' + lat.toFixed(5) + ', ' + lng.toFixed(5) +
         '<br><small style="color:var(--text-secondary)">Precision: ~' + precLat + 'm \xD7 ' + precLng + 'm</small>';
     }
 
@@ -1608,7 +1608,7 @@ function smapRunAIPlanner() {
     'You optimize school visit schedules based on geographic proximity, visit frequency, and educational priority. ' +
     'You create practical, realistic daily visit plans that minimize travel time while maximizing coverage of neglected schools. ' +
     'CRITICAL: Output ONLY the visit plan using the exact format given. Do NOT include any reasoning, thinking, explanation, or preamble. ' +
-    'Start your response DIRECTLY with ## 📅 Day 1. Never repeat any section twice.';
+    'Start your response DIRECTLY with ##  Day 1. Never repeat any section twice.';
 
 
   var userPrompt = 'Create an optimized ' + days + '-day school visit plan for an APF Resource Person.\n\n' +
@@ -1624,16 +1624,16 @@ function smapRunAIPlanner() {
     '5. If a cluster has multiple schools, try to group them together\n' +
     '6. Suggest the best time of day for each visit (morning/afternoon)\n\n' +
     'OUTPUT FORMAT (use exactly this structure):\n' +
-    '## 📅 Day 1 — [Date suggestion or "Monday"]\n' +
+    '##  Day 1 — [Date suggestion or "Monday"]\n' +
     '**Route:** Home → School A → School B → School C → Home\n' +
     '**Est. distance:** ~XX km\n' +
-    '- 🏫 **[School Name]** (Cluster: X) — [Priority] — [Why visit today: e.g., never visited, closest to School B]\n' +
-    '  - ⏰ Suggested time: 9:30 AM\n' +
-    '  - 💡 Focus: [specific suggestion e.g., check attendance records, observe Math class]\n' +
+    '-  **[School Name]** (Cluster: X) — [Priority] — [Why visit today: e.g., never visited, closest to School B]\n' +
+    '  -  Suggested time: 9:30 AM\n' +
+    '  -  Focus: [specific suggestion e.g., check attendance records, observe Math class]\n' +
     '[repeat for each school]\n\n' +
-    '## 📅 Day 2 — ...\n' +
+    '##  Day 2 — ...\n' +
     '[continue for all days]\n\n' +
-    '## 🗺️ Coverage Summary\n' +
+    '##  Coverage Summary\n' +
     '- Total schools planned: X\n' +
     '- Never-visited schools covered: X\n' +
     '- Estimated total travel: ~XX km\n' +
@@ -1661,19 +1661,19 @@ function smapRunAIPlanner() {
     if (firstHeading > 0) reply = reply.substring(firstHeading);
 
     // Deduplicate: if the plan section repeats itself, keep only the first occurrence
-    var day1Match = reply.match(/(## 📅 Day 1)/g);
+    var day1Match = reply.match(/(##  Day 1)/g);
     if (day1Match && day1Match.length > 1) {
       // Find second occurrence of Day 1 and cut everything from there
-      var idx = reply.indexOf('## 📅 Day 1');
-      var idx2 = reply.indexOf('## 📅 Day 1', idx + 10);
+      var idx = reply.indexOf('##  Day 1');
+      var idx2 = reply.indexOf('##  Day 1', idx + 10);
       if (idx2 > idx) reply = reply.substring(0, idx2).trim();
     }
 
     // Also deduplicate ## Coverage Summary repeated sections
-    var summaryMatch = reply.match(/(## 🗺️)/g);
+    var summaryMatch = reply.match(/(## )/g);
     if (summaryMatch && summaryMatch.length > 1) {
-      var s1 = reply.indexOf('## 🗺️');
-      var s2 = reply.indexOf('## 🗺️', s1 + 5);
+      var s1 = reply.indexOf('## ');
+      var s2 = reply.indexOf('## ', s1 + 5);
       if (s2 > s1) reply = reply.substring(0, s2).trim();
     }
 
@@ -1685,7 +1685,7 @@ function smapRunAIPlanner() {
     if (loadingEl) loadingEl.style.display = 'none';
     if (outputEl)  outputEl.style.display  = 'block';
     if (runBtn)    { runBtn.disabled = false; }
-    if (typeof showToast === 'function') showToast('AI Visit Plan generated! 🗺️', 'success');
+    if (typeof showToast === 'function') showToast('AI Visit Plan generated! ', 'success');
 
   }).catch(function(err) {
     if (loadingEl) loadingEl.style.display = 'none';
@@ -1703,9 +1703,9 @@ function _smapRenderAIPlan(mdText) {
     .replace(/^## (.+)$/gm, '<h3 style="color:#34d399;margin:18px 0 8px;font-size:14px;border-bottom:1px solid rgba(52,211,153,0.2);padding-bottom:6px;">$1</h3>')
     .replace(/^\*\*(.+?)\*\*/gm, '<strong style="color:#e2e8f0;">$1</strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#e2e8f0;">$1</strong>')
-    .replace(/^- 🏫 (.+)$/gm, '<div style="margin:10px 0 4px;padding:10px 12px;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;font-size:13px;color:#cbd5e1;">🏫 $1</div>')
-    .replace(/^  - ⏰ (.+)$/gm, '<div style="margin-left:20px;font-size:12px;color:#94a3b8;">⏰ $1</div>')
-    .replace(/^  - 💡 (.+)$/gm, '<div style="margin-left:20px;font-size:12px;color:#a5b4fc;">💡 $1</div>')
+    .replace(/^-  (.+)$/gm, '<div style="margin:10px 0 4px;padding:10px 12px;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;font-size:13px;color:#cbd5e1;"> $1</div>')
+    .replace(/^  -  (.+)$/gm, '<div style="margin-left:20px;font-size:12px;color:#94a3b8;"> $1</div>')
+    .replace(/^  -  (.+)$/gm, '<div style="margin-left:20px;font-size:12px;color:#a5b4fc;"> $1</div>')
     .replace(/^- (.+)$/gm, '<div style="font-size:12px;color:#94a3b8;margin:3px 0;padding-left:8px;">• $1</div>')
     .replace(/\n{2,}/g, '<br>')
     .replace(/\n/g, '<br>');
@@ -1719,7 +1719,7 @@ function smapAICopyPlan() {
     return;
   }
   navigator.clipboard.writeText(_smapAILastPlan.text).then(function() {
-    if (typeof showToast === 'function') showToast('Plan copied to clipboard! 📋', 'success');
+    if (typeof showToast === 'function') showToast('Plan copied to clipboard! ', 'success');
   }).catch(function() {
     if (typeof showToast === 'function') showToast('Could not copy — try manually selecting the text', 'error');
   });
@@ -1760,6 +1760,6 @@ function smapAIHighlightOnMap() {
     try { SchoolMap._map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 13 }); } catch(e) {}
   }
 
-  if (typeof showToast === 'function') showToast(highlightCount + ' planned schools highlighted on map 📍', 'success');
+  if (typeof showToast === 'function') showToast(highlightCount + ' planned schools highlighted on map ', 'success');
 }
 

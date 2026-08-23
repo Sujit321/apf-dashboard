@@ -6,6 +6,30 @@ let excelColumns = [];
 let excelColumnTypes = {};
 let activeCharts = [];
 
+// Parses cell values as DAY-FIRST dates (app convention: DD/MM/YYYY).
+function _eaParseCellDate(v) {
+    if (v instanceof Date) return v;
+    if (v == null) return new Date(NaN);
+    const s = String(v).trim();
+    if (!s) return new Date(NaN);
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    if (/^\d{5}$/.test(s)) {
+        const n = parseInt(s, 10);
+        if (n > 30000 && n < 60000) {
+            const dt = new Date(Math.round((n - 25569) * 86400000));
+            return new Date(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+        }
+    }
+    m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2}|\d{4})$/);
+    if (m) {
+        let d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+        if (y < 100) y += y > 50 ? 1900 : 2000;
+        return new Date(y, mo - 1, d);
+    }
+    return new Date(s);
+}
+
 // ===== Auto-Filter State =====
 let tableFilters = {};    // { colName: Set of selected values }
 let tableSearchTerm = '';
@@ -1392,7 +1416,7 @@ function renderAutoInsights() {
     }
     if (apfFields.date) {
         const col = apfFields.date[0];
-        const validDates = excelData.map(r => { let d = r[col]; if (!(d instanceof Date)) d = new Date(d); return d; }).filter(d => d instanceof Date && !isNaN(d)).sort((a, b) => a - b);
+        const validDates = excelData.map(r => _eaParseCellDate(r[col])).filter(d => d instanceof Date && !isNaN(d)).sort((a, b) => a - b);
         if (validDates.length > 0) {
             const first = validDates[0], last = validDates[validDates.length - 1];
             const days = Math.ceil((last - first) / (1000 * 60 * 60 * 24));
@@ -2501,9 +2525,9 @@ function renderCorrelationMatrix() {
                     </table>
                 </div>
                 <div class="corr-legend">
-                    <span style="color:#ef4444">◼ Negative</span>
-                    <span style="color:#64748b">◼ None</span>
-                    <span style="color:#10b981">◼ Positive</span>
+                    <span style="color:#ef4444"> Negative</span>
+                    <span style="color:#64748b"> None</span>
+                    <span style="color:#10b981"> Positive</span>
                 </div>
             </div>
             <div class="corr-insights">
@@ -2861,7 +2885,7 @@ function renderTrendAnalysis() {
         if (excelColumnTypes[col] === 'text' || excelColumnTypes[col] === 'categorical') {
             const sample = excelData.slice(0, 20).map(r => r[col]).filter(Boolean);
             const dateCount = sample.filter(v => {
-                const d = new Date(v);
+                const d = _eaParseCellDate(v);
                 return d instanceof Date && !isNaN(d) && d.getFullYear() > 1900 && d.getFullYear() < 2100;
             }).length;
             if (dateCount > sample.length * 0.6) potentialDateCols.push(col);
@@ -2884,9 +2908,7 @@ function renderTrendAnalysis() {
 
     // Parse and sort by date
     const dated = excelData.map(r => {
-        let d = r[dateCol];
-        if (!(d instanceof Date)) d = new Date(d);
-        return { date: d, row: r };
+        return { date: _eaParseCellDate(r[dateCol]), row: r };
     }).filter(r => r.date instanceof Date && !isNaN(r.date))
       .sort((a, b) => a.date - b.date);
 
@@ -2909,7 +2931,7 @@ function renderTrendAnalysis() {
             const week = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
             return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
         }
-        return d.toISOString().split('T')[0];
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
     // 1. Record count over time
@@ -3653,24 +3675,24 @@ function generateSmartReport() {
 
     // Action bar
     html += `<div class="action-bar no-print">
-        <button class="action-btn secondary" onclick="window.print()">🖨️ Print / Save PDF</button>
-        <button class="action-btn primary" onclick="downloadReportHTML()">⬇️ Download HTML</button>
+        <button class="action-btn secondary" onclick="window.print()"> Print / Save PDF</button>
+        <button class="action-btn primary" onclick="downloadReportHTML()"> Download HTML</button>
     </div>`;
 
     // Header
     html += `<div class="report-header">
-        <h1>📊 Smart Data Report</h1>
+        <h1> Smart Data Report</h1>
         <div class="subtitle">${fileName}</div>
         <div class="meta">
-            <span>📅 ${dateStr} at ${timeStr}</span>
-            <span>📋 ${excelData.length.toLocaleString()} records</span>
-            <span>📐 ${excelColumns.length} columns</span>
+            <span> ${dateStr} at ${timeStr}</span>
+            <span> ${excelData.length.toLocaleString()} records</span>
+            <span> ${excelColumns.length} columns</span>
         </div>
     </div>`;
 
     // 1. Dataset Overview
     html += `<div class="section">
-        <div class="section-title"><span class="icon icon-amber">📋</span> Dataset Overview</div>
+        <div class="section-title"><span class="icon icon-amber"></span> Dataset Overview</div>
         <div class="kpi-grid">
             <div class="kpi"><div class="value">${excelData.length.toLocaleString()}</div><div class="label">Total Rows</div></div>
             <div class="kpi"><div class="value">${excelColumns.length}</div><div class="label">Columns</div></div>
@@ -3680,15 +3702,15 @@ function generateSmartReport() {
             <div class="kpi"><div class="value">${completeness}%</div><div class="label">Completeness</div></div>
         </div>
         <div style="margin-top:10px;">
-            ${dupes > 0 ? `<span class="insight-chip chip-amber">⚠️ ${dupes} duplicate rows found</span>` : `<span class="insight-chip chip-green">✅ No duplicate rows</span>`}
-            ${missingCells > 0 ? `<span class="insight-chip chip-red">🔴 ${missingCells.toLocaleString()} missing cells</span>` : `<span class="insight-chip chip-green">✅ No missing data</span>`}
-            <span class="insight-chip chip-blue">📊 ${nums.length} numeric, ${cats.length} categorical, ${dates.length} date columns</span>
+            ${dupes > 0 ? `<span class="insight-chip chip-amber"> ${dupes} duplicate rows found</span>` : `<span class="insight-chip chip-green"> No duplicate rows</span>`}
+            ${missingCells > 0 ? `<span class="insight-chip chip-red"> ${missingCells.toLocaleString()} missing cells</span>` : `<span class="insight-chip chip-green"> No missing data</span>`}
+            <span class="insight-chip chip-blue"> ${nums.length} numeric, ${cats.length} categorical, ${dates.length} date columns</span>
         </div>
     </div>`;
 
     // 2. Column Profile
     html += `<div class="section">
-        <div class="section-title"><span class="icon icon-blue">📐</span> Column Profile</div>
+        <div class="section-title"><span class="icon icon-blue"></span> Column Profile</div>
         <table class="data-table">
             <thead><tr><th>#</th><th>Column Name</th><th>Type</th><th>Filled</th><th>Missing</th><th>Completeness</th></tr></thead>
             <tbody>`;
@@ -3711,7 +3733,7 @@ function generateSmartReport() {
     // 3. Numeric Statistics
     if (nums.length > 0) {
         html += `<div class="section page-break">
-            <div class="section-title"><span class="icon icon-green">📈</span> Numeric Statistics</div>
+            <div class="section-title"><span class="icon icon-green"></span> Numeric Statistics</div>
             <table class="data-table">
                 <thead><tr><th>Column</th><th class="num">Count</th><th class="num">Min</th><th class="num">Max</th><th class="num">Mean</th><th class="num">Median</th><th class="num">Std Dev</th><th class="num">CV%</th><th class="num">Outliers</th></tr></thead>
                 <tbody>`;
@@ -3736,7 +3758,7 @@ function generateSmartReport() {
     // 4. Categorical Summary
     if (cats.length > 0) {
         html += `<div class="section">
-            <div class="section-title"><span class="icon icon-purple">🏷️</span> Categorical Summary</div>`;
+            <div class="section-title"><span class="icon icon-purple"></span> Categorical Summary</div>`;
         cats.forEach(col => {
             const s = catStats[col];
             if (!s) return;
@@ -3759,7 +3781,7 @@ function generateSmartReport() {
     // 5. Correlation Analysis
     if (strongCorrs.length > 0) {
         html += `<div class="section">
-            <div class="section-title"><span class="icon icon-teal">🔗</span> Notable Correlations</div>
+            <div class="section-title"><span class="icon icon-teal"></span> Notable Correlations</div>
             <table class="data-table" style="max-width:600px;">
                 <thead><tr><th>Variable 1</th><th>Variable 2</th><th class="num">Correlation (r)</th><th>Strength</th></tr></thead>
                 <tbody>`;
@@ -3775,39 +3797,39 @@ function generateSmartReport() {
 
     // 6. Key Findings & Recommendations
     html += `<div class="section">
-        <div class="section-title"><span class="icon icon-amber">💡</span> Key Findings & Recommendations</div>
+        <div class="section-title"><span class="icon icon-amber"></span> Key Findings & Recommendations</div>
         <div style="display:flex;flex-direction:column;gap:8px;">`;
 
     // Auto-generate findings
     if (completeness < 80) {
-        html += `<span class="insight-chip chip-red">⚠️ Data completeness is ${completeness}% — consider cleaning missing values before analysis</span>`;
+        html += `<span class="insight-chip chip-red"> Data completeness is ${completeness}% — consider cleaning missing values before analysis</span>`;
     } else if (completeness >= 95) {
-        html += `<span class="insight-chip chip-green">✅ Excellent data quality — ${completeness}% completeness</span>`;
+        html += `<span class="insight-chip chip-green"> Excellent data quality — ${completeness}% completeness</span>`;
     }
 
     if (dupes > 0) {
-        html += `<span class="insight-chip chip-amber">🔁 ${dupes} duplicate rows (${((dupes/excelData.length)*100).toFixed(1)}%) — review for potential data entry errors</span>`;
+        html += `<span class="insight-chip chip-amber"> ${dupes} duplicate rows (${((dupes/excelData.length)*100).toFixed(1)}%) — review for potential data entry errors</span>`;
     }
 
     nums.forEach(col => {
         const s = numStats[col];
         if (!s) return;
         if (s.outliers > 0 && s.outliers / s.count > 0.05) {
-            html += `<span class="insight-chip chip-red">📊 "${col}" has ${s.outliers} outliers (${((s.outliers/s.count)*100).toFixed(1)}%) — may need investigation</span>`;
+            html += `<span class="insight-chip chip-red"> "${col}" has ${s.outliers} outliers (${((s.outliers/s.count)*100).toFixed(1)}%) — may need investigation</span>`;
         }
         if (parseFloat(s.cv) > 100) {
-            html += `<span class="insight-chip chip-amber">📉 "${col}" has very high variability (CV: ${s.cv}%)</span>`;
+            html += `<span class="insight-chip chip-amber"> "${col}" has very high variability (CV: ${s.cv}%)</span>`;
         }
     });
 
     strongCorrs.slice(0, 3).forEach(p => {
         const dir = p.r > 0 ? 'positively' : 'negatively';
-        html += `<span class="insight-chip chip-blue">🔗 "${p.col1}" and "${p.col2}" are ${dir} correlated (r = ${p.r.toFixed(2)})</span>`;
+        html += `<span class="insight-chip chip-blue"> "${p.col1}" and "${p.col2}" are ${dir} correlated (r = ${p.r.toFixed(2)})</span>`;
     });
 
     excelColumns.forEach(col => {
         if (colMissing[col] / excelData.length > 0.3) {
-            html += `<span class="insight-chip chip-amber">⚠️ "${col}" has ${((colMissing[col]/excelData.length)*100).toFixed(0)}% missing values</span>`;
+            html += `<span class="insight-chip chip-amber"> "${col}" has ${((colMissing[col]/excelData.length)*100).toFixed(0)}% missing values</span>`;
         }
     });
 
@@ -3816,7 +3838,7 @@ function generateSmartReport() {
     // 7. Charts
     if (chartImages.length > 0) {
         html += `<div class="section page-break">
-            <div class="section-title"><span class="icon icon-blue">📊</span> Charts & Visualizations</div>
+            <div class="section-title"><span class="icon icon-blue"></span> Charts & Visualizations</div>
             <div class="charts-grid">`;
         chartImages.slice(0, 12).forEach(img => {
             html += `<div class="chart-img-card"><img src="${img.src}" alt="${img.title}"><div class="chart-label">${img.title}</div></div>`;
@@ -3919,11 +3941,11 @@ async function aiExcelDataStory(event) {
 ${dataSummary}
 
 Write a compelling data narrative with these sections:
-1. **📊 Executive Summary** — 2-3 sentence overview of the dataset
-2. **🔍 Key Findings** — 4-5 most important patterns, trends, or insights (be specific with numbers)
-3. **⚠️ Data Quality Issues** — Missing data, outliers, duplicates, mixed types
-4. **💡 Interesting Patterns** — Correlations, concentrations, distributions worth noting
-5. **📋 Recommendations** — 3-4 actionable next steps based on the data
+1. ** Executive Summary** — 2-3 sentence overview of the dataset
+2. ** Key Findings** — 4-5 most important patterns, trends, or insights (be specific with numbers)
+3. ** Data Quality Issues** — Missing data, outliers, duplicates, mixed types
+4. ** Interesting Patterns** — Correlations, concentrations, distributions worth noting
+5. ** Recommendations** — 3-4 actionable next steps based on the data
 
 Be specific — cite actual column names, values, and percentages. Do not be generic.`;
 
@@ -3933,7 +3955,7 @@ Be specific — cite actual column names, values, and percentages. Do not be gen
             { role: 'user', content: prompt }
         ], { temperature: 0.6, max_tokens: 2500 });
         const reply = res.choices?.[0]?.message?.content || 'Could not generate data story.';
-        _showExcelAIResult('🧠 AI Data Story', reply);
+        _showExcelAIResult(' AI Data Story', reply);
     } catch (err) {
         showToast('AI Error: ' + err.message, 'error');
     }
@@ -4028,7 +4050,7 @@ async function aiExplainColumn(col, event) {
             { role: 'user', content: `Explain this column from a spreadsheet:\n\n${colInfo}\n\nProvide:\n1. **What this column likely represents** (1-2 sentences)\n2. **Data Quality assessment** (completeness, outliers, distribution)\n3. **Key observations** (2-3 bullet points with specific numbers)\n4. **Suggested actions** (1-2 recommendations)\n\nKeep it concise — max 150 words total.` }
         ], { temperature: 0.5, max_tokens: 1000 });
         const reply = res.choices?.[0]?.message?.content || 'Could not explain.';
-        _showExcelAIResult(`🔍 AI Analysis: ${col}`, reply);
+        _showExcelAIResult(` AI Analysis: ${col}`, reply);
     } catch (err) {
         showToast('AI Error: ' + err.message, 'error');
     }
@@ -4071,7 +4093,7 @@ async function aiNarrateChart(canvasId) {
             { role: 'user', content: `Describe the key insights from this chart in 3-5 bullet points:\n\n${chartDesc}\n\nFor each point:\n- Start with an emoji\n- Be specific (cite values and percentages)\n- Highlight the most important pattern, trend, or anomaly\n- Keep each bullet under 20 words` }
         ], { temperature: 0.6, max_tokens: 1000 });
         const reply = res.choices?.[0]?.message?.content || 'No insights generated.';
-        _showExcelAIResult(`📊 AI Chart Insights: ${title}`, reply);
+        _showExcelAIResult(` AI Chart Insights: ${title}`, reply);
     } catch (err) {
         showToast('AI Error: ' + err.message, 'error');
     }
