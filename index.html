@@ -3305,33 +3305,79 @@
       </div>
     </div>
 
-    <!-- ==================== SCHOOL-BASED WORK SECTION ==================== -->
+    <!-- ==================== SCHOOL-BASED WORK SECTION — MODERN ==================== -->
     <section class="content-section" id="section-schoolwork">
-      <div class="section-header">
-        <div>
-          <h1><i class="fas fa-chalkboard"></i> School-Based Work</h1>
-          <p class="section-subtitle">Track Assembly, Print-Rich Environment, Library, Creative Writing & Bal
-            Shodh Mela</p>
+      <!-- Clean header row -->
+      <div class="swh-head">
+        <div class="swh-head-left">
+          <div class="swh-title-wrap">
+            <h1>School-Based Work</h1>
+            <span class="swh-count-badge" id="swHeroLiveCount">0</span>
+          </div>
+          <p class="swh-sub">Assembly · Print-Rich Environment · Library · Creative Writing · Bal Shodh Mela</p>
         </div>
-        <div class="header-actions">
-          <button class="btn btn-primary" onclick="openSchoolWorkModal()">
+        <div class="swh-head-actions">
+          <button class="swh-btn swh-btn--icon" onclick="exportSchoolWorkExcel()" title="Export to Excel">
+            <i class="fas fa-file-export"></i>
+          </button>
+          <button class="swh-btn swh-btn--primary" onclick="openSchoolWorkModal()">
             <i class="fas fa-plus"></i> Log Activity
           </button>
-          <select id="schoolWorkTypeFilter" class="filter-select" onchange="_pageState.schoolWork=1;renderSchoolWork()">
-            <option value="all">All Activities</option>
-            <option value="assembly"> Assembly</option>
-            <option value="print-rich"> Print Rich</option>
-            <option value="library"> Library</option>
-            <option value="creative-writing"> Creative Writing</option>
-            <option value="bal-shodh-mela"> Bal Shodh Mela</option>
-            <option value="other"> Other</option>
-          </select>
-          <input type="text" id="schoolWorkSearchInput" class="filter-input" placeholder="Search school / activity..."
-            oninput="_pageState.schoolWork=1;renderSchoolWork()">
         </div>
       </div>
-      <div class="sw-stats-grid" id="schoolWorkStats"></div>
-      <div id="schoolWorkContainer"></div>
+
+      <!-- KPI strip -->
+      <div class="swh-kpis" id="swHeroKpis"></div>
+
+      <!-- Track tabs -->
+      <div class="swh-tabs" id="swTrackNav"></div>
+
+      <!-- Filter bar -->
+      <div class="swh-filterbar">
+        <div class="swh-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="schoolWorkSearchInput" placeholder="Search school, activity, teacher…"
+            oninput="_pageState.schoolWork=1;renderSchoolWork()">
+          <button class="swh-search-clear" id="swSearchClear" onclick="clearSwSearch()" style="display:none"
+            title="Clear"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="swh-chips" id="swStatusPills"></div>
+        <div class="swh-filterbar-right">
+          <select id="swSortSelect" onchange="setSwSort(this.value)" title="Sort">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="school">School A→Z</option>
+            <option value="participants">Most participants</option>
+          </select>
+          <div class="swh-viewtoggle" role="group" aria-label="View toggle">
+            <button class="active" data-view="grid" onclick="setSwView('grid')" title="Grid view"><i
+                class="fas fa-border-all"></i></button>
+            <button data-view="list" onclick="setSwView('list')" title="List view"><i class="fas fa-list"></i></button>
+          </div>
+        </div>
+        <!-- Hidden selects keep JS compatibility -->
+        <select id="schoolWorkTypeFilter" style="display:none" onchange="_pageState.schoolWork=1;renderSchoolWork()">
+          <option value="all">All Activities</option>
+          <option value="assembly">Assembly</option>
+          <option value="print-rich">Print Rich</option>
+          <option value="library">Library</option>
+          <option value="creative-writing">Creative Writing</option>
+          <option value="bal-shodh-mela">Bal Shodh Mela</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="schoolWorkStatusFilter" style="display:none">
+          <option value="all">All Status</option>
+          <option value="completed">Completed</option>
+          <option value="in-progress">In Progress</option>
+          <option value="planned">Planned</option>
+        </select>
+      </div>
+
+      <!-- Legacy stats grid (kept hidden for JS compat) -->
+      <div class="sw-stats-grid" id="schoolWorkStats" style="display:none"></div>
+
+      <!-- Cards board -->
+      <div id="schoolWorkContainer" class="swh-board swh-board--grid"></div>
     </section>
 
     <!-- School Work Modal -->

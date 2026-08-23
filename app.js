@@ -19592,84 +19592,261 @@ const SCHOOL_WORK_TYPES = [
   { key: 'other', label: 'Other Activity', emoji: '<i class="fas fa-map-pin"></i>', color: '#64748b', desc: 'Any other school-based work or initiative' }
 ];
 
+// --- School-Based Work helpers: view, sort, filters ---
+window._swView = localStorage.getItem('apf_sw_view') || 'grid';
+window._swSort = localStorage.getItem('apf_sw_sort') || 'newest';
+window._swStatus = 'all';
+
+function setSwTrack(type) {
+  const sel = document.getElementById('schoolWorkTypeFilter');
+  if (sel) sel.value = type;
+  if (typeof _pageState !== 'undefined') _pageState.schoolWork = 1;
+  renderSchoolWork();
+}
+
+function setSwStatus(status) {
+  window._swStatus = status;
+  const hidden = document.getElementById('schoolWorkStatusFilter');
+  if (hidden) hidden.value = status;
+  if (typeof _pageState !== 'undefined') _pageState.schoolWork = 1;
+  renderSchoolWork();
+}
+
+function setSwView(view) {
+  window._swView = view;
+  try { localStorage.setItem('apf_sw_view', view); } catch {}
+  document.querySelectorAll('.swh-viewtoggle button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  const board = document.getElementById('schoolWorkContainer');
+  if (board) {
+    board.classList.remove('swh-board--grid', 'swh-board--list');
+    board.classList.add(view === 'list' ? 'swh-board--list' : 'swh-board--grid');
+  }
+}
+
+function setSwSort(sort) {
+  window._swSort = sort;
+  try { localStorage.setItem('apf_sw_sort', sort); } catch {}
+  if (typeof _pageState !== 'undefined') _pageState.schoolWork = 1;
+  renderSchoolWork();
+}
+
+function clearSwSearch() {
+  const inp = document.getElementById('schoolWorkSearchInput');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const clr = document.getElementById('swSearchClear');
+  if (clr) clr.style.display = 'none';
+  if (typeof _pageState !== 'undefined') _pageState.schoolWork = 1;
+  renderSchoolWork();
+}
+
+function exportSchoolWorkExcel() {
+  const records = DB.get('schoolWork') || [];
+  if (!records.length) { showToast('No school work data to export', 'info'); return; }
+  try {
+    const rows = records.map(r => {
+      const t = SCHOOL_WORK_TYPES.find(x => x.key === r.type);
+      return {
+        'Activity Type': t ? t.label : r.type,
+        'Title': r.title || '',
+        'School': r.school || '',
+        'Block': r.block || '',
+        'Date': r.date || '',
+        'Status': r.status || '',
+        'Participants': r.participants || 0,
+        'Teachers': Array.isArray(r.teachers) ? r.teachers.join(', ') : '',
+        'Description': r.description || '',
+        'Observations': r.observations || '',
+        'Outcome': r.outcome || '',
+        'Photos': r.photos || 0
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'School Work');
+    const d = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `APF_SchoolWork_${d}.xlsx`);
+    showToast('Excel exported', 'success');
+  } catch (e) { console.error(e); showToast('Export failed: ' + e.message, 'error'); }
+}
+
 function renderSchoolWork() {
-  const records = DB.get('schoolWork');
+  const records = DB.get('schoolWork') || [];
   const container = document.getElementById('schoolWorkContainer');
+  if (!container) return;
   const typeFilter = document.getElementById('schoolWorkTypeFilter')?.value || 'all';
-  const searchTerm = (document.getElementById('schoolWorkSearchInput')?.value || '').toLowerCase();
+  const statusFilter = window._swStatus || document.getElementById('schoolWorkStatusFilter')?.value || 'all';
+  const searchTerm = (document.getElementById('schoolWorkSearchInput')?.value || '').trim().toLowerCase();
+  const sortMode = window._swSort || 'newest';
 
-  let filtered = [...records];
-  if (typeFilter !== 'all') {
-    filtered = filtered.filter(r => r.type === typeFilter);
-  }
-  if (searchTerm) {
-    filtered = filtered.filter(r =>
-      (r.school || '').toLowerCase().includes(searchTerm) ||
-      (r.title || '').toLowerCase().includes(searchTerm) ||
-      (r.description || '').toLowerCase().includes(searchTerm) ||
-      (r.type || '').toLowerCase().includes(searchTerm) ||
-      (Array.isArray(r.teachers) && r.teachers.some(t => t.toLowerCase().includes(searchTerm)))
-    );
-  }
-  filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  // Search clear button
+  const clrBtn = document.getElementById('swSearchClear');
+  if (clrBtn) clrBtn.style.display = searchTerm ? '' : 'none';
 
-  // Summary stats
-  const allRecords = records;
+  // Sync view toggle UI
+  const view = window._swView || 'grid';
+  container.classList.remove('swh-board--grid', 'swh-board--list');
+  container.classList.add(view === 'list' ? 'swh-board--list' : 'swh-board--grid');
+  document.querySelectorAll('.swh-viewtoggle button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  const sortSel = document.getElementById('swSortSelect');
+  if (sortSel) sortSel.value = sortMode;
+
+  // ---- analytics ----
   const typeCounts = {};
   SCHOOL_WORK_TYPES.forEach(t => typeCounts[t.key] = 0);
-  allRecords.forEach(r => { if (typeCounts.hasOwnProperty(r.type)) typeCounts[r.type]++; else typeCounts['other'] = (typeCounts['other'] || 0) + 1; });
-  const uniqueSchools = new Set(allRecords.map(r => (r.school || '').trim().toLowerCase()).filter(Boolean)).size;
-
+  const statusCounts = { completed: 0, 'in-progress': 0, planned: 0 };
+  records.forEach(r => {
+    if (typeCounts.hasOwnProperty(r.type)) typeCounts[r.type]++; else typeCounts['other']++;
+    if (statusCounts.hasOwnProperty(r.status)) statusCounts[r.status]++;
+  });
+  const total = records.length;
+  const uniqueSchools = new Set(records.map(r => (r.school || '').trim().toLowerCase()).filter(Boolean)).size;
   const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const thisMonthCount = allRecords.filter(r => (r.date || '').startsWith(thisMonth)).length;
+  const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const thisMonthCount = records.filter(r => (r.date || '').startsWith(thisMonthKey)).length;
+  const completedRate = total ? Math.round((statusCounts.completed / total) * 100) : 0;
+  const last30Count = records.filter(r => {
+    if (!r.date) return false;
+    const d = new Date(r.date);
+    const diff = (now - d) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 30;
+  }).length;
 
-  document.getElementById('schoolWorkStats').innerHTML =
-    SCHOOL_WORK_TYPES.map(t => `<div class="sw-stat-card" style="--sw-color:${t.color}"><span class="sw-stat-emoji">${t.emoji}</span><span class="sw-stat-value">${typeCounts[t.key]}</span><span class="sw-stat-label">${t.label}</span></div>`).join('') +
-    `<div class="sw-stat-card" style="--sw-color:var(--accent)"><span class="sw-stat-emoji"><i class="fas fa-school"></i></span><span class="sw-stat-value">${uniqueSchools}</span><span class="sw-stat-label">Schools</span></div>` +
-    `<div class="sw-stat-card" style="--sw-color:#0d9488"><span class="sw-stat-emoji"><i class="fas fa-calendar-alt"></i></span><span class="sw-stat-value">${thisMonthCount}</span><span class="sw-stat-label">This Month</span></div>`;
+  // Hero KPIs — 4 compact stat tiles
+  const heroKpiEl = document.getElementById('swHeroKpis');
+  if (heroKpiEl) {
+    const kpis = [
+      { label: 'Total', value: total, sub: 'activities logged', icon: 'fa-layer-group', color: '#6366f1' },
+      { label: 'Completed', value: completedRate + '%', sub: `${statusCounts.completed} of ${total}`, icon: 'fa-circle-check', color: '#10b981' },
+      { label: 'Schools', value: uniqueSchools, sub: 'covered so far', icon: 'fa-school', color: '#f59e0b' },
+      { label: 'This Month', value: thisMonthCount, sub: `${last30Count} in 30 days`, icon: 'fa-calendar-check', color: '#ec4899' }
+    ];
+    heroKpiEl.innerHTML = kpis.map(k => `
+      <div class="swh-kpi">
+        <span class="swh-kpi-icon" style="background:${k.color}14;color:${k.color}"><i class="fas ${k.icon}"></i></span>
+        <div class="swh-kpi-body">
+          <span class="swh-kpi-value">${k.value}</span>
+          <span class="swh-kpi-label">${k.label}</span>
+        </div>
+        <span class="swh-kpi-sub">${k.sub}</span>
+      </div>`).join('');
+  }
+  const liveCount = document.getElementById('swHeroLiveCount');
+  if (liveCount) liveCount.textContent = total;
+
+  // Track tabs
+  const trackNav = document.getElementById('swTrackNav');
+  if (trackNav) {
+    const allActive = typeFilter === 'all';
+    const tabs = [{ key: 'all', label: 'All', emoji: '<i class="fas fa-border-all"></i>', color: 'inherit' }]
+      .concat(SCHOOL_WORK_TYPES)
+      .map(t => {
+        const cnt = t.key === 'all' ? total : (typeCounts[t.key] || 0);
+        const isActive = typeFilter === t.key;
+        return `<button class="swh-tab ${isActive ? 'active' : ''}" data-track="${t.key}" style="--t-color:${t.color}" onclick="setSwTrack('${t.key}')">
+          ${t.emoji}<span>${escapeHtml(t.key === 'all' ? 'All' : t.label)}</span>
+          <em>${cnt}</em>
+        </button>`;
+      }).join('');
+    trackNav.innerHTML = tabs;
+  }
+
+  // Status chips
+  const statusPillsEl = document.getElementById('swStatusPills');
+  if (statusPillsEl) {
+    const statuses = [
+      { key: 'all', label: 'All', icon: '' },
+      { key: 'completed', label: 'Done', icon: 'fa-check' },
+      { key: 'in-progress', label: 'Ongoing', icon: 'fa-spinner' },
+      { key: 'planned', label: 'Planned', icon: 'fa-clock' }
+    ];
+    statusPillsEl.innerHTML = statuses.map(s => {
+      const cnt = s.key === 'all' ? total : (statusCounts[s.key] || 0);
+      return `<button class="swh-chip ${statusFilter === s.key ? 'active' : ''}" data-status="${s.key}" onclick="setSwStatus('${s.key}')">
+        ${s.icon ? `<i class="fas ${s.icon}"></i>` : ''}${s.label}<em>${cnt}</em>
+      </button>`;
+    }).join('');
+  }
+
+  // Keep legacy stats grid (hidden) for compatibility
+  const legacyGrid = document.getElementById('schoolWorkStats');
+  if (legacyGrid) {
+    legacyGrid.innerHTML = SCHOOL_WORK_TYPES.map(t => `<div class="sw-stat-card" style="--sw-color:${t.color}"><span class="sw-stat-emoji">${t.emoji}</span><span class="sw-stat-value">${typeCounts[t.key]}</span><span class="sw-stat-label">${t.label}</span></div>`).join('') +
+      `<div class="sw-stat-card" style="--sw-color:var(--accent)"><span class="sw-stat-emoji"><i class="fas fa-school"></i></span><span class="sw-stat-value">${uniqueSchools}</span><span class="sw-stat-label">Schools</span></div>` +
+      `<div class="sw-stat-card" style="--sw-color:#0d9488"><span class="sw-stat-emoji"><i class="fas fa-calendar-alt"></i></span><span class="sw-stat-value">${thisMonthCount}</span><span class="sw-stat-label">This Month</span></div>`;
+  }
+
+  // ---- filtering ----
+  let filtered = [...records];
+  if (typeFilter !== 'all') filtered = filtered.filter(r => r.type === typeFilter);
+  if (statusFilter !== 'all') filtered = filtered.filter(r => (r.status || 'completed') === statusFilter);
+  if (searchTerm) {
+    filtered = filtered.filter(r => {
+      const hay = [
+        r.school || '', r.title || '', r.description || '', r.observations || '', r.outcome || '', r.block || '', r.type || '',
+        Array.isArray(r.teachers) ? r.teachers.join(' ') : ''
+      ].join(' ').toLowerCase();
+      return hay.includes(searchTerm);
+    });
+  }
+  // Sorting
+  if (sortMode === 'newest') filtered.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  else if (sortMode === 'oldest') filtered.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || '').localeCompare(b.createdAt || ''));
+  else if (sortMode === 'school') filtered.sort((a, b) => (a.school || '').localeCompare(b.school || '') || (b.date || '').localeCompare(a.date || ''));
+  else if (sortMode === 'participants') filtered.sort((a, b) => (b.participants || 0) - (a.participants || 0));
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div class="idea-empty"><i class="fas fa-chalkboard"></i><h3>No school work recorded</h3><p>Track school-based activities like Assembly, Library, Print-Rich Environment, Creative Writing & Bal Shodh Mela.</p></div>';
+    const isEmptyAll = total === 0;
+    const activeLabel = typeFilter !== 'all' ? (SCHOOL_WORK_TYPES.find(t => t.key === typeFilter)?.label || typeFilter) : '';
+    const statusLabel = statusFilter !== 'all' ? statusFilter : '';
+    container.innerHTML = `
+      <div class="swh-empty">
+        <div class="swh-empty-icon">${isEmptyAll ? '<i class="fas fa-chalkboard"></i>' : (SCHOOL_WORK_TYPES.find(t => t.key === typeFilter)?.emoji || '<i class="fas fa-search"></i>')}</div>
+        <h3>${isEmptyAll ? 'Nothing logged yet' : 'No matching activities'}</h3>
+        <p>${isEmptyAll
+          ? 'Start tracking Assembly, Print-Rich Environment, Library, Creative Writing &amp; Bal Shodh Mela.'
+          : `No ${activeLabel ? '<strong>' + escapeHtml(activeLabel) + '</strong> ' : ''}${statusLabel ? '<strong>' + escapeHtml(statusLabel) + '</strong> ' : ''}activities ${searchTerm ? 'matching <strong>“' + escapeHtml(searchTerm) + '”</strong>' : 'found'}.`}</p>
+        <div class="swh-empty-actions">
+          ${!isEmptyAll ? `<button class="swh-btn swh-btn--ghost" onclick="setSwTrack('all');setSwStatus('all');clearSwSearch()"><i class="fas fa-rotate-left"></i> Clear filters</button>` : ''}
+          <button class="swh-btn swh-btn--primary" onclick="openSchoolWorkModal()"><i class="fas fa-plus"></i> ${isEmptyAll ? 'Log First Activity' : 'Log Activity'}</button>
+        </div>
+      </div>`;
     return;
   }
 
-  const pg = getPaginatedItems(filtered, 'schoolWork', getPageSize(15));
+  const pg = getPaginatedItems(filtered, 'schoolWork', getPageSize(view === 'list' ? 10 : 12));
 
   container.innerHTML = pg.items.map(r => {
     const typeInfo = SCHOOL_WORK_TYPES.find(t => t.key === r.type) || SCHOOL_WORK_TYPES[5];
-    const statusColors = { planned: '#3b82f6', 'in-progress': '#f59e0b', completed: '#10b981' };
-    const statusLabels = { planned: 'Planned', 'in-progress': 'In Progress', completed: 'Completed' };
-    const statusIcons = { planned: 'fa-clipboard-list', 'in-progress': 'fa-spinner', completed: 'fa-check-circle' };
+    const statusMap = {
+      planned: { label: 'Planned', icon: 'fa-clock', color: '#3b82f6' },
+      'in-progress': { label: 'In Progress', icon: 'fa-spinner', color: '#f59e0b' },
+      completed: { label: 'Done', icon: 'fa-check', color: '#10b981' }
+    };
+    const s = statusMap[r.status] || { label: r.status || '—', icon: 'fa-circle', color: '#6b7280' };
     const teachers = Array.isArray(r.teachers) ? r.teachers : [];
-
-    return `<div class="sw-card" style="--sw-accent:${typeInfo.color}">
- <div class="sw-card-accent" style="background:linear-gradient(180deg, ${typeInfo.color}, ${typeInfo.color}66)"></div>
- <div class="sw-card-body">
- <div class="sw-card-header">
- <div class="sw-card-header-left">
- <div class="sw-type-badge" style="background:${typeInfo.color}18;color:${typeInfo.color};border:1px solid ${typeInfo.color}30">${typeInfo.emoji} ${typeInfo.label}</div>
- <span class="sw-status-badge" style="color:${statusColors[r.status] || '#6b7280'};background:${statusColors[r.status] || '#6b7280'}12"><i class="fas ${statusIcons[r.status] || 'fa-circle'}"></i> ${statusLabels[r.status] || r.status}</span>
- </div>
- <div class="sw-card-actions">
- <button class="btn btn-sm btn-outline" onclick="openSchoolWorkModal('${r.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- <button class="btn btn-sm btn-outline sw-delete-btn" onclick="deleteSchoolWork('${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
- </div>
- </div>
- <h4 class="sw-card-title">${escapeHtml(r.title || typeInfo.label)}</h4>
- <div class="sw-card-meta">
- <span><i class="fas fa-school"></i> ${escapeHtml(r.school || 'Not specified')}</span>
- <span><i class="fas fa-calendar-alt"></i> ${r.date ? parseLocalDate(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
- ${r.participants ? `<span><i class="fas fa-users"></i> ${r.participants} participants</span>` : ''}
- ${r.block ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(r.block)}</span>` : ''}
- ${r.photos ? `<span><i class="fas fa-camera"></i> ${r.photos} photo(s)</span>` : ''}
- </div>
- ${teachers.length > 0 ? `<div class="sw-card-teachers"><i class="fas fa-chalkboard-teacher"></i>${teachers.map(t => `<span class="sw-teacher-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
- ${r.description ? `<div class="sw-card-desc">${escapeHtml(r.description)}</div>` : ''}
- ${r.observations ? `<div class="sw-card-obs"><i class="fas fa-eye"></i> <span>${escapeHtml(r.observations)}</span></div>` : ''}
- ${r.outcome ? `<div class="sw-card-outcome"><i class="fas fa-check-circle"></i> <span>${escapeHtml(r.outcome)}</span></div>` : ''}
- </div>
- </div>`;
+    const dateStr = r.date ? (typeof parseLocalDate === 'function' ? parseLocalDate(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : r.date) : 'No date';
+    return `<article class="swh-card" style="--c:${typeInfo.color}">
+      <header class="swh-card-top">
+        <span class="swh-card-type"><i class="${typeInfo.emoji.match(/class="([^"]+)"/)?.[1] || 'fas fa-tag'}"></i>${escapeHtml(typeInfo.label)}</span>
+        <div class="swh-card-tools">
+          <button class="swh-iconbtn" onclick="openSchoolWorkModal('${r.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+          <button class="swh-iconbtn swh-iconbtn--danger" onclick="deleteSchoolWork('${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </header>
+      <h4 class="swh-card-title">${escapeHtml(r.title || typeInfo.label)}</h4>
+      ${r.description ? `<p class="swh-card-desc">${escapeHtml((r.description || '').length > 130 ? r.description.slice(0, 130) + '…' : r.description)}</p>` : ''}
+      <div class="swh-card-meta">
+        <span title="School"><i class="fas fa-school"></i>${escapeHtml(r.school || '—')}</span>
+        <span title="Date"><i class="fas fa-calendar"></i>${escapeHtml(dateStr)}</span>
+        ${r.participants ? `<span title="Students"><i class="fas fa-user-group"></i>${r.participants}</span>` : ''}
+        ${r.photos ? `<span title="Photos"><i class="fas fa-camera"></i>${r.photos}</span>` : ''}
+      </div>
+      ${teachers.length ? `<div class="swh-card-teachers">${teachers.slice(0, 3).map(t => `<span><i class="fas fa-user"></i>${escapeHtml(t)}</span>`).join('')}${teachers.length > 3 ? `<span class="more">+${teachers.length - 3}</span>` : ''}</div>` : ''}
+      <footer class="swh-card-foot">
+        <span class="swh-card-status" style="--sc:${s.color}"><i class="fas ${s.icon}"></i>${s.label}</span>
+        ${r.outcome ? `<span class="swh-card-outcome" title="${escapeHtml(r.outcome)}"><i class="fas fa-seedling"></i>${escapeHtml(r.outcome.length > 60 ? r.outcome.slice(0, 60) + '…' : r.outcome)}</span>` : '<span></span>'}
+      </footer>
+    </article>`;
   }).join('') + renderPaginationControls('schoolWork', pg, 'renderSchoolWork');
 }
 
