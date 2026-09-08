@@ -64,6 +64,11 @@ const DB = {
     try { return JSON.parse(JSON.stringify(data)); }
     catch { return []; }
   },
+  peek(key) {
+    const data = this._store[key];
+    if (!data) return [];
+    return data;
+  },
   set(key, data) {
     this._store[key] = JSON.parse(JSON.stringify(data));
   },
@@ -23804,16 +23809,28 @@ const SarvamAI = {
   async request(endpoint, body) {
     const key = this.getApiKey();
     if (!key) throw new Error('Sarvam AI API key not configured. Go to Settings Sarvam AI to add your key.');
-    const res = await fetch(this.BASE_URL + endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'API-Subscription-Key': key },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message || errData.message || `API error: ${res.status}`);
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 25000) : null;
+    try {
+      const res = await fetch(this.BASE_URL + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'API-Subscription-Key': key },
+        body: JSON.stringify(body),
+        signal: controller ? controller.signal : undefined
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || errData.message || `API error: ${res.status}`);
+      }
+      return await res.json();
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error('Sarvam AI request timed out (25s). Please try again.');
+      }
+      throw err;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
-    return res.json();
   },
   async chat(messages, options = {}) {
     const s = getAppSettings();
@@ -26312,16 +26329,19 @@ function formatAIResponse(text) {
 }
 
 function buildDataContext() {
-  const visits = DB.get('visits') || [];
-  const trainings = DB.get('trainings') || [];
-  const observations = DB.get('observations') || [];
-  const followups = DB.get('followupStatus') || [];
-  const notes = DB.get('notes') || [];
-  const tasks = DB.get('plannerTasks') || [];
-  const goals = DB.get('goalTargets') || [];
-  const reflections = DB.get('reflections') || [];
-  const meetings = DB.get('meetings') || [];
-  const profile = DB.get('userProfile') || {};
+  const getList = (k) => (typeof DB.peek === 'function' ? DB.peek(k) : DB.get(k)) || [];
+  const visits = getList('visits');
+  const trainings = getList('trainings');
+  const observations = getList('observations');
+  const followups = getList('followupStatus');
+  const notes = getList('notes');
+  const tasks = getList('plannerTasks');
+  const goals = getList('goalTargets');
+  const reflections = getList('reflections');
+  const meetings = getList('meetings');
+  const profile = (typeof DB.peek === 'function' ? DB.peek('userProfile') : DB.get('userProfile')) || {};
+
+  const clean = (s, len = 35) => s ? String(s).replace(/\s+/g, ' ').trim().slice(0, len) : '';
 
   const now = new Date();
   const today = now.toISOString().split('T')[0];
@@ -26340,30 +26360,36 @@ function buildDataContext() {
   // School visit frequency
   const schoolFreq = {};
   visits.forEach(v => { const s = v.school || 'Unknown'; schoolFreq[s] = (schoolFreq[s] || 0) + 1; });
-  const topSchools = Object.entries(schoolFreq).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const topSchools = Object.entries(schoolFreq).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const leastVisited = Object.entries(schoolFreq).sort((a, b) => a[1] - b[1]).slice(0, 5);
 
-  // Visit purpose breakdown
+  // Visit purpose breakdown (safely sliced to top 6)
   const purposeCounts = {};
-  visits.forEach(v => { const p = v.purpose || 'General Visit'; purposeCounts[p] = (purposeCounts[p] || 0) + 1; });
+  visits.forEach(v => { const p = clean(v.purpose || 'General Visit', 30); purposeCounts[p] = (purposeCounts[p] || 0) + 1; });
+  const topPurposes = Object.entries(purposeCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
-  // Observation analysis
+  // Observation analysis (safely sliced to top 6)
   const engagementCounts = {};
   const subjectCounts = {};
   const uniqueTeachers = new Set();
   observations.forEach(o => {
-    const lvl = o.engagementLevel || 'Unknown';
+    const lvl = clean(o.engagementLevel || 'Unknown', 20);
     engagementCounts[lvl] = (engagementCounts[lvl] || 0) + 1;
-    if (o.subject) subjectCounts[o.subject] = (subjectCounts[o.subject] || 0) + 1;
+    if (o.subject) {
+      const sub = clean(o.subject, 25);
+      subjectCounts[sub] = (subjectCounts[sub] || 0) + 1;
+    }
     if (o.teacher) uniqueTeachers.add(o.teacher.toLowerCase().trim());
   });
+  const topSubjects = Object.entries(subjectCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
   // Training analysis
   const completedTrainings = trainings.filter(t => t.status === 'completed');
   const upcomingTrainings = trainings.filter(t => t.status === 'upcoming' || (t.date && t.date >= today));
   const totalAttendees = trainings.reduce((s, t) => s + Number(t.attendees || 0), 0);
   const trainingTopics = {};
-  trainings.forEach(t => { const topic = t.title || t.topic || 'Untitled'; trainingTopics[topic] = (trainingTopics[topic] || 0) + 1; });
+  trainings.forEach(t => { const topic = clean(t.title || t.topic || 'Untitled', 30); trainingTopics[topic] = (trainingTopics[topic] || 0) + 1; });
+  const topTopics = Object.entries(trainingTopics).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
   // Planner tasks
   const pendingTasks = tasks.filter(t => !t.done);
@@ -26376,45 +26402,42 @@ function buildDataContext() {
   const sortedMonths = Object.entries(monthlyVisits).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6);
 
   return `=== USER PROFILE ===
-- Name: ${profile.name || 'Not set'}
+- Name: ${clean(profile.name, 30) || 'Not set'}
 - Role: Academic Resource Person (ARP)
-- Block: ${profile.block || 'Not set'}, District: ${profile.district || 'Not set'}, State: ${profile.state || 'Not set'}
+- Block: ${clean(profile.block, 20) || 'Not set'}, District: ${clean(profile.district, 20) || 'Not set'}, State: ${clean(profile.state, 20) || 'Not set'}
 
 === VISIT DATA (${visits.length} total) ===
 - Completed: ${completedVisits.length}, This month: ${monthVisits.length}, This week: ${recentVisits.length}, Last 30 days: ${last30Visits.length}
 - Unique schools visited: ${uniqueSchools.size}
-- Visit purposes: ${Object.entries(purposeCounts).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
-- Top visited schools: ${topSchools.map(([s, c]) => s + '(' + c + ')').join(', ') || 'None'}
-- Least visited schools: ${leastVisited.map(([s, c]) => s + '(' + c + ')').join(', ') || 'None'}
+- Top visit purposes: ${topPurposes.map(([k, v]) => k + ':' + v).join(', ') || 'None'}
+- Top visited schools: ${topSchools.map(([s, c]) => clean(s, 25) + '(' + c + ')').join(', ') || 'None'}
+- Least visited schools: ${leastVisited.map(([s, c]) => clean(s, 25) + '(' + c + ')').join(', ') || 'None'}
 - Monthly visit trend: ${sortedMonths.map(([m, c]) => m + ':' + c).join(', ') || 'None'}
-- Recent visits (last 7 days): ${recentVisits.slice(0, 12).map(v => v.school + ' (' + v.date + ', ' + (v.purpose || 'Visit') + ')').join(' | ') || 'None'}
+- Recent visits: ${recentVisits.slice(0, 8).map(v => clean(v.school, 25) + ' (' + (v.date || 'N/A') + ')').join(' | ') || 'None'}
 
 === OBSERVATION DATA (${observations.length} total) ===
 - Unique teachers observed: ${uniqueTeachers.size}
-- Engagement levels: ${Object.entries(engagementCounts).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
-- Subjects observed: ${Object.entries(subjectCounts).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
-- Recent observations: ${observations.slice(0, 8).map(o => (o.date || 'N/A') + ' ' + (o.school || '') + ' ' + (o.teacher || '') + ' ' + (o.subject || '')).join(' | ') || 'None'}
+- Engagement levels: ${Object.entries(engagementCounts).slice(0, 5).map(([k, v]) => k + ':' + v).join(', ') || 'None'}
+- Top subjects observed: ${topSubjects.map(([k, v]) => k + ':' + v).join(', ') || 'None'}
+- Recent observations: ${observations.slice(0, 6).map(o => (o.date || 'N/A') + ' ' + clean(o.school, 20) + ' ' + clean(o.teacher, 15)).join(' | ') || 'None'}
 
 === TRAINING DATA (${trainings.length} total) ===
 - Completed: ${completedTrainings.length}, Upcoming: ${upcomingTrainings.length}
 - Total teachers/attendees reached: ${totalAttendees}
-- Training topics: ${Object.entries(trainingTopics).slice(0, 10).map(([k, v]) => k + (v > 1 ? '(' + v + ')' : '')).join(', ') || 'None'}
-- Recent trainings: ${trainings.slice(0, 6).map(t => (t.date || 'N/A') + ' ' + (t.title || t.topic || 'Untitled') + ' (' + (t.status || 'N/A') + ', ' + (t.attendees || 0) + ' attendees)').join(' | ') || 'None'}
+- Training topics: ${topTopics.map(([k, v]) => k + (v > 1 ? '(' + v + ')' : '')).join(', ') || 'None'}
+- Recent trainings: ${trainings.slice(0, 5).map(t => (t.date || 'N/A') + ' ' + clean(t.title || t.topic || 'Untitled', 25)).join(' | ') || 'None'}
 
 === FOLLOW-UP DATA (${followups.length} total) ===
 - Pending: ${pendingFollowups.length}, Overdue: ${overdueFollowups.length}
-- Overdue items: ${overdueFollowups.slice(0, 8).map(f => (f.title || f.description || 'Untitled') + ' [due:' + f.dueDate + ', ' + (f.priority || 'normal') + ']').join(' | ') || 'None'}
-- Pending items: ${pendingFollowups.slice(0, 10).map(f => (f.title || f.description || 'Untitled') + ' [' + (f.priority || 'normal') + ']').join(' | ') || 'None'}
+- Overdue items: ${overdueFollowups.slice(0, 6).map(f => clean(f.title || f.description || 'Untitled', 30) + ' [due:' + (f.dueDate || 'N/A') + ']').join(' | ') || 'None'}
+- Pending items: ${pendingFollowups.slice(0, 6).map(f => clean(f.title || f.description || 'Untitled', 30)).join(' | ') || 'None'}
 
 === PLANNER (${tasks.length} tasks) ===
 - Pending tasks: ${pendingTasks.length}, This week: ${weekTasks.length}
-- Upcoming tasks: ${weekTasks.slice(0, 8).map(t => (t.date || 'N/A') + ' ' + (t.text || 'Task') + ' (' + (t.type || 'other') + ')').join(' | ') || 'None'}
+- Upcoming tasks: ${weekTasks.slice(0, 6).map(t => (t.date || 'N/A') + ' ' + clean(t.text || 'Task', 25)).join(' | ') || 'None'}
 
 === OTHER DATA ===
-- Goals set: ${goals.length}
-- Meetings: ${meetings.length}
-- Reflections: ${reflections.length}
-- Notes: ${notes.length}`;
+- Goals set: ${goals.length}, Meetings: ${meetings.length}, Reflections: ${reflections.length}, Notes: ${notes.length}`;
 }
 
 function buildScopedDataContext(scope = 'auto') {
@@ -27926,37 +27949,176 @@ async function toggleVoiceRecording(targetFieldId, lang) {
   }
 }
 
-// Feature 7: AI Dashboard Digest
-async function generateDashboardDigest() {
-  if (!SarvamAI.isConfigured()) return;
+// Feature 7: AI Dashboard Digest & Smart Local Fallback
+let _isGeneratingDigest = false;
+let _cachedDigestHtml = null;
+let _cachedDigestDate = null;
+let _cachedDigestTime = 0;
 
-  const digestEl = document.getElementById('aiDashboardDigest');
-  if (!digestEl) return;
-
-  digestEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Generating AI digest...</div>';
-  digestEl.style.display = 'block';
-
-  const context = buildDataContext();
-  const visits = DB.get('visits') || [];
-  const followups = DB.get('followupStatus') || [];
-  const observations = DB.get('observations') || [];
+function buildCompactDigestContext() {
+  const getList = (k) => (typeof DB.peek === 'function' ? DB.peek(k) : DB.get(k)) || [];
+  const visits = getList('visits');
+  const followups = getList('followupStatus');
+  const observations = getList('observations');
+  const tasks = getList('plannerTasks');
+  const profile = (typeof DB.peek === 'function' ? DB.peek('userProfile') : DB.get('userProfile')) || {};
 
   const now = new Date();
   const today = now.toISOString().split('T')[0];
-  const weekAgo = new Date(now - 7 * 86400000).toISOString().split('T')[0];
-  const todayVisits = visits.filter(v => v.date === today);
-  const weekVisits = visits.filter(v => v.date >= weekAgo);
-  const overdueFollowups = followups.filter(f => f.status !== 'completed' && f.status !== 'done' && f.dueDate && f.dueDate < today);
+  const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0];
+  const thisMonth = now.toISOString().slice(0, 7);
 
-  const prompt = `Generate a brief daily digest (3-5 bullet points) for an APF Resource Person based on their data. Today is ${now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.
+  const clean = (s, len = 35) => s ? String(s).replace(/\s+/g, ' ').trim().slice(0, len) : '';
+
+  // Visits
+  const todayVisits = visits.filter(v => v.date === today);
+  const weekVisits = visits.filter(v => v.date >= weekAgo && v.date <= today);
+  const monthVisits = visits.filter(v => (v.date || '').startsWith(thisMonth));
+  const completedThisMonth = monthVisits.filter(v => v.status === 'completed').length;
+
+  // Follow-ups
+  const pendingFollowups = followups.filter(f => f.status !== 'completed' && f.status !== 'done');
+  const overdueFollowups = pendingFollowups.filter(f => f.dueDate && f.dueDate < today);
+
+  // Tasks
+  const todayTasks = tasks.filter(t => !t.done && (t.date === today || (!t.date && t.dueDate === today)));
+
+  // Observations (most recent 3)
+  const recentObs = observations.slice(-3).reverse();
+
+  let todaySummary = 'No visits scheduled today';
+  if (todayVisits.length > 0) {
+    const list = todayVisits.slice(0, 3).map(v => `${clean(v.school, 25)} (${v.status || 'planned'})`).join(', ');
+    const extra = todayVisits.length > 3 ? ` +${todayVisits.length - 3} more` : '';
+    todaySummary = `${todayVisits.length} visit(s): ${list}${extra}`;
+  }
+
+  let overdueSummary = 'None';
+  if (overdueFollowups.length > 0) {
+    const list = overdueFollowups.slice(0, 3).map(f => clean(f.title || f.description || 'Follow-up', 25)).join(', ');
+    const extra = overdueFollowups.length > 3 ? ` +${overdueFollowups.length - 3} more` : '';
+    overdueSummary = `${overdueFollowups.length} overdue (${list}${extra})`;
+  }
+
+  let tasksSummary = 'None';
+  if (todayTasks.length > 0) {
+    const list = todayTasks.slice(0, 3).map(t => clean(t.text || 'Task', 25)).join(', ');
+    tasksSummary = `${todayTasks.length} task(s): ${list}`;
+  }
+
+  const officerName = clean(profile.name, 30) || 'Resource Person';
+  const blockName = clean(profile.block, 20) || 'Block';
+  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+  const summaryText = `OFFICER: ${officerName} (${blockName})
+DATE: ${dateStr}
+TODAY'S VISITS: ${todaySummary}
+OVERDUE FOLLOW-UPS: ${overdueSummary}
+TODAY'S TASKS: ${tasksSummary}
+THIS WEEK'S VISITS: ${weekVisits.length} total
+THIS MONTH'S PROGRESS: ${completedThisMonth} completed of ${monthVisits.length} total visits
+RECENT OBSERVATIONS: ${recentObs.map(o => `${clean(o.school, 20)} - ${clean(o.teacher, 15)} (${clean(o.subject, 15)})`).join(', ') || 'None'}`;
+
+  return {
+    todayVisits,
+    weekVisits,
+    overdueFollowups,
+    pendingFollowups,
+    monthVisits,
+    completedThisMonth,
+    summaryText
+  };
+}
+
+function generateLocalDigest(digestCtx) {
+  const { todayVisits, weekVisits, overdueFollowups, pendingFollowups, monthVisits, completedThisMonth } = digestCtx;
+  const bullets = [];
+
+  // 1. Today's visits or focus
+  if (todayVisits && todayVisits.length > 0) {
+    const schools = todayVisits.slice(0, 2).map(v => v.school || 'School').join(', ');
+    const more = todayVisits.length > 2 ? ` (+${todayVisits.length - 2} more)` : '';
+    bullets.push(`🎯 Today's visits: ${todayVisits.length} planned at ${schools}${more}.`);
+  } else {
+    bullets.push(`🎯 No school visits scheduled today — ideal for planning, follow-ups & documentation.`);
+  }
+
+  // 2. Urgent follow-ups
+  if (overdueFollowups && overdueFollowups.length > 0) {
+    const topItem = (overdueFollowups[0].title || overdueFollowups[0].description || 'Follow-up').slice(0, 30);
+    bullets.push(`⚠️ Urgent: ${overdueFollowups.length} overdue follow-up(s) need attention ("${topItem}").`);
+  } else if (pendingFollowups && pendingFollowups.length > 0) {
+    bullets.push(`📋 ${pendingFollowups.length} pending follow-up action(s) currently open.`);
+  } else {
+    bullets.push(`✅ All follow-ups are up to date! Great job on action closures.`);
+  }
+
+  // 3. Weekly / Monthly performance
+  const weekCount = weekVisits ? weekVisits.length : 0;
+  if (weekCount > 0) {
+    bullets.push(`📊 Progress: ${weekCount} visit(s) conducted this week across your schools.`);
+  } else if (monthVisits && monthVisits.length > 0) {
+    bullets.push(`📊 Month-to-date: ${completedThisMonth} of ${monthVisits.length} visits completed.`);
+  } else {
+    bullets.push(`📊 Ready for field visits: schedule upcoming school visits to build weekly momentum.`);
+  }
+
+  // 4. Motivational note
+  const quotes = [
+    '⭐ Consistent classroom mentoring makes a lasting difference in teacher confidence.',
+    '⭐ Every supportive conversation with a teacher empowers an entire classroom.',
+    '⭐ Focused follow-up actions turn school observations into real learning outcomes.',
+    '⭐ Continuous reflection and small regular improvements drive large educational impacts.'
+  ];
+  const dayIdx = new Date().getDate() % quotes.length;
+  bullets.push(quotes[dayIdx]);
+
+  return bullets.map(b => `- ${b}`).join('\n');
+}
+
+async function generateDashboardDigest(forceRefresh = false) {
+  const digestEl = document.getElementById('aiDashboardDigest');
+  if (!digestEl) return;
+
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+
+  // If already running, skip concurrent call
+  if (_isGeneratingDigest) return;
+
+  // Use cache if not forced and still fresh (< 30 min old on same day)
+  if (!forceRefresh && _cachedDigestHtml && _cachedDigestDate === today && (Date.now() - _cachedDigestTime < 1800000)) {
+    digestEl.innerHTML = _cachedDigestHtml;
+    digestEl.style.display = 'block';
+    return;
+  }
+
+  const digestCtx = buildCompactDigestContext();
+
+  // If Sarvam AI is not configured, show smart local digest directly
+  if (!SarvamAI.isConfigured()) {
+    const localContent = generateLocalDigest(digestCtx);
+    const html = `<div class="ai-digest-header">
+      <span><i class="fas fa-robot"></i> Daily Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(139,92,246,0.15);color:#8b5cf6;">Smart Local</span></span>
+      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="ai-digest-body">${formatAIResponse(localContent)}</div>`;
+    _cachedDigestHtml = html;
+    _cachedDigestDate = today;
+    _cachedDigestTime = Date.now();
+    digestEl.innerHTML = html;
+    digestEl.style.display = 'block';
+    return;
+  }
+
+  _isGeneratingDigest = true;
+  digestEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Generating AI digest...</div>';
+  digestEl.style.display = 'block';
+
+  const prompt = `Generate a brief daily digest (3-5 bullet points) for an APF Academic Resource Person based on their current data.
 
 DATA SUMMARY:
-${context}
-
-TODAY: ${todayVisits.length > 0 ? todayVisits.map(v => `Visit to ${v.school} (${v.status})`).join(', ') : 'No visits scheduled today'}
-THIS WEEK: ${weekVisits.length} visits
-OVERDUE FOLLOW-UPS: ${overdueFollowups.length}
-RECENT OBSERVATIONS: ${observations.slice(0, 3).map(o => `${o.school} - ${o.teacher || 'Unknown'} (${o.engagementLevel || 'N/A'})`).join(', ') || 'None'}
+${digestCtx.summaryText}
 
 Write 3-5 short, actionable bullet points covering:
 - Today's priorities
@@ -27964,17 +28126,43 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. , , , , , , ).`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 🎯, ⚠️, 📊, 💡, ⭐). Format: "- [Emoji] [Text]"`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "-  Your point here".' },
+      { role: 'system', content: 'You are a concise daily educational planner AI for an Azim Premji Foundation Resource Person. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- [Emoji] Your point here".' },
       { role: 'user', content: prompt }
-    ], { temperature: 0.7, max_tokens: 1500 });
-    const reply = res.choices?.[0]?.message?.content || 'No digest available.';
-    digestEl.innerHTML = `<div class="ai-digest-header"><i class="fas fa-robot"></i> AI Digest <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest()" title="Refresh"><i class="fas fa-sync-alt"></i></button></div><div class="ai-digest-body">${formatAIResponse(reply)}</div>`;
+    ], { temperature: 0.7, max_tokens: 400 });
+
+    const reply = res.choices?.[0]?.message?.content?.trim();
+    if (!reply) throw new Error('Empty response received from AI service');
+
+    const html = `<div class="ai-digest-header">
+      <span><i class="fas fa-robot"></i> AI Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(139,92,246,0.15);color:#8b5cf6;">AI Generated</span></span>
+      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="ai-digest-body">${formatAIResponse(reply)}</div>`;
+
+    _cachedDigestHtml = html;
+    _cachedDigestDate = today;
+    _cachedDigestTime = Date.now();
+    digestEl.innerHTML = html;
   } catch (err) {
-    digestEl.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-muted);"><i class="fas fa-info-circle"></i> AI digest unavailable</div>';
+    console.warn('[AI Digest] AI generation failed, falling back to smart local digest:', err);
+    const localContent = generateLocalDigest(digestCtx);
+    const html = `<div class="ai-digest-header">
+      <span><i class="fas fa-robot"></i> Daily Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(234,179,8,0.15);color:#ca8a04;" title="AI unavailable: ${escapeHtml(err.message || 'offline')}">Smart Local</span></span>
+      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" title="Retry AI generation"><i class="fas fa-sync-alt"></i> Retry AI</button>
+    </div>
+    <div class="ai-digest-body">
+      ${formatAIResponse(localContent)}
+    </div>`;
+    _cachedDigestHtml = html;
+    _cachedDigestDate = today;
+    _cachedDigestTime = Date.now();
+    digestEl.innerHTML = html;
+  } finally {
+    _isGeneratingDigest = false;
   }
 }
 
