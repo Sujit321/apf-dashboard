@@ -27844,6 +27844,44 @@ let _voiceRecording = false;
 let _voiceTargetField = null;
 
 async function toggleVoiceRecording(targetFieldId, lang) {
+  _voiceTargetField = targetFieldId;
+  const targetField = document.getElementById(targetFieldId);
+  if (!targetField) { showToast('Target field not found', 'error'); return; }
+
+  if (_voiceRecording) {
+    // Stop recording
+    _voiceRecording = false;
+    if (_voiceRecorder && _voiceRecorder.state === 'recording') {
+      _voiceRecorder.stop();
+    }
+    return;
+  }
+
+  if (!SarvamAI.isConfigured()) { showToast('Configure Sarvam AI API key in Settings first', 'warning'); return; }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    _voiceRecorder = mediaRecorder;
+    _voiceRecording = true;
+
+    const chunks = [];
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const allBtns = document.querySelectorAll('.ai-voice-btn.recording');
+      allBtns.forEach(b => { b.classList.remove('recording'); b.innerHTML = '<i class="fas fa-microphone"></i>'; });
+
+      if (chunks.length === 0) return;
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result.split(',')[1];
+        const field = document.getElementById(_voiceTargetField);
+        if (field) {
           const prevVal = field.value;
           field.value = prevVal + (prevVal ? '\n' : '') + ' Transcribing...';
         }
@@ -27898,12 +27936,7 @@ async function generateDashboardDigest() {
   digestEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Generating AI digest...</div>';
   digestEl.style.display = 'block';
 
-  // Cap context size to prevent API token limit errors with large datasets
-  const MAX_CONTEXT_CHARS = 3000;
-  let context = buildDataContext();
-  if (context.length > MAX_CONTEXT_CHARS) {
-    context = context.slice(0, MAX_CONTEXT_CHARS) + '\n[... context truncated for brevity ...]';
-  }
+  const context = buildDataContext();
   const visits = DB.get('visits') || [];
   const followups = DB.get('followupStatus') || [];
   const observations = DB.get('observations') || [];
@@ -27920,7 +27953,7 @@ async function generateDashboardDigest() {
 DATA SUMMARY:
 ${context}
 
-TODAY: ${todayVisits.length > 0 ? todayVisits.slice(0, 5).map(v => `Visit to ${v.school} (${v.status})`).join(', ') : 'No visits scheduled today'}
+TODAY: ${todayVisits.length > 0 ? todayVisits.map(v => `Visit to ${v.school} (${v.status})`).join(', ') : 'No visits scheduled today'}
 THIS WEEK: ${weekVisits.length} visits
 OVERDUE FOLLOW-UPS: ${overdueFollowups.length}
 RECENT OBSERVATIONS: ${observations.slice(0, 3).map(o => `${o.school} - ${o.teacher || 'Unknown'} (${o.engagementLevel || 'N/A'})`).join(', ') || 'None'}
@@ -27933,20 +27966,15 @@ Write 3-5 short, actionable bullet points covering:
 
 Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. , , , , , , ).`;
 
-  // Final safety cap on total prompt length
-  const MAX_PROMPT_CHARS = 4500;
-  const finalPrompt = prompt.length > MAX_PROMPT_CHARS ? prompt.slice(0, MAX_PROMPT_CHARS) : prompt;
-
   try {
     const res = await SarvamAI.chat([
       { role: 'system', content: 'You are a brief, helpful daily planner AI. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "-  Your point here".' },
-      { role: 'user', content: finalPrompt }
+      { role: 'user', content: prompt }
     ], { temperature: 0.7, max_tokens: 1500 });
     const reply = res.choices?.[0]?.message?.content || 'No digest available.';
     digestEl.innerHTML = `<div class="ai-digest-header"><i class="fas fa-robot"></i> AI Digest <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest()" title="Refresh"><i class="fas fa-sync-alt"></i></button></div><div class="ai-digest-body">${formatAIResponse(reply)}</div>`;
   } catch (err) {
-    console.error('[AI Digest] Error:', err);
-    digestEl.innerHTML = `<div style="padding:12px;font-size:12px;color:var(--text-muted);"><i class="fas fa-info-circle"></i> AI digest unavailable. <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest()" style="font-size:11px;padding:2px 6px;margin-left:4px;">Retry</button></div>`;
+    digestEl.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-muted);"><i class="fas fa-info-circle"></i> AI digest unavailable</div>';
   }
 }
 
