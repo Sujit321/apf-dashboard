@@ -23091,8 +23091,8 @@ function getSarvamMessageDisplayText(message, fallback = '') {
   if (content && !content.includes('<think>')) return content;
   if (content) return content;
 
-  // Fallback: if only reasoning was returned (no content), use the reasoning text directly
-  if (reasoning) return reasoning;
+  // Fallback: if only reasoning was returned (no content), wrap in think tag so callers can identify it
+  if (reasoning) return '<think>\n' + reasoning + '\n</think>';
 
   return fallback;
 }
@@ -23835,12 +23835,12 @@ const SarvamAI = {
   async chat(messages, options = {}) {
     const s = getAppSettings();
     const model = normalizeSarvamModel(options.model || s.sarvamModel || 'sarvam-m');
-    // Reasoning models use 60-70% of tokens on chain-of-thought, so scale up aggressively
+    // Reasoning models use 60-70% of tokens on chain-of-thought, so ensure sufficient headroom
     let maxTokens = options.max_tokens || 2048;
     // Starter tier limits: sarvam-105b/30b = 4096, sarvam-m = 2048
-    if (model === 'sarvam-105b') maxTokens = Math.min(4096, Math.round(maxTokens * 2));
-    else if (model === 'sarvam-30b') maxTokens = Math.min(4096, Math.round(maxTokens * 2));
-    else maxTokens = Math.min(2048, maxTokens);
+    if (model === 'sarvam-105b') maxTokens = Math.min(4096, Math.max(1500, Math.round(maxTokens * 2)));
+    else if (model === 'sarvam-30b') maxTokens = Math.min(4096, Math.max(1500, Math.round(maxTokens * 2)));
+    else maxTokens = Math.min(2048, Math.max(1500, Math.round(maxTokens * 2)));
 
     // Inject user's preferred response language into the system prompt
     const langCode = s.sarvamDefaultLang || 'en-IN';
@@ -26316,10 +26316,8 @@ function formatAIResponse(text) {
     cleaned = text.replace(thinkRegex, '').trim();
     if (!cleaned) {
       // Reasoning models sometimes return only reasoning_content with no final answer.
-      // Show a clean fallback — the reasoning block is already visible above if present.
-      cleaned = reasoningParts.join('\n\n').trim() || '';
-      if (!cleaned) cleaned = "<em>(AI response was incomplete. Please try again.)</em>";
-      thinkingHtml = '';
+      // If no final answer was generated, keep reasoning visible in its block and show an incomplete note.
+      cleaned = "<em>(AI response was incomplete. Please try again.)</em>";
     }
   }
 
@@ -28003,7 +28001,8 @@ function buildCompactDigestContext() {
   let tasksSummary = 'None';
   if (todayTasks.length > 0) {
     const list = todayTasks.slice(0, 3).map(t => clean(t.text || 'Task', 25)).join(', ');
-    tasksSummary = `${todayTasks.length} task(s): ${list}`;
+    const extra = todayTasks.length > 3 ? ` +${todayTasks.length - 3} more` : '';
+    tasksSummary = `${todayTasks.length} task(s): ${list}${extra}`;
   }
 
   const officerName = clean(profile.name, 30) || 'Resource Person';
@@ -28126,16 +28125,27 @@ Write 3-5 short, actionable bullet points covering:
 - A brief performance insight
 - One motivational note
 
-Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 🎯, ⚠️, 📊, 💡, ⭐). Format: "- [Emoji] [Text]"`;
+Keep each point under 15 words. Be specific, not generic. Start every bullet point with a relevant emoji (e.g. 🎯, ⚠️, 📊, 💡, ⭐). Format: "- [Emoji] [Text]"
+Output ONLY the bullet points directly. Do not include thinking, reasoning steps, or preamble.`;
 
   try {
     const res = await SarvamAI.chat([
-      { role: 'system', content: 'You are a concise daily educational planner AI for an Azim Premji Foundation Resource Person. Write very concise bullet points. No headers or long sentences. You MUST start every bullet point with a relevant emoji. Format: "- [Emoji] Your point here".' },
+      { role: 'system', content: 'You are a concise daily educational planner AI for an Azim Premji Foundation Resource Person. Provide exactly 3-5 concise, actionable bullet points immediately. Do NOT include lengthy chain-of-thought, reasoning steps, or conversational preamble. Every bullet point MUST start with a relevant emoji (e.g. 🎯, ⚠️, 📊, 💡, ⭐). Format: "- [Emoji] [Text]".' },
       { role: 'user', content: prompt }
-    ], { temperature: 0.7, max_tokens: 400 });
+    ], { temperature: 0.5, max_tokens: 1800, reasoning_effort: 'low' });
 
-    const reply = res.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error('Empty response received from AI service');
+    let reply = res.choices?.[0]?.message?.content?.trim() || '';
+
+    // Strip any <think>...</think> or unclosed <think>... reasoning blocks completely
+    reply = reply.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
+
+    // Verify reply actually has bullet content and is not empty or raw thinking
+    const hasBullets = /(?:^|\n)\s*[-*•]\s+/m.test(reply) || /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u.test(reply);
+    const looksLikeThinking = /^(?:thinking process|let'?s analyze|i need to|the user wants|analyzing the data|first,? let'?s|we need to|to generate)/i.test(reply);
+
+    if (!reply || !hasBullets || looksLikeThinking) {
+      throw new Error('AI output did not contain valid digest bullets');
+    }
 
     const html = `<div class="ai-digest-header">
       <span><i class="fas fa-robot"></i> AI Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(139,92,246,0.15);color:#8b5cf6;">AI Generated</span></span>
@@ -28148,7 +28158,7 @@ Keep each point under 15 words. Be specific, not generic. Start every bullet poi
     _cachedDigestTime = Date.now();
     digestEl.innerHTML = html;
   } catch (err) {
-    console.warn('[AI Digest] AI generation failed, falling back to smart local digest:', err);
+    console.warn('[AI Digest] AI generation failed or returned incomplete output, falling back to smart local digest:', err);
     const localContent = generateLocalDigest(digestCtx);
     const html = `<div class="ai-digest-header">
       <span><i class="fas fa-robot"></i> Daily Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(234,179,8,0.15);color:#ca8a04;" title="AI unavailable: ${escapeHtml(err.message || 'offline')}">Smart Local</span></span>
