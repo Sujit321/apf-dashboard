@@ -7468,6 +7468,7 @@ function saveObservation(e) {
   renderObservations();
   renderDashboard();
   refreshPlannerIfVisible();
+  refreshNeedAnalysisIfVisible();
   if (document.getElementById('obsTabNeeds')?.classList.contains('active') && typeof renderObsNeedAnalysis === 'function') {
     renderObsNeedAnalysis();
   }
@@ -7482,18 +7483,22 @@ async function deleteObservation(id) {
   renderObservations();
   renderDashboard();
   refreshPlannerIfVisible();
+  refreshNeedAnalysisIfVisible();
 }
 
 // ===== Observation Tabs =====
 function switchObsTab(tab) {
   document.querySelectorAll('.obs-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.obs-tab-content').forEach(c => c.classList.remove('active'));
-  const tabMap = { list: 'obsTabList', analytics: 'obsTabAnalytics', planner: 'obsTabPlanner', aianalysis: 'obsTabAianalysis', needs: 'obsTabNeeds' };
+  const tabMap = { list: 'obsTabList', analytics: 'obsTabAnalytics', planner: 'obsTabPlanner', aianalysis: 'obsTabAianalysis', needs: 'obsTabNeeds', needanalysis: 'obsTabNeedAnalysis' };
   const el = document.getElementById(tabMap[tab] || 'obsTabList');
   if (el) el.classList.add('active');
   if (tab === 'analytics') renderObsAnalytics();
   if (tab === 'planner') renderSmartPlanner();
   if (tab === 'needs') renderObsNeedAnalysis();
+  if (tab === 'needanalysis') renderNeedAnalysis();
+  // Clean up NA charts when leaving the tab (canvas reuse prevention)
+  if (tab !== 'needanalysis') _naDestroyCharts();
 }
 
 // ===== Observation Stats =====
@@ -7661,6 +7666,757 @@ function goToObsPage(page) {
   renderObservations();
   const container = document.getElementById('observationsContainer');
   if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================================
+// ===== NEED ANALYSIS DASHBOARD (Power BI-style) =============================
+// ============================================================================
+// Mirrors the DMT "Need Analysis" Power BI report inside Field Notes &
+// Observations: left filter rail (Block / Cluster / Subject / Practice Type /
+// Group / Observation / Teacher), KPI tiles (Total, NO, Teaching Practices,
+// YES), clickable Stage chips (ECE / Primary ...) and two live tables
+// (Practice Master + Teacher/School/Cluster). All computed from DB 'observations'
+// enriched with the 'teachingPractices' master list.
+
+const _NA_ROW_COLORS = ['#b6a6e8', '#a9e8b8', '#c3b3ee', '#9fd8f2', '#b8e39a', '#e8c8f0', '#a8e0cf', '#d4b8ec'];
+
+let _needAnalysisState = {
+  block: 'all', cluster: 'all', subject: 'all', practiceType: 'all',
+  group: 'all', observation: 'all', teacher: 'all', stage: 'all'
+};
+
+function _naNorm(v) { return (v || '').toString().trim(); }
+function _naNormKey(v) { return _naNorm(v).toLowerCase(); }
+
+/** Refresh the Need Analysis tab if it is currently visible. */
+function refreshNeedAnalysisIfVisible() {
+  if (document.getElementById('obsTabNeedAnalysis')?.classList.contains('active') && typeof renderNeedAnalysis === 'function') {
+    renderNeedAnalysis();
+  }
+}
+
+/** Read observations once; returns [] when nothing recorded yet. */
+function _naGetObservations() { return DB.get('observations') || []; }
+
+/** Apply every active Need Analysis filter to an observations array. */
+function _naApplyFilters(obs, state) {
+  return obs.filter(o => {
+    if (state.cluster !== 'all' && _naNormKey(o.cluster) !== _naNormKey(state.cluster)) return false;
+    if (state.subject !== 'all' && _naNormKey(o.subject) !== _naNormKey(state.subject)) return false;
+    if (state.practiceType !== 'all' && _naNormKey(o.practiceType) !== _naNormKey(state.practiceType)) return false;
+    if (state.group !== 'all' && _naNormKey(o.group) !== _naNormKey(state.group)) return false;
+    if (state.observation !== 'all' && _naNorm(o.observationStatus) !== state.observation) return false;
+    if (state.teacher !== 'all' && _naNormKey(o.teacher) !== _naNormKey(state.teacher)) return false;
+    if (state.stage !== 'all' && _naNormKey(o.teacherStage) !== _naNormKey(state.stage)) return false;
+    return true;
+  });
+}
+
+/**
+ * Build the practice master list for the current scope: only practices that
+ * appear in the filtered observations are shown (they filter out with the
+ * scope, like the Power BI report). Counts (obs/yes/no) reflect the scope.
+ */
+function _naBuildPracticeMaster(allObs, filteredObs) {
+  const tps = DB.get('teachingPractices') || [];
+  const map = new Map(); // key(lowercase serial) -> { serial, practice, obs, yes, no }
+  const ensure = (serial, practice) => {
+    const key = _naNormKey(serial);
+    if (!key) return null;
+    if (!map.has(key)) map.set(key, { serial: _naNorm(serial) || serial, practice: _naNorm(practice), obs: 0, yes: 0, no: 0 });
+    const entry = map.get(key);
+    if (!entry.practice && practice) entry.practice = _naNorm(practice);
+    return entry;
+  };
+  tps.forEach(tp => ensure(tp.serialNo, tp.practice));
+  filteredObs.forEach(o => {
+    const entry = ensure(o.practiceSerial, o.practice);
+    if (!entry) return;
+    entry.obs++;
+    const st = _naNorm(o.observationStatus);
+    if (st === 'Yes') entry.yes++;
+    else if (st === 'No' || st === 'Not_Observed') entry.no++;
+  });
+  // Keep only practices actually observed in this scope
+  return [...map.values()].filter(p => p.obs > 0)
+    .sort((a, b) => a.serial.localeCompare(b.serial, undefined, { numeric: true }));
+}
+
+/** Build the teacher / school / cluster list for the current scope. */
+function _naBuildTeacherList(filteredObs) {
+  const map = new Map(); // key(name|school) -> { teacher, school, cluster, obs, yes, no }
+  filteredObs.forEach(o => {
+    const name = _naNorm(o.teacher);
+    if (!name) return;
+    const key = `${name.toLowerCase()}|${_naNormKey(o.school)}`;
+    if (!map.has(key)) map.set(key, { teacher: name, school: _naNorm(o.school), cluster: _naNorm(o.cluster), obs: 0, yes: 0, no: 0 });
+    const t = map.get(key);
+    if (!t.cluster && o.cluster) t.cluster = _naNorm(o.cluster);
+    t.obs++;
+    const st = _naNorm(o.observationStatus);
+    if (st === 'Yes') t.yes++;
+    else if (st === 'No' || st === 'Not_Observed') t.no++;
+  });
+  return [...map.values()].sort((a, b) => a.teacher.localeCompare(b.teacher) || a.school.localeCompare(b.school));
+}
+
+/** Distinct sorted values of a field (non-empty) for dropdown population. */
+function _naDistinctValues(obs, field) {
+  return [...new Set(obs.map(o => _naNorm(o[field])).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+function _naFillSelect(id, values, current, allLabel) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const opts = [`<option value="all">${allLabel}</option>`]
+    .concat(values.map(v => {
+      // Keep the raw value in a data attribute so exact casing survives round-trips
+      const sel = _naNormKey(v) === _naNormKey(current === 'all' ? '' : current) ? ' selected' : '';
+      return `<option value="${escapeHtml(v)}"${sel}>${escapeHtml(v)}</option>`;
+    }));
+  // Keep current selection even if it temporarily dropped out of scope
+  if (current !== 'all' && !values.some(v => _naNormKey(v) === _naNormKey(current))) {
+    opts.push(`<option value="${escapeHtml(current)}" selected>${escapeHtml(current)}</option>`);
+  }
+  el.innerHTML = opts.join('');
+}
+
+function naOnFilterChange() {
+  _needAnalysisState.cluster = document.getElementById('naFilterCluster')?.value || 'all';
+  _needAnalysisState.subject = document.getElementById('naFilterSubject')?.value || 'all';
+  _needAnalysisState.practiceType = document.getElementById('naFilterPracticeType')?.value || 'all';
+  _needAnalysisState.group = document.getElementById('naFilterGroup')?.value || 'all';
+  _needAnalysisState.observation = document.getElementById('naFilterObservation')?.value || 'all';
+  _needAnalysisState.teacher = document.getElementById('naFilterTeacher')?.value || 'all';
+  renderNeedAnalysis();
+}
+
+/** Destroy NA charts on tab switch (prevent canvas reuse errors). */
+function _naCleanup() {
+  _naDestroyCharts();
+}
+
+function naClearAllFilters() {
+  _needAnalysisState = { cluster: 'all', subject: 'all', practiceType: 'all', group: 'all', observation: 'all', teacher: 'all', stage: 'all' };
+  renderNeedAnalysis();
+}
+
+function naToggleStage(stage) {
+  _needAnalysisState.stage = (_needAnalysisState.stage === stage) ? 'all' : stage;
+  renderNeedAnalysis();
+}
+
+/**
+ * Render the whole Need Analysis dashboard.
+ * Two-pass: pass 1 computes scope-cascade filter options from the stage-
+ * filtered set; pass 2 applies all filters and renders KPIs, chips and tables.
+ */
+function renderNeedAnalysis() {
+  const root = document.getElementById('obsTabNeedAnalysis');
+  if (!root) return;
+  const allObs = _naGetObservations();
+
+  if (allObs.length === 0) {
+    root.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-magnifying-glass-chart"></i>
+        <h3>No observations recorded yet</h3>
+        <p>Record classroom observations or import a DMT Excel file to see the Need Analysis dashboard.</p>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="openObservationModal()">
+          <i class="fas fa-plus"></i> New Observation
+        </button>
+      </div>`;
+    return;
+  }
+
+  // If the static skeleton is gone (e.g. empty-state was rendered earlier), rebuild it
+  if (!document.getElementById('naFilterBlock')) {
+    root.innerHTML = _naBuildSkeletonHTML();
+  }
+
+  const state = _needAnalysisState;
+
+  // ---- Pass 1: stage-filtered scope (stage chip applies BEFORE cascade) ----
+  const stageScope = state.stage === 'all' ? allObs : allObs.filter(o => _naNormKey(o.teacherStage) === _naNormKey(state.stage));
+
+  // Cascade source for each filter: everything except that filter's own dimension
+  const byDim = {
+    cluster: obs => _naApplyFilters(obs, { ...state, cluster: 'all' }),
+    subject: obs => _naApplyFilters(obs, { ...state, subject: 'all' }),
+    practiceType: obs => _naApplyFilters(obs, { ...state, practiceType: 'all' }),
+    group: obs => _naApplyFilters(obs, { ...state, group: 'all' }),
+    teacher: obs => _naApplyFilters(obs, { ...state, teacher: 'all' })
+  };
+
+  _naFillSelect('naFilterCluster', _naDistinctValues(byDim.cluster(stageScope), 'cluster'), state.cluster, 'All');
+  _naFillSelect('naFilterSubject', _naDistinctValues(byDim.subject(stageScope), 'subject'), state.subject, 'All');
+  _naFillSelect('naFilterPracticeType', _naDistinctValues(byDim.practiceType(stageScope), 'practiceType'), state.practiceType, 'All');
+  _naFillSelect('naFilterGroup', _naDistinctValues(byDim.group(stageScope), 'group'), state.group, 'All');
+  _naFillSelect('naFilterTeacher', _naDistinctValues(byDim.teacher(stageScope), 'teacher'), state.teacher, 'All');
+  // Observation select is static (Yes/No/Not Observed) — restore current value only
+  const obsSel = document.getElementById('naFilterObservation');
+  if (obsSel && obsSel.value !== state.observation) obsSel.value = state.observation;
+
+  // ---- Pass 2: fully filtered set ----
+  const filtered = _naApplyFilters(stageScope, state);
+
+  // ---- KPIs ----
+  const total = filtered.length;
+  const yesCount = filtered.filter(o => _naNorm(o.observationStatus) === 'Yes').length;
+  const noCount = filtered.filter(o => ['No', 'Not_Observed'].includes(_naNorm(o.observationStatus))).length;
+  const practiceMaster = _naBuildPracticeMaster(allObs, filtered);
+  const tpCount = practiceMaster.length;
+  const teacherList = _naBuildTeacherList(filtered);
+
+  const setNum = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v.toLocaleString('en-IN'); };
+  setNum('naKpiTotal', total);
+  setNum('naKpiNo', noCount);
+  setNum('naKpiTp', tpCount);
+  setNum('naKpiYes', yesCount);
+  const setSub = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setSub('naKpiTotalSub', `${teacherList.length.toLocaleString('en-IN')} teachers · ${new Set(filtered.map(o => _naNormKey(o.school)).filter(Boolean)).size.toLocaleString('en-IN')} schools`);
+  setSub('naKpiNoSub', total > 0 ? `${Math.round(noCount / total * 100)}% of observations` : '');
+  setSub('naKpiYesSub', total > 0 ? `${Math.round(yesCount / total * 100)}% of observations` : '');
+  setSub('naKpiTpSub', `${practiceMaster.filter(p => p.obs > 0).length.toLocaleString('en-IN')} practices observed at least once`);
+
+  // ---- Charts ----
+  _naRenderCharts(filtered, practiceMaster, teacherList);
+
+  // ---- Stage chips ----
+  const stageCounts = {};
+  stageScope.forEach(o => { const st = _naNorm(o.teacherStage); if (st) stageCounts[st] = (stageCounts[st] || 0) + 1; });
+  const stageOrder = ['ECE', 'Primary', 'Upper Primary', 'Secondary', 'Senior Secondary'];
+  const stageKeys = [...stageOrder.filter(s => stageCounts[s]), ...Object.keys(stageCounts).filter(s => !stageOrder.includes(s)).sort()];
+  const stageBar = document.getElementById('naStageBar');
+  if (stageBar) {
+    stageBar.innerHTML = stageKeys.length === 0
+      ? `<span class="na-stage-empty">No stage data — set "Teacher Stage" in observations to enable stage filtering</span>`
+      : `<span class="na-stage-label"><i class="fas fa-layer-group"></i> Stage</span>` + stageKeys.map(s => `
+        <button class="na-stage-chip${state.stage === s ? ' active' : ''}" onclick="naToggleStage('${escapeHtml(s)}')">
+          ${escapeHtml(s)} <span class="na-stage-count">${stageCounts[s].toLocaleString('en-IN')}</span>
+        </button>`).join('');
+  }
+
+  // ---- Practice Master table ----
+  const practiceEl = document.getElementById('naPracticeTable');
+  if (practiceEl) {
+    if (practiceMaster.length === 0) {
+      practiceEl.innerHTML = `<div class="na-table-empty">No practices in the current scope.</div>`;
+    } else {
+      practiceEl.innerHTML = practiceMaster.map((p, i) => `
+        <div class="na-practice-row${i % 2 === 1 ? ' alt' : ''}${p.obs === 0 ? ' na-row-muted' : ''}">
+          <span class="na-serial">${escapeHtml(p.serial)}</span>
+          <span class="na-practice-text" title="${escapeHtml(p.practice)}">${escapeHtml(p.practice) || '<em>(no practice text)</em>'}</span>
+          <span class="na-counts">
+            <span class="na-c-obs" title="Observations">${p.obs.toLocaleString('en-IN')}</span>
+            <span class="na-c-yes" title="Yes">${p.yes.toLocaleString('en-IN')}</span>
+            <span class="na-c-no" title="No">${p.no.toLocaleString('en-IN')}</span>
+          </span>
+        </div>`).join('');
+    }
+  }
+
+  // ---- Teacher table ----
+  const teacherEl = document.getElementById('naTeacherTable');
+  if (teacherEl) {
+    if (teacherList.length === 0) {
+      teacherEl.innerHTML = `<div class="na-table-empty">No teachers in the current scope.</div>`;
+    } else {
+      teacherEl.innerHTML = teacherList.map((t, i) => `
+        <div class="na-teacher-row" style="background:${i % 2 === 0 ? 'var(--na-row-a)' : 'var(--na-row-b)'}">
+          <span class="na-t-name">${escapeHtml(t.teacher)}</span>
+          <span class="na-t-school">${escapeHtml(t.school) || '<em>—</em>'}</span>
+          <span class="na-t-cluster">${escapeHtml(t.cluster) || '<em>—</em>'}</span>
+          <span class="na-counts">
+            <span class="na-c-obs" title="Observations">${t.obs.toLocaleString('en-IN')}</span>
+            <span class="na-c-yes" title="Yes">${t.yes.toLocaleString('en-IN')}</span>
+            <span class="na-c-no" title="No">${t.no.toLocaleString('en-IN')}</span>
+          </span>
+        </div>`).join('');
+    }
+  }
+}
+
+/** Rebuild the static dashboard skeleton (used after an empty-state render). */
+function _naBuildSkeletonHTML() {
+  return `
+    <div class="na-layout">          <aside class="na-filter-rail">
+            <div class="na-rail-head" style="flex:0 0 auto;width:100%;">
+              <h3><i class="fas fa-sliders"></i> Filters</h3>
+              <button class="na-clear-all" onclick="naClearAllFilters()"><i class="fas fa-broom"></i> Clear all</button>
+              <button class="na-export-btn" onclick="exportNeedAnalysisExcel()" style="margin-left:auto;"><i class="fas fa-file-excel"></i> Export to Excel</button>
+            </div>
+        <div class="na-filter-card na-c-cluster">
+          <label for="naFilterCluster"><i class="fas fa-layer-group"></i> Cluster</label>
+          <select id="naFilterCluster" onchange="naOnFilterChange()"></select>
+        </div>
+        <div class="na-filter-card na-c-subject">
+          <label for="naFilterSubject"><i class="fas fa-book-open"></i> Subject</label>
+          <select id="naFilterSubject" onchange="naOnFilterChange()"></select>
+        </div>
+        <div class="na-filter-card na-c-ptype">
+          <label for="naFilterPracticeType"><i class="fas fa-clipboard-list"></i> Practice Type</label>
+          <select id="naFilterPracticeType" onchange="naOnFilterChange()"></select>
+        </div>
+        <div class="na-filter-card na-c-group">
+          <label for="naFilterGroup"><i class="fas fa-users"></i> Group</label>
+          <select id="naFilterGroup" onchange="naOnFilterChange()"></select>
+        </div>
+        <div class="na-filter-card na-c-obs">
+          <label for="naFilterObservation"><i class="fas fa-eye"></i> Observation</label>
+          <select id="naFilterObservation" onchange="naOnFilterChange()">
+            <option value="all">All</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Not_Observed">Not Observed</option>
+          </select>
+        </div>
+        <div class="na-filter-card na-c-teacher">
+          <label for="naFilterTeacher"><i class="fas fa-user"></i> Teacher Name</label>
+          <select id="naFilterTeacher" onchange="naOnFilterChange()"></select>
+        </div>
+        <div class="na-rail-note" style="flex:0 0 100%;margin-top:4px;"><i class="fas fa-circle-info"></i> Dropdowns show only values present in the current data scope.</div>
+      </aside>
+      <div class="na-main">
+        <div class="na-kpi-grid">
+          <div class="na-kpi na-kpi-total">
+            <div class="na-kpi-label">Total Observation</div>
+            <div class="na-kpi-value" id="naKpiTotal">0</div>
+            <div class="na-kpi-sub" id="naKpiTotalSub"></div>
+          </div>
+          <div class="na-kpi na-kpi-no">
+            <div class="na-kpi-label">Observation 'NO'</div>
+            <div class="na-kpi-value" id="naKpiNo">0</div>
+            <div class="na-kpi-sub" id="naKpiNoSub"></div>
+          </div>
+          <div class="na-kpi na-kpi-tp">
+            <div class="na-kpi-label">Teaching Practices</div>
+            <div class="na-kpi-value" id="naKpiTp">0</div>
+            <div class="na-kpi-sub" id="naKpiTpSub"></div>
+          </div>
+          <div class="na-kpi na-kpi-yes">
+            <div class="na-kpi-label">Observation 'YES'</div>
+            <div class="na-kpi-value" id="naKpiYes">0</div>
+            <div class="na-kpi-sub" id="naKpiYesSub"></div>
+          </div>
+        </div>
+        <div class="na-stage-bar" id="naStageBar"></div>
+
+        <!-- Tables -->
+        <div class="na-tables">
+          <div class="na-table-card na-practice-card">
+            <div class="na-table-head na-head-practice">
+              <span class="na-head-title"><i class="fas fa-list-ol"></i> Practice Master: Practice Serial No</span>
+              <span class="na-th-counts"><i class="fas fa-tachometer-alt"></i> Obs · Yes · No</span>
+            </div>
+            <div class="na-table-body" id="naPracticeTable"></div>
+          </div>
+          <div class="na-table-card na-teacher-card">
+            <div class="na-table-head na-head-teacher">
+              <span>Teacher Name</span>
+              <span>School Name</span>
+              <span>Cluster</span>
+              <span class="na-th-counts">Obs · Yes · No</span>
+            </div>
+            <div class="na-table-body" id="naTeacherTable"></div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="na-charts-grid" id="naChartsGrid">
+          <div class="na-chart-card na-chart-accent-purple">
+            <h4><i class="fas fa-chart-doughnut"></i> Observed vs Not Observed</h4>
+            <canvas id="naChartEngagement"></canvas>
+          </div>
+          <div class="na-chart-card na-chart-accent-teal">
+            <h4><i class="fas fa-chart-bar"></i> Engagement Level</h4>
+            <canvas id="naChartStatus"></canvas>
+          </div>
+          <div class="na-chart-card na-chart-accent-amber">
+            <h4><i class="fas fa-chart-bar"></i> Observations by Subject</h4>
+            <canvas id="naChartSubject"></canvas>
+          </div>
+          <div class="na-chart-card na-chart-accent-purple">
+            <h4><i class="fas fa-chart-bar"></i> Practice Type Distribution</h4>
+            <canvas id="naChartPracticeType"></canvas>
+          </div>
+          <div class="na-chart-card na-chart-accent-rose">
+            <h4><i class="fas fa-chart-line"></i> Monthly Yes/No Trend</h4>
+            <canvas id="naChartTrend"></canvas>
+          </div>
+          <div class="na-chart-card na-chart-accent-emerald na-chart-wide">
+            <h4><i class="fas fa-chart-bar"></i> Practice Type: Yes vs No</h4>
+            <canvas id="naChartNoRate"></canvas>
+          </div>
+          <div class="na-chart-card na-chart-accent-blue na-chart-wide">
+            <h4><i class="fas fa-school"></i> 'No' Count by School</h4>
+            <canvas id="naChartSchoolNo"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/** Render charts for the Need Analysis dashboard. Called inside renderNeedAnalysis().
+ * Destroys old charts first to avoid canvas reuse conflicts.
+ */
+let _naActiveCharts = {};
+let _naDynamicCards = [];
+function _naDestroyCharts() {
+  Object.values(_naActiveCharts).forEach(c => { try { c.destroy(); } catch (e) { } });
+  _naActiveCharts = {};
+  // Remove dynamically appended chart cards (e.g. cluster chart)
+  _naDynamicCards.forEach(card => { try { card.remove(); } catch (e) { } });
+  _naDynamicCards = [];
+}
+function _naRenderCharts(filtered, practiceMaster, teacherList) {
+  const grid = document.getElementById('naChartsGrid');
+  if (!grid) return;
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="na-table-empty"><i class="fas fa-chart-bar"></i>No data to chart in current scope</div>';
+    return;
+  }
+  _naDestroyCharts();
+
+  const palette = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1', '#d946ef', '#84cc16'];
+
+  const countBy = (arr, key) => {
+    const m = {};
+    arr.forEach(o => { const v = o[key] || 'Unknown'; m[v] = (m[v] || 0) + 1; });
+    return m;
+  };
+
+  // 1. Overall Yes vs No vs Not-Observed (Doughnut)
+  const statusData = countBy(filtered, 'observationStatus');
+  const statusLabels = Object.keys(statusData).map(k => k === 'Yes' ? 'Observed' : k === 'Not_Observed' ? 'Not Observed' : k === 'No' ? 'Not Done' : k);
+  const statusColors = ['#10b981', '#f59e0b', '#ef4444', '#6b7280'].slice(0, statusLabels.length);
+  _naActiveCharts.statusDoughnut = new Chart(document.getElementById('naChartEngagement'), {
+    type: 'doughnut',
+    data: { labels: statusLabels, datasets: [{ data: Object.values(statusData), backgroundColor: statusColors, hoverOffset: 8 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3b8', boxWidth: 12, padding: 12, usePointStyle: true, pointStyle: 'circle' } } } }
+  });
+
+  // 2. Engagement Level (Bar)
+  const engData = countBy(filtered, 'engagementLevel');
+  const engLabels = Object.keys(engData).sort();
+  const engColors = ['#10b981', '#f59e0b', '#ef4444', '#6b7280'].slice(0, engLabels.length);
+  _naActiveCharts.engagementBar = new Chart(document.getElementById('naChartStatus'), {
+    type: 'bar',
+    data: { labels: engLabels, datasets: [{ data: engLabels.map(l => engData[l]), backgroundColor: engColors, borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#9ca3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#9ca3b8', maxRotation: 20 }, grid: { display: false } } } }
+  });
+
+  // 3. Observations by Subject (vertical bar)
+  const subData = countBy(filtered, 'subject');
+  const subEntries = Object.entries(subData).sort((a, b) => b[1] - a[1]);
+  _naActiveCharts.subject = new Chart(document.getElementById('naChartSubject'), {
+    type: 'bar',
+    data: {
+      labels: subEntries.map(([s]) => s.length > 20 ? s.substring(0, 20) + '…' : s),
+      datasets: [{ data: subEntries.map(([, v]) => v), backgroundColor: palette }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#9ca3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#9ca3b8', maxRotation: 35, font: { size: 10 } }, grid: { display: false } } } }
+  });
+
+  // 4. Practice Type Distribution (vertical bar with count labels)
+  const ptData = countBy(filtered, 'practiceType');
+  const ptEntries = Object.entries(ptData).sort((a, b) => b[1] - a[1]);
+  _naActiveCharts.practiceType = new Chart(document.getElementById('naChartPracticeType'), {
+    type: 'bar',
+    data: {
+      labels: ptEntries.map(([t]) => t),
+      datasets: [{
+        data: ptEntries.map(([, v]) => v),
+        backgroundColor: ptEntries.map(([, v]) => v > 10 ? '#6366f1' : v > 5 ? '#8b5cf6' : '#a78bfa'),
+        borderRadius: 4, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y} observations` } }
+      },
+      scales: {
+        y: { ticks: { color: '#9ca3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        x: { ticks: { color: '#9ca3b8', maxRotation: 25, font: { size: 10, weight: '600' } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // 5. Monthly Yes/No Trend (line - dual dataset)
+  const monthYes = {}, monthNo = {};
+  filtered.forEach(o => {
+    if (!o.date) return;
+    let m = o.date.substring(0, 7);
+    if (!/^\d{4}-\d{2}/.test(m)) {
+      const d = parseLocalDate(o.date);
+      if (!isNaN(d.getTime())) m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      else return;
+    }
+    if (o.observationStatus === 'Yes') { monthYes[m] = (monthYes[m] || 0) + 1; }
+    else { monthNo[m] = (monthNo[m] || 0) + 1; }
+  });
+  const sortedMonths = [...new Set([...Object.keys(monthYes), ...Object.keys(monthNo)])].sort();
+  _naActiveCharts.monthlyTrend = new Chart(document.getElementById('naChartTrend'), {
+    type: 'line',
+    data: {
+      labels: sortedMonths.map(m => { const [y, mo] = m.split('-'); return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(mo)-1]} ${y}`; }),
+      datasets: [
+        { label: 'Observed (Yes)', data: sortedMonths.map(m => monthYes[m] || 0), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#10b981' },
+        { label: 'Not Observed (No)', data: sortedMonths.map(m => monthNo[m] || 0), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#ef4444' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: '#9ca3b8', boxWidth: 12, padding: 12, usePointStyle: true } } }, scales: { y: { ticks: { color: '#9ca3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#9ca3b8', maxRotation: 30, font: { size: 10 } }, grid: { display: false } } } }
+  });
+
+  // 6. Teacher Stage-wise 'No' Rate (horizontal bar — beside Monthly Trend)
+  const stageStats = {};
+  filtered.forEach(o => {
+    const st = o.teacherStage || 'Unknown';
+    if (!stageStats[st]) stageStats[st] = { obs: 0, no: 0 };
+    stageStats[st].obs++;
+    if (o.observationStatus === 'No' || o.observationStatus === 'Not_Observed') stageStats[st].no++;
+  });
+  const stageOrder = ['ECE', 'Primary', 'Upper Primary', 'Secondary', 'Senior Secondary'];
+  let stageNoRate = stageOrder
+    .filter(s => stageStats[s] && stageStats[s].obs >= 2)
+    .map(s => ({ stage: s, obs: stageStats[s].obs, no: stageStats[s].no, noRate: Math.round(stageStats[s].no / stageStats[s].obs * 100) }))
+    .sort((a, b) => b.noRate - a.noRate);
+  Object.keys(stageStats).forEach(k => {
+    if (!stageOrder.includes(k) && stageStats[k].obs >= 2) {
+      stageNoRate.push({ stage: k, obs: stageStats[k].obs, no: stageStats[k].no, noRate: Math.round(stageStats[k].no / stageStats[k].obs * 100) });
+    }
+  });
+  if (stageNoRate.length > 0) {
+    const grid = document.getElementById('naChartsGrid');
+    // Insert right after the Monthly Trend card (naChartTrend's parent)
+    const trendCard = document.getElementById('naChartTrend').closest('.na-chart-card');
+    const card = document.createElement('div');
+    card.className = 'na-chart-card na-chart-accent-amber';
+    card.innerHTML = '<h4><i class="fas fa-layer-group"></i> "No" Rate by Teacher Stage</h4><canvas id="_naStageChart"></canvas>';
+    trendCard.after(card);
+    _naDynamicCards.push(card);
+    _naActiveCharts.stageNoRate = new Chart(document.getElementById('_naStageChart'), {
+      type: 'bar',
+      data: {
+        labels: stageNoRate.map(s => s.stage),
+        datasets: [{
+          data: stageNoRate.map(s => s.noRate),
+          backgroundColor: stageNoRate.map(s => s.noRate >= 50 ? '#ef4444' : s.noRate >= 25 ? '#f59e0b' : '#10b981'),
+          borderRadius: 4, borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `No rate: ${ctx.parsed.x}% · ${stageNoRate[ctx.dataIndex].no}/${stageNoRate[ctx.dataIndex].obs} obs` } } },
+        scales: {
+          x: { min: 0, max: 100, ticks: { color: '#9ca3b8', callback: (v) => v + '%', stepSize: 25 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#9ca3b8', font: { size: 11, weight: '600' } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 7. Practice Type-wise Yes/No Breakdown (stacked horizontal bar)
+  const typeBreakdown = {};
+  filtered.forEach(o => {
+    const pt = o.practiceType || 'Unknown';
+    if (!typeBreakdown[pt]) typeBreakdown[pt] = { Yes: 0, No: 0, Not_Observed: 0 };
+    const st = o.observationStatus || 'Unknown';
+    if (typeBreakdown[pt][st] !== undefined) typeBreakdown[pt][st]++;
+    else typeBreakdown[pt].No++;
+  });
+  const typeEntries = Object.entries(typeBreakdown).sort((a, b) => (b[1].Yes + b[1].No + b[1].Not_Observed) - (a[1].Yes + a[1].No + a[1].Not_Observed));
+  _naActiveCharts.typeBreakdown = new Chart(document.getElementById('naChartNoRate'), {
+    type: 'bar',
+    data: {
+      labels: typeEntries.map(([t]) => t),
+      datasets: [
+        { label: 'Yes', data: typeEntries.map(([, v]) => v.Yes), backgroundColor: '#10b981', borderRadius: 2 },
+        { label: 'No / Not Observed', data: typeEntries.map(([, v]) => v.No + v.Not_Observed), backgroundColor: '#ef4444', borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { position: 'top', labels: { color: '#9ca3b8', boxWidth: 12, padding: 12, usePointStyle: true } } },
+      scales: {
+        x: { stacked: true, ticks: { color: '#9ca3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { stacked: true, ticks: { color: '#9ca3b8', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // 7. Subject Comparison: Math vs Hindi vs English (vertical bar - grouped)
+  const subjectComparison = { Math: { Yes: 0, No: 0 }, Hindi: { Yes: 0, No: 0 }, English: { Yes: 0, No: 0 } };
+  filtered.forEach(o => {
+    const s = (o.subject || '').trim();
+    const key = s === 'Math' || s === 'Mathematics' ? 'Math' : s === 'Hindi' ? 'Hindi' : s === 'English' ? 'English' : null;
+    if (!key) return;
+    if (o.observationStatus === 'Yes') subjectComparison[key].Yes++;
+    else subjectComparison[key].No++;
+  });
+  const hasSubjectData = Object.values(subjectComparison).some(v => v.Yes + v.No > 0);
+  if (hasSubjectData) {
+    const subjects = ['Math', 'Hindi', 'English'];
+    const mathComp = subjectComparison.Math, hindiComp = subjectComparison.Hindi, englishComp = subjectComparison.English;
+    // Render as a new card appended after school chart
+    const grid = document.getElementById('naChartsGrid');
+    const schoolCard = document.getElementById('naChartSchoolNo');
+    const schoolCardParent = schoolCard ? schoolCard.closest('.na-chart-card') : null;
+    const card = document.createElement('div');
+    card.className = 'na-chart-card na-chart-accent-teal na-chart-wide';
+    card.innerHTML = '<h4><i class="fas fa-chart-bar"></i> Subject Comparison: Math vs Hindi vs English</h4><canvas id="_naSubjectCompare"></canvas>';
+    if (schoolCardParent) schoolCardParent.after(card); else grid.appendChild(card);
+    _naDynamicCards.push(card);
+    _naActiveCharts.subjectCompare = new Chart(document.getElementById('_naSubjectCompare'), {
+      type: 'bar',
+      data: {
+        labels: subjects,
+        datasets: [
+          { label: 'Observed (Yes)', data: [mathComp.Yes, hindiComp.Yes, englishComp.Yes], backgroundColor: '#10b981', borderRadius: 4, borderSkipped: false },
+          { label: 'Not Observed (No)', data: [mathComp.No, hindiComp.No, englishComp.No], backgroundColor: '#ef4444', borderRadius: 4, borderSkipped: false },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#9ca3b8', boxWidth: 12, padding: 12, usePointStyle: true } } },
+        scales: {
+          y: { stacked: false, ticks: { color: '#9ca3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          x: { stacked: false, ticks: { color: '#9ca3b8', font: { size: 12, weight: '700' } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 9. 'No' Count by School (vertical bar - top 12 schools)
+  const schoolNoCount = {};
+  filtered.forEach(o => {
+    const s = o.school || 'Unknown';
+    if (o.observationStatus === 'No' || o.observationStatus === 'Not_Observed') {
+      schoolNoCount[s] = (schoolNoCount[s] || 0) + 1;
+    }
+  });
+  const topSchoolNo = Object.entries(schoolNoCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12);
+  _naActiveCharts.schoolNoCount = new Chart(document.getElementById('naChartSchoolNo'), {
+    type: 'bar',
+    data: {
+      labels: topSchoolNo.map(([s]) => s.length > 28 ? s.substring(0, 28) + '…' : s),
+      datasets: [{
+        data: topSchoolNo.map(([, v]) => v),
+        backgroundColor: '#ef4444',
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y} 'No' / 'Not Observed'` } }
+      },
+      scales: {
+        y: { ticks: { color: '#9ca3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        x: { ticks: { color: '#9ca3b8', maxRotation: 35, font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // 7. Cluster-wise 'No' Rate (horizontal bar) — NEW
+  const clusterStats = {};
+  filtered.forEach(o => {
+    const c = o.cluster || 'Unknown';
+    if (!clusterStats[c]) clusterStats[c] = { obs: 0, no: 0 };
+    clusterStats[c].obs++;
+    if (o.observationStatus === 'No' || o.observationStatus === 'Not_Observed') clusterStats[c].no++;
+  });
+  const clusterNoRate = Object.entries(clusterStats)
+    .filter(([, s]) => s.obs >= 2)
+    .map(([cluster, s]) => ({ cluster, obs: s.obs, no: s.no, noRate: s.obs > 0 ? Math.round(s.no / s.obs * 100) : 0 }))
+    .sort((a, b) => b.noRate - a.noRate);
+  _naActiveCharts.clusterNoRate = (function() {
+    const canvas = document.createElement('canvas');
+    canvas.id = '_naClusterChart';
+    // Render cluster data into a NEW card appended after the school card
+    const grid = document.getElementById('naChartsGrid');
+    const schoolCard = document.getElementById('naChartSchoolNo');
+    const schoolCardParent = schoolCard ? schoolCard.closest('.na-chart-card') : null;
+    const card = document.createElement('div');
+    card.className = 'na-chart-card na-chart-accent-rose na-chart-wide';
+    card.innerHTML = '<h4><i class="fas fa-layer-group"></i> "No" Rate by Cluster</h4><canvas id="_naClusterChart"></canvas>';
+    if (schoolCardParent) schoolCardParent.after(card); else grid.appendChild(card);
+    _naDynamicCards.push(card);
+    return new Chart(document.getElementById('_naClusterChart'), {
+      type: 'bar',
+      data: {
+        labels: clusterNoRate.map(c => c.cluster.length > 25 ? c.cluster.substring(0, 25) + '…' : c.cluster),
+        datasets: [{
+          data: clusterNoRate.map(c => c.noRate),
+          backgroundColor: clusterNoRate.map(c => c.noRate >= 50 ? '#ef4444' : c.noRate >= 25 ? '#f59e0b' : '#10b981'),
+          borderRadius: 4, borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => `No rate: ${ctx.parsed.x}% · ${clusterNoRate[ctx.dataIndex].no}/${clusterNoRate[ctx.dataIndex].obs} obs` } }
+        },
+        scales: {
+          x: { min: 0, max: 100, ticks: { color: '#9ca3b8', callback: (v) => v + '%', stepSize: 25 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#9ca3b8', font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+  })();
+}
+
+/** Export the current Need Analysis view to Excel (KPIs + both tables). */
+function exportNeedAnalysisExcel() {
+  const allObs = _naGetObservations();
+  if (allObs.length === 0) { showToast('No observations to export', 'info'); return; }
+  const filtered = _naApplyFilters(
+    _needAnalysisState.stage === 'all' ? allObs : allObs.filter(o => _naNormKey(o.teacherStage) === _naNormKey(_needAnalysisState.stage)),
+    _needAnalysisState
+  );
+
+  const practiceMaster = _naBuildPracticeMaster(allObs, filtered);
+  const teacherList = _naBuildTeacherList(filtered);
+  const yesCount = filtered.filter(o => _naNorm(o.observationStatus) === 'Yes').length;
+  const noCount = filtered.filter(o => ['No', 'Not_Observed'].includes(_naNorm(o.observationStatus))).length;
+
+  const wb = XLSX.utils.book_new();
+
+  const kpiData = [
+    { Metric: 'Total Observation', Value: filtered.length },
+    { Metric: "Observation 'YES'", Value: yesCount },
+    { Metric: "Observation 'NO'", Value: noCount },
+    { Metric: 'Teaching Practices (distinct serials)', Value: practiceMaster.length },
+    { Metric: 'Teachers', Value: teacherList.length },
+    { Metric: 'Schools', Value: new Set(filtered.map(o => _naNormKey(o.school)).filter(Boolean)).size }
+  ];
+  const activeFilters = Object.entries(_needAnalysisState).filter(([, v]) => v !== 'all').map(([k, v]) => `${k}=${v}`).join('; ') || 'None';
+  kpiData.push({ Metric: 'Active Filters', Value: activeFilters });
+  const kpiWs = XLSX.utils.json_to_sheet(kpiData);
+  kpiWs['!cols'] = [{ wch: 38 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, kpiWs, 'Summary');
+
+  const practiceWs = XLSX.utils.json_to_sheet(practiceMaster.map(p => ({
+    'Practice Serial No': p.serial, 'Practice': p.practice, 'Observations': p.obs, 'Yes': p.yes, 'No': p.no
+  })));
+  practiceWs['!cols'] = [{ wch: 16 }, { wch: 90 }, { wch: 13 }, { wch: 8 }, { wch: 8 }];
+  XLSX.utils.book_append_sheet(wb, practiceWs, 'Practice Master');
+
+  const teacherWs = XLSX.utils.json_to_sheet(teacherList.map(t => ({
+    'Teacher Name': t.teacher, 'School Name': t.school, 'Cluster': t.cluster, 'Observations': t.obs, 'Yes': t.yes, 'No': t.no
+  })));
+  teacherWs['!cols'] = [{ wch: 26 }, { wch: 26 }, { wch: 22 }, { wch: 13 }, { wch: 8 }, { wch: 8 }];
+  XLSX.utils.book_append_sheet(wb, teacherWs, 'Teachers');
+
+  XLSX.writeFile(wb, `Need_Analysis_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('Need Analysis exported to Excel', 'success');
 }
 
 // ===== DMT Excel Import =====
@@ -7962,6 +8718,7 @@ async function executeFilteredImport() {
   _filteredImportRows = [];
   renderObservations();
   renderDashboard();
+  refreshNeedAnalysisIfVisible();
   showToast(`Imported ${imported.toLocaleString()} records (${filterDesc}). ${(rows.length - imported)} duplicates skipped.`, 'success', 6000);
   setTimeout(() => switchObsTab('analytics'), 500);
 }
@@ -8272,6 +9029,7 @@ async function importDMTExcel(event) {
     DB.set('observations', observations);
     renderObservations();
     renderDashboard();
+    refreshNeedAnalysisIfVisible();
     showToast(`Imported ${imported.toLocaleString()} observations from DMT Excel! (${rows.length - imported} duplicates skipped)`, 'success', 6000);
     // Auto-switch to analytics tab after import
     setTimeout(() => switchObsTab('analytics'), 500);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apf-dashboard-v16';
+const CACHE_NAME = 'apf-dashboard-v17';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
