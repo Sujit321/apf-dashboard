@@ -7310,6 +7310,11 @@ function openObservationModal(id) {
   document.getElementById('observationModalTitle').innerHTML = '<i class="fas fa-clipboard-check"></i> New Observation';
   observationRatings = { engagement: 0, methodology: 0, tlm: 0 };
   document.querySelectorAll('.star-rating').forEach(g => updateStars(g, 0));
+  if (document.getElementById('observationNeedTeacher')) document.getElementById('observationNeedTeacher').value = '';
+  if (document.getElementById('observationNeedStudent')) document.getElementById('observationNeedStudent').value = '';
+  if (document.getElementById('observationNeedTLM')) document.getElementById('observationNeedTLM').value = '';
+  if (document.getElementById('observationNeedIntervention')) document.getElementById('observationNeedIntervention').value = '';
+  if (document.getElementById('observationNeedPriority')) document.getElementById('observationNeedPriority').value = 'Medium';
 
   populateObsDataLists();
 
@@ -7354,6 +7359,11 @@ function openObservationModal(id) {
       document.getElementById('observationSuggestions').value = o.suggestions || '';
       document.getElementById('observationObserver').value = o.observer || '';
       document.getElementById('observationStakeholderStatus').value = o.stakeholderStatus || '';
+      if (document.getElementById('observationNeedTeacher')) document.getElementById('observationNeedTeacher').value = o.needTeacher || '';
+      if (document.getElementById('observationNeedStudent')) document.getElementById('observationNeedStudent').value = o.needStudent || '';
+      if (document.getElementById('observationNeedTLM')) document.getElementById('observationNeedTLM').value = o.needTLM || '';
+      if (document.getElementById('observationNeedIntervention')) document.getElementById('observationNeedIntervention').value = o.needIntervention || '';
+      if (document.getElementById('observationNeedPriority')) document.getElementById('observationNeedPriority').value = o.needPriority || 'Medium';
       observationRatings = {
         engagement: o.engagementRating || o.engagement || 0,
         methodology: o.methodology || 0,
@@ -7433,6 +7443,11 @@ function saveObservation(e) {
     suggestions: document.getElementById('observationSuggestions').value.trim(),
     observer: document.getElementById('observationObserver').value.trim(),
     stakeholderStatus: document.getElementById('observationStakeholderStatus').value,
+    needTeacher: (document.getElementById('observationNeedTeacher')?.value || '').trim(),
+    needStudent: (document.getElementById('observationNeedStudent')?.value || '').trim(),
+    needTLM: (document.getElementById('observationNeedTLM')?.value || '').trim(),
+    needIntervention: document.getElementById('observationNeedIntervention')?.value || '',
+    needPriority: document.getElementById('observationNeedPriority')?.value || 'Medium',
   };
 
   if (id) {
@@ -7453,6 +7468,9 @@ function saveObservation(e) {
   renderObservations();
   renderDashboard();
   refreshPlannerIfVisible();
+  if (document.getElementById('obsTabNeeds')?.classList.contains('active') && typeof renderObsNeedAnalysis === 'function') {
+    renderObsNeedAnalysis();
+  }
 }
 
 async function deleteObservation(id) {
@@ -7470,11 +7488,12 @@ async function deleteObservation(id) {
 function switchObsTab(tab) {
   document.querySelectorAll('.obs-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.obs-tab-content').forEach(c => c.classList.remove('active'));
-  const tabMap = { list: 'obsTabList', analytics: 'obsTabAnalytics', planner: 'obsTabPlanner', aianalysis: 'obsTabAianalysis' };
+  const tabMap = { list: 'obsTabList', analytics: 'obsTabAnalytics', planner: 'obsTabPlanner', aianalysis: 'obsTabAianalysis', needs: 'obsTabNeeds' };
   const el = document.getElementById(tabMap[tab] || 'obsTabList');
   if (el) el.classList.add('active');
   if (tab === 'analytics') renderObsAnalytics();
   if (tab === 'planner') renderSmartPlanner();
+  if (tab === 'needs') renderObsNeedAnalysis();
 }
 
 // ===== Observation Stats =====
@@ -9372,6 +9391,614 @@ function _svsNextWorkDays(count = 5) {
   }
   return out;
 }
+
+
+// ==========================================================================
+// FIELD NOTES & OBSERVATIONS: NEED ANALYSIS ENGINE & DASHBOARD
+// ==========================================================================
+let _obsNeedsFilterState = {
+  subject: 'all',
+  category: 'all',
+  priority: 'all',
+  search: ''
+};
+let _cachedAINeedAnalysis = null;
+
+function analyzeObservationNeeds(observations) {
+  const needsList = [];
+  const teacherMap = new Map();
+  const schoolMap = new Map();
+  const categoryCounts = {
+    'Pedagogy': 0,
+    'Student Learning': 0,
+    'TLM & Materials': 0,
+    'Classroom Management': 0
+  };
+  const priorityCounts = { 'High': 0, 'Medium': 0, 'Low': 0 };
+  const supportCounts = {};
+
+  (observations || []).forEach(o => {
+    const teacher = (o.teacher || 'Unknown Teacher').trim();
+    const school = (o.school || 'Unknown School').trim();
+    const subject = (o.subject || 'General').trim();
+    const date = o.date || '';
+
+    // 1. Explicit need from form
+    if (o.needTeacher || o.needStudent || o.needTLM || o.needIntervention) {
+      const p = o.needPriority || 'Medium';
+      let cat = 'Pedagogy';
+      if (o.needStudent && !o.needTeacher) cat = 'Student Learning';
+      else if (o.needTLM && !o.needTeacher && !o.needStudent) cat = 'TLM & Materials';
+      else if (o.needTeacher && /classroom|discipline|multi-grade|time/i.test(o.needTeacher)) cat = 'Classroom Management';
+
+      const item = {
+        id: 'exp-' + (o.id || DB.generateId()),
+        obsId: o.id,
+        source: 'explicit',
+        teacher,
+        school,
+        cluster: o.cluster || '',
+        block: o.block || '',
+        subject,
+        date,
+        category: cat,
+        priority: p,
+        teacherNeed: o.needTeacher || 'General pedagogical support',
+        studentNeed: o.needStudent || '',
+        tlmNeed: o.needTLM || '',
+        intervention: o.needIntervention || '1-on-1 Classroom Mentoring',
+        practiceSerial: o.practiceSerial || '',
+        practice: o.practice || ''
+      };
+      needsList.push(item);
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      priorityCounts[p] = (priorityCounts[p] || 0) + 1;
+      const suppKey = item.intervention;
+      supportCounts[suppKey] = (supportCounts[suppKey] || 0) + 1;
+    }
+
+    // 2. Synthesize implicit needs from Areas for Improvement or unobserved practices
+    const areas = (o.areas || '').trim();
+    const lowEngagement = o.engagementLevel === 'Not Engaged';
+    const lowMethodology = Number(o.methodology) > 0 && Number(o.methodology) <= 2;
+    const lowTLM = Number(o.tlm) > 0 && Number(o.tlm) <= 2;
+    const unobserved = o.observationStatus === 'Not_Observed' || o.observationStatus === 'No';
+
+    if (!o.needTeacher && (areas || lowEngagement || lowMethodology || lowTLM || unobserved)) {
+      let inferredCat = 'Pedagogy';
+      let inferredNeed = areas;
+      let inferredPriority = (lowEngagement || lowMethodology) ? 'High' : 'Medium';
+      let inferredSupport = '1-on-1 Classroom Mentoring';
+
+      if (lowTLM || (areas && /tlm|material|kit|chart|book/i.test(areas))) {
+        inferredCat = 'TLM & Materials';
+        inferredSupport = 'TLM & Resource Provision';
+        if (!inferredNeed) inferredNeed = 'TLM utilization and activity materials needed';
+      } else if (areas && /reading|math|operation|student|learner|comprehension|count/i.test(areas)) {
+        inferredCat = 'Student Learning';
+        inferredSupport = 'Demonstration / Model Class';
+      } else if (areas && /management|control|seating|multi-grade/i.test(areas)) {
+        inferredCat = 'Classroom Management';
+        inferredSupport = 'Co-Teaching Session';
+      } else if (unobserved && o.practiceSerial) {
+        inferredNeed = 'Teaching practice ' + o.practiceSerial + ' was not demonstrated in classroom';
+        inferredSupport = 'Demonstration / Model Class';
+      } else if (!inferredNeed) {
+        inferredNeed = 'Pedagogical refinement and teaching methodology strengthening required';
+      }
+
+      const item = {
+        id: 'imp-' + (o.id || DB.generateId()),
+        obsId: o.id,
+        source: 'inferred',
+        teacher,
+        school,
+        cluster: o.cluster || '',
+        block: o.block || '',
+        subject,
+        date,
+        category: inferredCat,
+        priority: inferredPriority,
+        teacherNeed: inferredNeed,
+        studentNeed: lowEngagement ? 'Low student engagement observed during lesson' : '',
+        tlmNeed: lowTLM ? 'Appropriate learning materials / kits required' : '',
+        intervention: inferredSupport,
+        practiceSerial: o.practiceSerial || '',
+        practice: o.practice || ''
+      };
+      needsList.push(item);
+      categoryCounts[inferredCat] = (categoryCounts[inferredCat] || 0) + 1;
+      priorityCounts[inferredPriority] = (priorityCounts[inferredPriority] || 0) + 1;
+      supportCounts[inferredSupport] = (supportCounts[inferredSupport] || 0) + 1;
+    }
+  });
+
+  // Unique teachers needing support
+  const uniqueTeachersCount = new Set(needsList.map(n => n.teacher)).size;
+  const uniqueSchoolsCount = new Set(needsList.map(n => n.school)).size;
+
+  return {
+    needsList,
+    totalNeeds: needsList.length,
+    categoryCounts,
+    priorityCounts,
+    supportCounts,
+    uniqueTeachersCount,
+    uniqueSchoolsCount
+  };
+}
+
+function renderObsNeedAnalysis() {
+  const container = document.getElementById('obsNeedsContainer');
+  if (!container) return;
+
+  const observations = DB.get('observations') || [];
+  if (observations.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-clipboard-check"></i>
+        <h3>No observations recorded yet</h3>
+        <p>Record classroom observations or import DMT Excel data to generate automated Need Analysis.</p>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="openObservationModal()">
+          <i class="fas fa-plus"></i> New Observation
+        </button>
+      </div>`;
+    return;
+  }
+
+  const analysis = analyzeObservationNeeds(observations);
+  const { needsList, totalNeeds, categoryCounts, priorityCounts, supportCounts, uniqueTeachersCount } = analysis;
+
+  // Filter criteria
+  const subjFilter = _obsNeedsFilterState.subject;
+  const catFilter = _obsNeedsFilterState.category;
+  const priFilter = _obsNeedsFilterState.priority;
+  const search = (_obsNeedsFilterState.search || '').toLowerCase().trim();
+
+  const filteredNeeds = needsList.filter(item => {
+    if (subjFilter !== 'all' && item.subject.toLowerCase() !== subjFilter.toLowerCase()) return false;
+    if (catFilter !== 'all' && item.category !== catFilter) return false;
+    if (priFilter !== 'all' && item.priority !== priFilter) return false;
+    if (search) {
+      const match = item.teacher.toLowerCase().includes(search) ||
+                    item.school.toLowerCase().includes(search) ||
+                    item.teacherNeed.toLowerCase().includes(search) ||
+                    item.studentNeed.toLowerCase().includes(search) ||
+                    (item.practiceSerial || '').toLowerCase().includes(search);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  // Top category
+  const topCat = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0] || ['Pedagogy', 0];
+  const highPriorityTotal = priorityCounts['High'] || 0;
+
+  // Category progress bars
+  const catKeys = ['Pedagogy', 'Student Learning', 'TLM & Materials', 'Classroom Management'];
+  const catColors = {
+    'Pedagogy': '#8b5cf6',
+    'Student Learning': '#3b82f6',
+    'TLM & Materials': '#10b981',
+    'Classroom Management': '#f59e0b'
+  };
+
+  const categoryBarsHTML = catKeys.map(k => {
+    const count = categoryCounts[k] || 0;
+    const pct = totalNeeds > 0 ? Math.round((count / totalNeeds) * 100) : 0;
+    const col = catColors[k] || '#8b5cf6';
+    return `
+      <div class="obs-needs-bar-row">
+        <div class="obs-needs-bar-labels">
+          <span><strong>${k}</strong></span>
+          <span style="color:var(--text-muted)">${count} (${pct}%)</span>
+        </div>
+        <div class="obs-needs-bar-track">
+          <div class="obs-needs-bar-fill" style="width:${pct}%;background:${col};"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Support modalities
+  const suppKeys = Object.entries(supportCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const supportBarsHTML = suppKeys.length > 0 ? suppKeys.map(([k, count]) => {
+    const pct = totalNeeds > 0 ? Math.round((count / totalNeeds) * 100) : 0;
+    return `
+      <div class="obs-needs-bar-row">
+        <div class="obs-needs-bar-labels">
+          <span>${k}</span>
+          <span style="color:var(--text-muted)">${count} (${pct}%)</span>
+        </div>
+        <div class="obs-needs-bar-track">
+          <div class="obs-needs-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,#06b6d4,#3b82f6);"></div>
+        </div>
+      </div>`;
+  }).join('') : '<p style="color:var(--text-muted);font-size:13px;">No specific support actions registered yet.</p>';
+
+  // Subjects for dropdown
+  const allSubjects = Array.from(new Set(observations.map(o => o.subject).filter(Boolean))).sort();
+
+  // Needs cards
+  const needsCardsHTML = filteredNeeds.length === 0
+    ? `<div class="empty-state" style="padding:24px;">
+        <i class="fas fa-filter"></i>
+        <h3>No needs match your filters</h3>
+        <p>Try selecting different filter options or search terms.</p>
+       </div>`
+    : filteredNeeds.map(item => {
+        const pBadgeClass = item.priority === 'High' ? 'badge-priority-high' : item.priority === 'Low' ? 'badge-priority-low' : 'badge-priority-medium';
+        const safeTeacher = escapeHtml(item.teacher);
+        const safeSchool = escapeHtml(item.school);
+        const safeTitle = escapeHtml(item.teacherNeed);
+
+        return `
+          <div class="obs-need-item-card">
+            <div class="obs-need-card-header">
+              <div class="obs-need-card-title">
+                <i class="fas fa-user-circle" style="color:#8b5cf6;"></i> ${safeTeacher}
+                <span class="${pBadgeClass}">${item.priority} Priority</span>
+                <span class="badge-need-cat">${item.category}</span>
+                ${item.source === 'inferred' ? '<span class="badge" style="font-size:10px;background:rgba(255,255,255,0.06);color:var(--text-muted);">From Observations</span>' : ''}
+              </div>
+              <div class="obs-need-meta">
+                <span><i class="fas fa-school"></i> ${safeSchool}</span>
+                <span><i class="fas fa-book"></i> ${escapeHtml(item.subject)}</span>
+                ${item.date ? '<span><i class="fas fa-calendar-alt"></i> ' + escapeHtml(item.date) + '</span>' : ''}
+              </div>
+            </div>
+
+            <div class="obs-need-details-grid">
+              <div class="obs-need-col">
+                <label><i class="fas fa-chalkboard-teacher"></i> Teacher Pedagogical Need</label>
+                <div>${escapeHtml(item.teacherNeed)}</div>
+              </div>
+              ${item.studentNeed ? `
+                <div class="obs-need-col">
+                  <label><i class="fas fa-user-graduate"></i> Student Learning Gap</label>
+                  <div>${escapeHtml(item.studentNeed)}</div>
+                </div>` : ''}
+              ${item.tlmNeed ? `
+                <div class="obs-need-col">
+                  <label><i class="fas fa-cubes"></i> TLM & Resource Need</label>
+                  <div>${escapeHtml(item.tlmNeed)}</div>
+                </div>` : ''}
+            </div>
+
+            <div class="obs-need-card-footer">
+              <div class="obs-need-badges">
+                <span class="badge-need-support"><i class="fas fa-hands-helping"></i> ${escapeHtml(item.intervention)}</span>
+                ${item.practiceSerial ? '<span class="obs-serial-badge"><i class="fas fa-link"></i> ' + escapeHtml(item.practiceSerial) + '</span>' : ''}
+              </div>
+              <div class="obs-need-actions">
+                <button class="btn btn-sm btn-outline" onclick="createTaskFromNeed('${encodeURIComponent(item.teacherNeed)}', '${encodeURIComponent(item.teacher)}', '${encodeURIComponent(item.school)}')" title="Add mentoring visit to Planner">
+                  <i class="fas fa-calendar-plus"></i> Plan Task
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="createFollowupFromNeed('${encodeURIComponent(item.teacherNeed)}', '${encodeURIComponent(item.teacher)}', '${encodeURIComponent(item.school)}')" title="Add action to Follow-ups">
+                  <i class="fas fa-clock"></i> Follow-up
+                </button>
+                ${item.obsId ? `<button class="btn btn-sm btn-ghost" onclick="openObservationModal('${item.obsId}')" title="View parent observation"><i class="fas fa-eye"></i></button>` : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+  // AI / Local Synthesis text
+  const defaultSynthesis = _cachedAINeedAnalysis || `
+    <p>Based on <strong>${observations.length}</strong> classroom observations across <strong>${uniqueTeachersCount}</strong> teachers:</p>
+    <ul>
+      <li>🎯 <strong>Primary Need Area:</strong> ${topCat[0]} accounts for ${topCat[1]} identified requirement(s).</li>
+      <li>⚠️ <strong>High Priority Attention:</strong> ${highPriorityTotal} teacher/classroom support needs require immediate follow-up.</li>
+      <li>💡 <strong>Recommended Support Modality:</strong> Intensive 1-on-1 classroom mentoring and demonstration lessons for foundational skills.</li>
+    </ul>`;
+
+  container.innerHTML = `
+    <!-- Header Banner -->
+    <div class="obs-needs-header">
+      <div class="obs-needs-header-left">
+        <div class="obs-needs-header-icon"><i class="fas fa-search-plus"></i></div>
+        <div class="obs-needs-header-info">
+          <h2>Classroom & Teacher Need Analysis</h2>
+          <p>Synthesizes pedagogical challenges, student learning gaps, and support actions across all visits</p>
+        </div>
+      </div>
+      <div class="obs-needs-header-actions">
+        <button class="btn btn-outline" onclick="generateAINeedAnalysis()" id="aiNeedAnalysisBtn">
+          <i class="fas fa-brain"></i> AI Deep Needs Assessment
+        </button>
+        <button class="btn btn-outline" onclick="exportNeedsAnalysisToExcel()">
+          <i class="fas fa-file-excel"></i> Export Needs (.xlsx)
+        </button>
+        <button class="btn btn-ghost" onclick="renderObsNeedAnalysis()" title="Refresh">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="obs-needs-kpi-grid">
+      <div class="obs-needs-kpi-card">
+        <div class="obs-needs-kpi-icon" style="background:rgba(139,92,246,0.15);color:#8b5cf6;">
+          <i class="fas fa-search-plus"></i>
+        </div>
+        <div class="obs-needs-kpi-info">
+          <span class="obs-needs-kpi-val">${totalNeeds}</span>
+          <span class="obs-needs-kpi-lbl">Total Needs Identified</span>
+        </div>
+      </div>
+      <div class="obs-needs-kpi-card">
+        <div class="obs-needs-kpi-icon" style="background:rgba(239,68,68,0.15);color:#ef4444;">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="obs-needs-kpi-info">
+          <span class="obs-needs-kpi-val" style="color:#ef4444;">${highPriorityTotal}</span>
+          <span class="obs-needs-kpi-lbl">High Priority / Urgent</span>
+        </div>
+      </div>
+      <div class="obs-needs-kpi-card">
+        <div class="obs-needs-kpi-icon" style="background:rgba(59,130,246,0.15);color:#3b82f6;">
+          <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div class="obs-needs-kpi-info">
+          <span class="obs-needs-kpi-val">${uniqueTeachersCount}</span>
+          <span class="obs-needs-kpi-lbl">Teachers Requiring Support</span>
+        </div>
+      </div>
+      <div class="obs-needs-kpi-card">
+        <div class="obs-needs-kpi-icon" style="background:rgba(16,185,129,0.15);color:#10b981;">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="obs-needs-kpi-info">
+          <span class="obs-needs-kpi-val" style="font-size:18px;">${topCat[0]}</span>
+          <span class="obs-needs-kpi-lbl">Top Focus Area (${topCat[1]} gaps)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI / Automated Synthesis Card -->
+    <div class="obs-needs-synthesis-card" id="obsNeedsSynthesisCard">
+      <div class="obs-needs-synthesis-header">
+        <span><i class="fas fa-robot"></i> Needs Synthesis & Executive Summary</span>
+        <button class="btn btn-sm btn-ghost" onclick="generateAINeedAnalysis(true)" title="Run AI synthesis">
+          <i class="fas fa-magic"></i> Generate AI Insight
+        </button>
+      </div>
+      <div class="obs-needs-synthesis-body" id="obsNeedsSynthesisBody">
+        ${defaultSynthesis}
+      </div>
+    </div>
+
+    <!-- 2-Col Analytics: Category Breakdown & Support Modalities -->
+    <div class="obs-needs-analytics-row">
+      <div class="obs-needs-panel-card">
+        <div class="obs-needs-panel-title"><i class="fas fa-chart-pie" style="color:#8b5cf6;"></i> Needs by Category</div>
+        ${categoryBarsHTML}
+      </div>
+      <div class="obs-needs-panel-card">
+        <div class="obs-needs-panel-title"><i class="fas fa-hands-helping" style="color:#3b82f6;"></i> Recommended Support Modalities</div>
+        ${supportBarsHTML}
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="obs-needs-filter-bar">
+      <select onchange="_obsNeedsFilterState.subject = this.value; renderObsNeedAnalysis();">
+        <option value="all" ${subjFilter === 'all' ? 'selected' : ''}>All Subjects</option>
+        ${allSubjects.map(s => `<option value="${escapeHtml(s)}" ${subjFilter.toLowerCase() === s.toLowerCase() ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+      </select>
+      <select onchange="_obsNeedsFilterState.category = this.value; renderObsNeedAnalysis();">
+        <option value="all" ${catFilter === 'all' ? 'selected' : ''}>All Need Categories</option>
+        <option value="Pedagogy" ${catFilter === 'Pedagogy' ? 'selected' : ''}>Pedagogy</option>
+        <option value="Student Learning" ${catFilter === 'Student Learning' ? 'selected' : ''}>Student Learning</option>
+        <option value="TLM & Materials" ${catFilter === 'TLM & Materials' ? 'selected' : ''}>TLM & Materials</option>
+        <option value="Classroom Management" ${catFilter === 'Classroom Management' ? 'selected' : ''}>Classroom Management</option>
+      </select>
+      <select onchange="_obsNeedsFilterState.priority = this.value; renderObsNeedAnalysis();">
+        <option value="all" ${priFilter === 'all' ? 'selected' : ''}>All Priorities</option>
+        <option value="High" ${priFilter === 'High' ? 'selected' : ''}>High Priority</option>
+        <option value="Medium" ${priFilter === 'Medium' ? 'selected' : ''}>Medium Priority</option>
+        <option value="Low" ${priFilter === 'Low' ? 'selected' : ''}>Low Priority</option>
+      </select>
+      <input type="text" placeholder="Search teacher, school, or need..." value="${escapeHtml(_obsNeedsFilterState.search)}"
+             oninput="_obsNeedsFilterState.search = this.value; renderObsNeedAnalysis();">
+    </div>
+
+    <!-- Needs Cards List -->
+    <div class="obs-needs-list-container">
+      <div style="font-size:13px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;">
+        <span>Showing ${filteredNeeds.length} of ${totalNeeds} identified need items</span>
+        <span><i class="fas fa-info-circle"></i> Click 'Plan Task' to schedule mentoring in your Planner</span>
+      </div>
+      ${needsCardsHTML}
+    </div>`;
+}
+
+function createTaskFromNeed(encodedTitle, encodedTeacher, encodedSchool) {
+  const title = decodeURIComponent(encodedTitle || '');
+  const teacher = decodeURIComponent(encodedTeacher || '');
+  const school = decodeURIComponent(encodedSchool || '');
+
+  const today = _isoDateLocal ? _isoDateLocal() : new Date().toISOString().split('T')[0];
+  const tasks = DB.get('plannerTasks') || [];
+  const newTask = {
+    id: DB.generateId(),
+    text: `Mentoring: ${teacher} (${school}) — ${title.slice(0, 50)}`,
+    date: today,
+    priority: 'high',
+    done: false,
+    type: 'mentoring',
+    createdAt: new Date().toISOString()
+  };
+  tasks.push(newTask);
+  DB.set('plannerTasks', tasks);
+  showToast(`Planner task scheduled for ${teacher}!`, 'success');
+  if (typeof renderPlanner === 'function') renderPlanner();
+}
+
+function createFollowupFromNeed(encodedTitle, encodedTeacher, encodedSchool) {
+  const title = decodeURIComponent(encodedTitle || '');
+  const teacher = decodeURIComponent(encodedTeacher || '');
+  const school = decodeURIComponent(encodedSchool || '');
+
+  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  const followups = DB.get('followupStatus') || [];
+  const newFollowup = {
+    id: DB.generateId(),
+    teacher,
+    school,
+    title: `Support: ${title.slice(0, 60)}`,
+    status: 'pending',
+    dueDate: nextWeek,
+    priority: 'high',
+    createdAt: new Date().toISOString()
+  };
+  followups.push(newFollowup);
+  DB.set('followupStatus', followups);
+  showToast(`Follow-up registered for ${teacher} (Due: ${nextWeek})!`, 'success');
+}
+
+async function generateAINeedAnalysis(force = false) {
+  const btn = document.getElementById('aiNeedAnalysisBtn');
+  const bodyEl = document.getElementById('obsNeedsSynthesisBody');
+
+  const observations = DB.get('observations') || [];
+  if (observations.length === 0) {
+    showToast('No observations to analyze', 'warning');
+    return;
+  }
+
+  const analysis = analyzeObservationNeeds(observations);
+  const profile = (typeof DB.peek === 'function' ? DB.peek('userProfile') : DB.get('userProfile')) || {};
+
+  if (!SarvamAI.isConfigured()) {
+    // Smart Local Need Synthesis
+    const topNeeds = analysis.needsList.slice(0, 5).map(n => `- ${n.teacher} (${n.school}, ${n.subject}): ${n.teacherNeed}`).join('\n');
+    const localHTML = `
+      <div style="background:rgba(139,92,246,0.08);padding:12px 16px;border-radius:8px;border-left:4px solid #8b5cf6;margin-bottom:10px;">
+        <strong><i class="fas fa-clipboard-check"></i> Field Need Assessment Summary (Smart Local):</strong>
+        <p style="margin:6px 0 0 0;">Identified <strong>${analysis.totalNeeds}</strong> needs across <strong>${analysis.uniqueTeachersCount}</strong> teachers in <strong>${analysis.uniqueSchoolsCount}</strong> schools.</p>
+      </div>
+      <p><strong>Key Teacher Support Requirements:</strong></p>
+      <ul>
+        ${analysis.needsList.slice(0, 4).map(n => `<li><strong>${escapeHtml(n.teacher)} (${escapeHtml(n.school)}):</strong> ${escapeHtml(n.teacherNeed)} ${n.intervention ? '<em>[' + escapeHtml(n.intervention) + ']</em>' : ''}</li>`).join('')}
+      </ul>
+      <p><strong>Action Recommendations:</strong> Prioritize 1-on-1 mentoring sessions for the ${analysis.priorityCounts['High'] || 0} high-priority teachers and conduct a cluster workshop for common pedagogical gaps.</p>`;
+    _cachedAINeedAnalysis = localHTML;
+    if (bodyEl) bodyEl.innerHTML = localHTML;
+    showToast('Need analysis generated (Smart Local)');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+  }
+
+  const sampleNeeds = analysis.needsList.slice(0, 10).map(n =>
+    `Teacher: ${n.teacher}, School: ${n.school}, Subj: ${n.subject}, Need: ${n.teacherNeed}, Support: ${n.intervention}, Priority: ${n.priority}`
+  ).join('\n');
+
+  const prompt = `Generate a professional, structured Classroom & Teacher Need Analysis Report for an Azim Premji Foundation Resource Person.
+
+OFFICER: ${profile.name || 'Resource Person'} (${profile.block || 'Block'})
+TOTAL NEEDS: ${analysis.totalNeeds}
+HIGH PRIORITY: ${analysis.priorityCounts['High'] || 0}
+TEACHERS REQUIRING SUPPORT: ${analysis.uniqueTeachersCount}
+
+SAMPLE IDENTIFIED NEEDS:
+${sampleNeeds}
+
+Provide a concise, practical synthesis with:
+1. Executive Need Summary (3-4 bullet points)
+2. Top 3 Pedagogical Challenges Observed
+3. High Priority Intervention Strategy (Mentoring / Workshops)
+4. Recommended Next Steps for the Coming Month
+Keep headings clear, format with markdown bullets, and be direct and actionable.`;
+
+  try {
+    const res = await SarvamAI.chat([
+      {
+        role: 'system',
+        content: 'You are an experienced academic resource person and education specialist for Azim Premji Foundation. Generate concise, actionable teacher and school need analysis reports.'
+      },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.4, max_tokens: 1800, reasoning_effort: 'low' });
+
+    let reply = (res.choices?.[0]?.message?.content || '').trim();
+    reply = reply.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim();
+
+    if (!reply) throw new Error('Empty AI response');
+
+    const formatted = formatAIResponse(reply);
+    _cachedAINeedAnalysis = formatted;
+    if (bodyEl) bodyEl.innerHTML = formatted;
+    showAIOutputModal('AI Field Need Analysis Report', reply);
+  } catch (err) {
+    console.warn('[AI Need Analysis] AI failed, falling back to local synthesis:', err);
+    showToast('AI request failed; showing Smart Local synthesis', 'warning');
+    const localHTML = `
+      <div style="background:rgba(234,179,8,0.1);padding:12px 16px;border-radius:8px;border-left:4px solid #eab308;margin-bottom:10px;">
+        <strong><i class="fas fa-exclamation-triangle"></i> Field Need Assessment (Smart Local Fallback):</strong>
+        <p style="margin:6px 0 0 0;">Identified ${analysis.totalNeeds} needs across ${analysis.uniqueTeachersCount} teachers in ${analysis.uniqueSchoolsCount} schools.</p>
+      </div>
+      <ul>
+        ${analysis.needsList.slice(0, 5).map(n => `<li><strong>${escapeHtml(n.teacher)} (${escapeHtml(n.school)}):</strong> ${escapeHtml(n.teacherNeed)}</li>`).join('')}
+      </ul>`;
+    _cachedAINeedAnalysis = localHTML;
+    if (bodyEl) bodyEl.innerHTML = localHTML;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-brain"></i> AI Deep Needs Assessment';
+    }
+  }
+}
+
+function exportNeedsAnalysisToExcel() {
+  const observations = DB.get('observations') || [];
+  const analysis = analyzeObservationNeeds(observations);
+  if (analysis.needsList.length === 0) {
+    showToast('No needs to export', 'warning');
+    return;
+  }
+
+  const exportData = analysis.needsList.map((n, idx) => ({
+    'S.No': idx + 1,
+    'Date': n.date,
+    'Teacher': n.teacher,
+    'School': n.school,
+    'Cluster': n.cluster,
+    'Block': n.block,
+    'Subject': n.subject,
+    'Need Category': n.category,
+    'Priority': n.priority,
+    'Teacher Pedagogical Need': n.teacherNeed,
+    'Student Learning Gap': n.studentNeed,
+    'TLM / Resource Need': n.tlmNeed,
+    'Recommended Support Action': n.intervention
+  }));
+
+  if (typeof XLSX !== 'undefined') {
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Need_Analysis');
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `APF_Observation_Need_Analysis_${today}.xlsx`);
+    showToast('Need Analysis exported to Excel!', 'success');
+  } else {
+    // CSV fallback
+    const headers = Object.keys(exportData[0]).join(',');
+    const rows = exportData.map(r => Object.values(r).map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([headers + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `APF_Need_Analysis_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Need Analysis exported to CSV!', 'success');
+  }
+}
+
 
 function buildDataQualityModel() {
   const today = _isoDateLocal();
