@@ -1,6 +1,75 @@
 // =====================================================================
 // SCHOOL MAP MODULE — APF Dashboard
 // =====================================================================
+
+// Tile providers (all keyless, CORS-enabled so the map snapshot/canvas
+// export keeps working):
+//  - Light mode primary: OSM France mirror — full-detail classic OSM style.
+//    (OSM's own tile servers block apps under their volunteer-server policy
+//    → 403; CARTO basemaps now require an API key.)
+//  - Dark mode primary: Esri Dark Gray Canvas.
+//  - Fallback for both: Esri World Street Map / Dark Gray Canvas.
+function smapTileUrl() {
+  var dark = !document.body.classList.contains('light-mode');
+  return dark
+    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+    : 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
+}
+function smapFallbackTileUrl() {
+  var dark = !document.body.classList.contains('light-mode');
+  return dark
+    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+    : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+}
+function smapTileAttribution() {
+  var dark = !document.body.classList.contains('light-mode');
+  return dark
+    ? 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, tiles courtesy of <a href="https://www.openstreetmap.fr/">OpenStreetMap France</a>';
+}
+
+// Create a tile layer with automatic fallback: if the primary provider
+// starts erroring (blocked / offline), swap to the Esri fallback layer.
+function smapMakeTileLayer() {
+  var layer = L.tileLayer(smapTileUrl(), {
+    attribution: smapTileAttribution(),
+    subdomains: 'abc',
+    maxZoom: 19,
+    crossOrigin: true,
+    detectRetina: true
+  });
+  var errorCount = 0, swapped = false;
+  layer.on('tileerror', function() {
+    if (swapped) return;
+    if (++errorCount >= 6) {
+      swapped = true;
+      layer.setUrl(smapFallbackTileUrl());
+      layer.options.attribution = 'Tiles &copy; Esri';
+    }
+  });
+  return layer;
+}
+
+// Re-point existing tile layers after a theme switch (called by toggleTheme).
+// Fully defensive: maps may not exist yet, layers may be detached, and the
+// preview map runs with attributionControl:false (no attribution control).
+function smapRefreshTiles() {
+  try {
+    if (typeof SchoolMap === 'undefined' || !SchoolMap) return;
+    ['_tileLayer', '_previewTileLayer'].forEach(function(key) {
+      var layer = SchoolMap[key];
+      if (!layer || typeof layer.setUrl !== 'function') return;
+      layer.setUrl(smapTileUrl());
+      layer.options.attribution = smapTileAttribution();
+      var map = layer._map;
+      var ac = map && map.attributionControl;
+      if (ac && typeof ac._update === 'function') ac._update();
+    });
+  } catch (e) {
+    console.warn('smapRefreshTiles: skipped tile refresh', e);
+  }
+}
+
 const SchoolMap = {
   LOC_KEY: 'apf_school_locations',
   _map: null,
@@ -162,11 +231,8 @@ function initSchoolMap() {
       zoom: home.zoom || 11,
       zoomControl: true
     });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-      crossOrigin: true
-    }).addTo(SchoolMap._map);
+    SchoolMap._tileLayer = smapMakeTileLayer();
+    SchoolMap._tileLayer.addTo(SchoolMap._map);
   } else {
     setTimeout(function() { SchoolMap._map.invalidateSize(); }, 150);
   }
@@ -1140,8 +1206,8 @@ function renderSchoolMapTable(filter) {
         '<button class="btn btn-outline btn-sm" style="padding:4px 9px;font-size:11px;" onclick="openSchoolLocationEditor(\'' + safeName + '\')">' +
           '<i class="fas fa-' + (hasPinned ? 'edit' : 'map-pin') + '"></i> ' + (hasPinned ? 'Edit' : 'Pin') +
         '</button>' +
-        (hasPinned ? '<button class="btn btn-ghost btn-sm" style="padding:4px 7px;font-size:11px;margin-left:4px;" onclick="smapFlyTo(\'' + safeName + '\')" title="Fly to on map"><i class="fas fa-search-location"></i></button>' : '') +
-        (hasPinned ? '<a class="btn btn-ghost btn-sm" style="padding:4px 7px;font-size:11px;margin-left:4px;color:#10b981;" href="https://www.google.com/maps/search/?api=1&query=' + loc.lat + ',' + loc.lng + '" target="_blank" title="Open in Google Maps"><i class="fas fa-map-marked-alt"></i></a>' : '') +
+        (hasPinned ? '<button class="btn btn-ghost btn-sm" style="padding:4px 7px;font-size:11px;margin-left:4px;" onclick="smapFlyTo(\'' + safeName + '\')" data-tip="Fly to on map"><i class="fas fa-search-location"></i></button>' : '') +
+        (hasPinned ? '<a class="btn btn-ghost btn-sm" style="padding:4px 7px;font-size:11px;margin-left:4px;color:#10b981;" href="https://www.google.com/maps/search/?api=1&query=' + loc.lat + ',' + loc.lng + '" target="_blank" data-tip="Open in Google Maps"><i class="fas fa-map-marked-alt"></i></a>' : '') +
       '</td>' +
     '</tr>';
   }).join('');
@@ -1465,7 +1531,8 @@ function slmPreviewPin() {
 
   if (!SchoolMap._previewMap) {
     SchoolMap._previewMap = L.map('slmPreviewMap', { zoomControl: false, attributionControl: false }).setView([lat, lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(SchoolMap._previewMap);
+    SchoolMap._previewTileLayer = smapMakeTileLayer();
+    SchoolMap._previewTileLayer.addTo(SchoolMap._previewMap);
     SchoolMap._previewMarker = L.marker([lat, lng]).addTo(SchoolMap._previewMap);
   } else {
     SchoolMap._previewMap.setView([lat, lng], 14);

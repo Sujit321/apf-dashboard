@@ -130,7 +130,7 @@
   <!-- Password Lock Screen -->
   <div id="lockScreen" class="lock-screen" style="display:none;">
     <div class="lock-container">
-      <div class="lock-icon" id="lockIconTap" title="APF Dashboard"><i class="fas fa-shield-alt"></i></div>
+      <div class="lock-icon" id="lockIconTap" data-tip="APF Dashboard"><i class="fas fa-shield-alt"></i></div>
       <h1 class="lock-title">APF Dashboard</h1>
       <p class="lock-subtitle" id="lockSubtitle">Enter your password to continue</p>
       <form id="lockForm" onsubmit="handlePasswordSubmit(event)" autocomplete="off">
@@ -212,7 +212,7 @@
           <span class="logo-subtitle">Resource Person</span>
         </div>
       </div>
-      <button class="sidebar-toggle-btn" id="sidebarToggle" title="Collapse sidebar" onclick="toggleDesktopSidebar()">
+      <button class="sidebar-toggle-btn" id="sidebarToggle" data-tip="Collapse sidebar" onclick="toggleDesktopSidebar()">
         <i class="fas fa-chevron-left"></i>
       </button>
     </div>
@@ -418,7 +418,7 @@
           </a>
           <a href="#" class="nav-item" data-section="livesync" id="nav-livesync" data-tooltip="Live Sync">
             <i class="fas fa-sync-alt"></i><span>Live Sync</span>
-            <span class="sync-status-dot" id="syncNavDot" title="Offline"></span>
+            <span class="sync-status-dot" id="syncNavDot" data-tip="Offline"></span>
           </a>
           <a href="#" class="nav-item" data-section="backup" id="nav-backup" data-tooltip="Data & Security">
             <i class="fas fa-shield-alt"></i><span>Data & Security</span>
@@ -436,14 +436,14 @@
       </div>
     </nav>
     <div class="sidebar-footer">
-      <div class="user-info" onclick="openProfileModal()" style="cursor:pointer;" title="Click to edit your profile">
+      <div class="user-info" onclick="openProfileModal()" style="cursor:pointer;" data-tip="Click to edit your profile">
         <div class="user-avatar" id="userAvatarIcon"><i class="fas fa-user"></i></div>
         <div class="user-details">
           <span class="user-name" id="userName">Resource Person</span>
           <span class="user-role" id="userOrg">Azim Premji Foundation</span>
         </div>
         <button class="theme-toggle-btn" id="themeToggle" onclick="event.stopPropagation(); toggleTheme()"
-          title="Switch theme">
+          data-tip="Switch theme">
           <i class="fas fa-moon" id="themeIcon"></i>
         </button>
       </div>
@@ -471,7 +471,7 @@
         </div>
         <div class="header-actions">
           <div class="notif-wrapper" style="position:relative">
-            <button class="btn btn-ghost notif-bell-btn" onclick="toggleNotificationPanel()" title="Notifications">
+            <button class="btn btn-ghost notif-bell-btn" onclick="toggleNotificationPanel()" data-tip="Notifications">
               <i class="fas fa-bell"></i>
               <span class="notif-badge" id="notifBadge" style="display:none">0</span>
             </button>
@@ -578,7 +578,7 @@
           <div class="vdr-sep"></div>
           <button id="vdrToBtn" class="vdr-trigger-btn"
             onclick="VDR.open('to',this,function(f,t){document.getElementById('visitDateFrom').value=f;document.getElementById('visitDateTo').value=t;_pageState.visits=1;renderVisits();})">To</button>
-          <button class="vdr-clear-btn" title="Clear dates"
+          <button class="vdr-clear-btn" data-tip="Clear dates"
             onclick="VDR._clear(); document.getElementById('visitDateFrom').value=''; document.getElementById('visitDateTo').value=''; _pageState.visits=1; renderVisits();">
             <i class="fas fa-times"></i></button>
         </div>
@@ -597,15 +597,15 @@
       <!-- Bulk Action Bar for Visits (hidden until bulk mode is enabled) -->
       <div id="visitsBulkBar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm" id="visitsSelectAllBtn" onclick="visitsToggleSelectAll()"
-          style="display:none;" title="Select / deselect all visible">
+          style="display:none;" data-tip="Select / deselect all visible">
           <i class="fas fa-check-double"></i> Select All
         </button>
         <button class="btn btn-danger btn-sm" id="visitsDeleteSelectedBtn" onclick="visitsDeleteSelected()"
-          style="display:none;" disabled title="Delete selected visits">
+          style="display:none;" disabled data-tip="Delete selected visits">
           <i class="fas fa-trash"></i> Delete Selected (0)
         </button>
         <button class="btn btn-outline btn-sm" id="visitsDeleteFilteredBtn" onclick="visitsDeleteFiltered()"
-          style="display:none;color:#ef4444;border-color:#ef4444;" title="Delete all visits matching current filters">
+          style="display:none;color:#ef4444;border-color:#ef4444;" data-tip="Delete all visits matching current filters">
           <i class="fas fa-filter"></i> Delete Filtered (0)
         </button>
       </div>
@@ -835,14 +835,14 @@
       </div>
 
       <!-- Tabs: List / Analytics / Smart Planner -->
-      <div class="obs-tabs">
-        <button class="obs-tab active" data-tab="list" onclick="switchObsTab('list')"><i class="fas fa-list"></i> List
+      <div class="obs-tabs" role="tablist" aria-label="Observation views">
+        <button class="obs-tab active" data-tab="list" role="tab" aria-selected="true" aria-controls="obsTabList" onclick="switchObsTab('list')"><i class="fas fa-list"></i> List
           View</button>
-        <button class="obs-tab" data-tab="analytics" onclick="switchObsTab('analytics')"><i
+        <button class="obs-tab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="obsTabAnalytics" onclick="switchObsTab('analytics')"><i
             class="fas fa-chart-pie"></i> Analytics</button>
-        <button class="obs-tab" data-tab="planner" onclick="switchObsTab('planner')"><i class="fas fa-brain"></i> Smart
+        <button class="obs-tab" data-tab="planner" role="tab" aria-selected="false" aria-controls="obsTabPlanner" onclick="switchObsTab('planner')"><i class="fas fa-brain"></i> Smart
           Planner</button>
-        <button class="obs-tab" data-tab="needanalysis" onclick="switchObsTab('needanalysis')"><i
+        <button class="obs-tab" data-tab="needanalysis" role="tab" aria-selected="false" aria-controls="obsTabNeedAnalysis" onclick="switchObsTab('needanalysis')"><i
             class="fas fa-magnifying-glass-chart"></i> Need Analysis</button>
       </div>
 
@@ -952,24 +952,36 @@
             <!-- KPI cards -->
             <div class="na-kpi-grid">
               <div class="na-kpi na-kpi-total">
-                <div class="na-kpi-label">Total Observation</div>
-                <div class="na-kpi-value" id="naKpiTotal">0</div>
-                <div class="na-kpi-sub" id="naKpiTotalSub"></div>
+                <span class="na-kpi-icon"><i class="fas fa-clipboard-list"></i></span>
+                <div class="na-kpi-text">
+                  <div class="na-kpi-label">Total Observation</div>
+                  <div class="na-kpi-value" id="naKpiTotal">0</div>
+                  <div class="na-kpi-sub" id="naKpiTotalSub"></div>
+                </div>
               </div>
               <div class="na-kpi na-kpi-no">
-                <div class="na-kpi-label">Observation 'NO'</div>
-                <div class="na-kpi-value" id="naKpiNo">0</div>
-                <div class="na-kpi-sub" id="naKpiNoSub"></div>
+                <span class="na-kpi-icon"><i class="fas fa-circle-xmark"></i></span>
+                <div class="na-kpi-text">
+                  <div class="na-kpi-label">Observation 'NO'</div>
+                  <div class="na-kpi-value" id="naKpiNo">0</div>
+                  <div class="na-kpi-sub" id="naKpiNoSub"></div>
+                </div>
               </div>
               <div class="na-kpi na-kpi-tp">
-                <div class="na-kpi-label">Teaching Practices</div>
-                <div class="na-kpi-value" id="naKpiTp">0</div>
-                <div class="na-kpi-sub" id="naKpiTpSub"></div>
+                <span class="na-kpi-icon"><i class="fas fa-list-check"></i></span>
+                <div class="na-kpi-text">
+                  <div class="na-kpi-label">Teaching Practices</div>
+                  <div class="na-kpi-value" id="naKpiTp">0</div>
+                  <div class="na-kpi-sub" id="naKpiTpSub"></div>
+                </div>
               </div>
               <div class="na-kpi na-kpi-yes">
-                <div class="na-kpi-label">Observation 'YES'</div>
-                <div class="na-kpi-value" id="naKpiYes">0</div>
-                <div class="na-kpi-sub" id="naKpiYesSub"></div>
+                <span class="na-kpi-icon"><i class="fas fa-circle-check"></i></span>
+                <div class="na-kpi-text">
+                  <div class="na-kpi-label">Observation 'YES'</div>
+                  <div class="na-kpi-value" id="naKpiYes">0</div>
+                  <div class="na-kpi-sub" id="naKpiYesSub"></div>
+                </div>
               </div>
             </div>
 
@@ -1645,9 +1657,9 @@
               class="qn-dot red"></span>Red</button>
         </div>
         <div class="qn-view-toggle" role="group" aria-label="Change notes view">
-          <button type="button" class="qn-view-btn active" id="qnViewGrid" onclick="qnSetView('grid')" title="Grid view"
+          <button type="button" class="qn-view-btn active" id="qnViewGrid" onclick="qnSetView('grid')" data-tip="Grid view"
             aria-label="Grid view"><i class="fas fa-th-large"></i></button>
-          <button type="button" class="qn-view-btn" id="qnViewList" onclick="qnSetView('list')" title="List view"
+          <button type="button" class="qn-view-btn" id="qnViewList" onclick="qnSetView('list')" data-tip="List view"
             aria-label="List view"><i class="fas fa-list"></i></button>
         </div>
       </div>
@@ -1887,7 +1899,7 @@
             <option value="12">Last 12 months</option>
             <option value="3">Last 3 months</option>
           </select>
-          <button class="swh-btn swh-btn--icon" onclick="exportRecordInsightsExcel()" title="Export summary to Excel">
+          <button class="swh-btn swh-btn--icon" onclick="exportRecordInsightsExcel()" data-tip="Export summary to Excel">
             <i class="fas fa-file-export"></i>
           </button>
         </div>
@@ -1962,7 +1974,7 @@
             <i class="fas fa-download"></i> Export
           </button>
           <button class="btn btn-outline btn-sm" onclick="runActionClosureEngine()"
-            title="Auto-detect and close follow-ups with evidence">
+            data-tip="Auto-detect and close follow-ups with evidence">
             <i class="fas fa-link"></i> Auto-Sync
           </button>
         </div>
@@ -2015,9 +2027,9 @@
             <option value="school">School A-Z</option>
           </select>
           <div class="fu-view-toggle">
-            <button class="fu-view-btn active" id="fuViewList" onclick="setFollowupView('list')" title="List view"><i
+            <button class="fu-view-btn active" id="fuViewList" onclick="setFollowupView('list')" data-tip="List view"><i
                 class="fas fa-list"></i></button>
-            <button class="fu-view-btn" id="fuViewKanban" onclick="setFollowupView('kanban')" title="Kanban board"><i
+            <button class="fu-view-btn" id="fuViewKanban" onclick="setFollowupView('kanban')" data-tip="Kanban board"><i
                 class="fas fa-columns"></i></button>
           </div>
         </div>
@@ -2259,14 +2271,14 @@
         </div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="exportSchoolDataExcel()"
-            title="Export all school profiles and student data to Excel">
+            data-tip="Export all school profiles and student data to Excel">
             <i class="fas fa-file-export"></i> Export to Excel
           </button>
           <button class="btn btn-outline" onclick="triggerSchoolProfileImport()"
-            title="Import school profiles from DMT Excel">
+            data-tip="Import school profiles from DMT Excel">
             <i class="fas fa-file-excel"></i> Import from Excel
           </button>
-          <button class="btn btn-danger-outline" onclick="openBulkDeleteSchools()" title="Delete multiple schools">
+          <button class="btn btn-danger-outline" onclick="openBulkDeleteSchools()" data-tip="Delete multiple schools">
             <i class="fas fa-trash-alt"></i> Delete Schools
           </button>
           <input type="file" id="schoolProfileImportFile" accept=".xlsx,.xls,.csv" style="display:none"
@@ -2274,7 +2286,7 @@
           <div class="school-search-bar">
             <span class="search-filter-icon"
               onclick="document.getElementById('schoolClusterFilter').closest('.school-search-bar').classList.toggle('show-cluster')"
-              title="Filter by cluster"><i class="fas fa-filter"></i></span>
+              data-tip="Filter by cluster"><i class="fas fa-filter"></i></span>
             <input type="text" id="schoolSearchInput" class="filter-input" placeholder="Search schools..."
               oninput="_pageState.schools=1;renderSchoolProfiles()">
             <select id="schoolClusterFilter" class="filter-select school-cluster-filter"
@@ -2299,27 +2311,27 @@
             as image</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-outline" onclick="schoolMapGoHome()" title="Fly to home base area" id="smapGoHomeBtn">
+          <button class="btn btn-outline" onclick="schoolMapGoHome()" data-tip="Fly to home base area" id="smapGoHomeBtn">
             <i class="fas fa-home"></i> <span id="smapHomeBtnLabel">Home Area</span>
           </button>
-          <button class="btn btn-outline" onclick="schoolMapFlyToMyLocation()" title="Use your GPS">
+          <button class="btn btn-outline" onclick="schoolMapFlyToMyLocation()" data-tip="Use your GPS">
             <i class="fas fa-crosshairs"></i> My Location
           </button>
-          <button class="btn btn-outline" onclick="schoolMapFitAll()" title="Fit all pins">
+          <button class="btn btn-outline" onclick="schoolMapFitAll()" data-tip="Fit all pins">
             <i class="fas fa-expand-arrows-alt"></i> Fit All
           </button>
           <button class="btn btn-outline" onclick="smapShowAllRoutes()"
-            title="Show routes to all schools from home base" style="color:#a5b4fc;border-color:rgba(99,102,241,0.4);">
+            data-tip="Show routes to all schools from home base" style="color:#a5b4fc;border-color:rgba(99,102,241,0.4);">
             <i class="fas fa-network-wired"></i> Route All
           </button>
-          <button class="btn btn-outline" onclick="smapToggleAIPanel()" title="AI visit route suggestions"
+          <button class="btn btn-outline" onclick="smapToggleAIPanel()" data-tip="AI visit route suggestions"
             style="color:#34d399;border-color:rgba(52,211,153,0.4);" id="smapAIBtn">
             <i class="fas fa-robot"></i> AI Planner
           </button>
-          <button class="btn btn-outline" onclick="exportSchoolMapImage()" title="Export map as PNG image">
+          <button class="btn btn-outline" onclick="exportSchoolMapImage()" data-tip="Export map as PNG image">
             <i class="fas fa-image"></i> Export Image
           </button>
-          <button class="btn btn-outline" onclick="smapToggleHomePanel()" title="Configure home base location"
+          <button class="btn btn-outline" onclick="smapToggleHomePanel()" data-tip="Configure home base location"
             id="smapHomeCogBtn">
             <i class="fas fa-cog"></i>
           </button>
@@ -2426,10 +2438,10 @@
           </div>
           <div style="display:flex;gap:8px;">
             <button class="smap-home-btn smap-btn-gps" onclick="smapHomeUseGPS()"
-              title="Use my current GPS coordinates">
+              data-tip="Use my current GPS coordinates">
               <i class="fas fa-crosshairs"></i>
             </button>
-            <button class="smap-home-btn smap-btn-save" onclick="smapSaveHome()" title="Save home base">
+            <button class="smap-home-btn smap-btn-save" onclick="smapSaveHome()" data-tip="Save home base">
               <i class="fas fa-save"></i> Save
             </button>
           </div>
@@ -2553,13 +2565,13 @@
         <div class="smap-stat" style="gap:6px;">
           <i class="fas fa-filter" style="color:var(--text-secondary);font-size:11px;"></i>
           <select id="smapRegionFilter" class="smap-select" onchange="schoolMapFilterRegion(this.value)"
-            title="Filter by cluster/region">
+            data-tip="Filter by cluster/region">
             <option value="all">All Regions</option>
           </select>
         </div>
         <!-- Hotspot toggle -->
         <div class="smap-stat" style="gap:6px;">
-          <label class="smap-toggle-wrap" title="Show visit-frequency heatmap">
+          <label class="smap-toggle-wrap" data-tip="Show visit-frequency heatmap">
             <input type="checkbox" id="smapHotspotToggle" onchange="schoolMapToggleHotspot(this.checked)">
             <span class="smap-toggle-slider"></span>
             <span style="font-size:12px;color:var(--text-secondary);"> Hotspots</span>
@@ -2581,14 +2593,14 @@
       <div class="smap-wrapper" id="smapWrapperEl">
         <div id="apf-school-map"></div>
         <!-- Region label (top-left overlay on map) -->
-        <div id="smapRegionLabel"
-          style="position:absolute;top:10px;left:10px;z-index:800;background:rgba(15,17,23,0.82);backdrop-filter:blur(8px);padding:7px 13px;border-radius:10px;font-size:12px;color:#cbd5e1;pointer-events:none;display:none;border:1px solid rgba(255,255,255,0.08);">
+        <div id="smapRegionLabel" class="smap-region-label"
+          style="position:absolute;top:10px;left:10px;z-index:800;backdrop-filter:blur(8px);padding:7px 13px;border-radius:10px;font-size:12px;pointer-events:none;display:none;">
           <span id="smapRegionLabelText" style="display:flex;align-items:center;gap:6px;"><i
               class="fas fa-map-marker-alt" style="color:#6366f1;"></i><span></span></span>
         </div>
         <!-- Route info panel (slides up from bottom of map) -->
-        <div id="smapRoutePanel"
-          style="display:none;position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:900;background:rgba(15,17,23,0.92);backdrop-filter:blur(12px);border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:12px 18px;min-width:320px;max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div id="smapRoutePanel" class="smap-route-panel"
+          style="display:none;position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:900;border-radius:14px;padding:12px 18px;min-width:320px;max-width:520px;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <i class="fas fa-route" style="color:#6366f1;font-size:16px;"></i>
             <div style="flex:1;min-width:0;">
@@ -2598,13 +2610,13 @@
               <div id="smapRouteMeta" style="font-size:11px;color:var(--text-secondary);margin-top:2px;"></div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-              <div id="smapRouteDist"
-                style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:#a5b4fc;white-space:nowrap;">
+              <div id="smapRouteDist" class="smap-route-chip smap-route-chip-dist"
+                style="border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap;">
               </div>
-              <div id="smapRouteEta"
-                style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:#86efac;white-space:nowrap;">
+              <div id="smapRouteEta" class="smap-route-chip smap-route-chip-eta"
+                style="border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap;">
               </div>
-              <button class="btn btn-ghost btn-sm" onclick="smapClearRoute()" title="Clear route"
+              <button class="btn btn-ghost btn-sm" onclick="smapClearRoute()" data-tip="Clear route"
                 style="padding:4px 8px;"><i class="fas fa-times"></i></button>
             </div>
           </div>
@@ -2634,7 +2646,7 @@
           <span style="font-weight:600;font-size:15px;"><i class="fas fa-list"></i> School Locations</span>
           <span id="smapTableCount" style="font-size:12px;color:var(--text-secondary);margin-right:auto;"></span>
           <div style="display:flex;align-items:center;gap:8px;">
-            <button class="btn btn-outline btn-sm" onclick="smapExportTableCSV()" title="Export to Excel / CSV"
+            <button class="btn btn-outline btn-sm" onclick="smapExportTableCSV()" data-tip="Export to Excel / CSV"
               style="height:32px;">
               <i class="fas fa-file-excel" style="color:#10b981;"></i> Export Data
             </button>
@@ -3521,7 +3533,7 @@
           <p class="swh-sub">Assembly · Print-Rich Environment · Library · Creative Writing · Bal Shodh Mela</p>
         </div>
         <div class="swh-head-actions">
-          <button class="swh-btn swh-btn--icon" onclick="exportSchoolWorkExcel()" title="Export to Excel">
+          <button class="swh-btn swh-btn--icon" onclick="exportSchoolWorkExcel()" data-tip="Export to Excel">
             <i class="fas fa-file-export"></i>
           </button>
           <button class="swh-btn swh-btn--primary" onclick="openSchoolWorkModal()">
@@ -3543,20 +3555,20 @@
           <input type="text" id="schoolWorkSearchInput" placeholder="Search school, activity, teacher…"
             oninput="_pageState.schoolWork=1;renderSchoolWork()">
           <button class="swh-search-clear" id="swSearchClear" onclick="clearSwSearch()" style="display:none"
-            title="Clear"><i class="fas fa-times"></i></button>
+            data-tip="Clear"><i class="fas fa-times"></i></button>
         </div>
         <div class="swh-chips" id="swStatusPills"></div>
         <div class="swh-filterbar-right">
-          <select id="swSortSelect" onchange="setSwSort(this.value)" title="Sort">
+          <select id="swSortSelect" onchange="setSwSort(this.value)" data-tip="Sort">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="school">School A→Z</option>
             <option value="participants">Most participants</option>
           </select>
           <div class="swh-viewtoggle" role="group" aria-label="View toggle">
-            <button class="active" data-view="grid" onclick="setSwView('grid')" title="Grid view"><i
+            <button class="active" data-view="grid" onclick="setSwView('grid')" data-tip="Grid view"><i
                 class="fas fa-border-all"></i></button>
-            <button data-view="list" onclick="setSwView('list')" title="List view"><i class="fas fa-list"></i></button>
+            <button data-view="list" onclick="setSwView('list')" data-tip="List view"><i class="fas fa-list"></i></button>
           </div>
         </div>
         <!-- Hidden selects keep JS compatibility -->
@@ -3652,7 +3664,7 @@
                 <input type="text" id="schoolWorkTeacherInput" placeholder="Type teacher name & press Enter"
                   list="schoolWorkTeacherList" onkeydown="handleSwTeacherKeydown(event)">
                 <datalist id="schoolWorkTeacherList"></datalist>
-                <button type="button" class="sw-teacher-add-btn" onclick="addSwTeacher()" title="Add teacher"><i
+                <button type="button" class="sw-teacher-add-btn" onclick="addSwTeacher()" data-tip="Add teacher"><i
                     class="fas fa-plus"></i></button>
               </div>
               <div class="sw-teacher-tags" id="schoolWorkTeacherTags"></div>
@@ -3699,7 +3711,7 @@
                 <i class="fas fa-link"></i> Link Excel
               </button>
               <button class="btn btn-outline vp-split-arrow" onclick="toggleVpExcelMenu(event)"
-                title="More Excel options" id="vpExcelArrowBtn">
+                data-tip="More Excel options" id="vpExcelArrowBtn">
                 <i class="fas fa-chevron-down" style="font-size:10px;margin:0;pointer-events:none"></i>
               </button>
               <div class="vp-excel-dropdown-menu" id="vpExcelDropdownMenu" style="display:none">
@@ -3739,11 +3751,11 @@
             <span id="vpLinkedFileName">Not linked</span>
             <span class="vp-link-mode" id="vpLinkMode">Synced</span>
             <button class="vp-autosync-toggle" id="vpAutoSyncToggle" onclick="vpToggleAutoSync()"
-              title="Auto-sync to Excel (OFF by default)">
+              data-tip="Auto-sync to Excel (OFF by default)">
               <i class="fas fa-sync-alt"></i> <span id="vpAutoSyncLabel">Sync OFF</span>
             </button>
-            <button class="vp-unlink-btn" onclick="vpUnlinkExcel()" title="Unlink"><i class="fas fa-times"></i></button>
-            <span class="vp-autosave-dot" id="vpAutoSaveDot" title="Data saved in app"></span>
+            <button class="vp-unlink-btn" onclick="vpUnlinkExcel()" data-tip="Unlink"><i class="fas fa-times"></i></button>
+            <span class="vp-autosave-dot" id="vpAutoSaveDot" data-tip="Data saved in app"></span>
           </div>
         </div>
       </div>
@@ -3775,7 +3787,7 @@
           <div class="vp-date-single-wrap" onclick="event.stopPropagation()">
             <i class="fas fa-calendar-day" style="font-size:11px;color:var(--accent);opacity:0.7;margin-left:6px"></i>
             <button id="vpDatePickBtn" class="vdr-trigger-btn" onclick="vpOpenDatePicker(this)">Pick Date</button>
-            <button class="vdr-clear-btn" title="Clear date" onclick="vpClearSingleDate()">
+            <button class="vdr-clear-btn" data-tip="Clear date" onclick="vpClearSingleDate()">
               <i class="fas fa-times"></i></button>
           </div>
           <span style="font-size:11px;color:var(--text-muted);font-weight:500">or</span>
@@ -3786,7 +3798,7 @@
             <div class="vdr-sep"></div>
             <button id="vpVdrToBtn" class="vdr-trigger-btn"
               onclick="VDR.open('to',this,vpDateRangeCallback)">To</button>
-            <button class="vdr-clear-btn" title="Clear range" onclick="vpClearRangeDates()">
+            <button class="vdr-clear-btn" data-tip="Clear range" onclick="vpClearRangeDates()">
               <i class="fas fa-times"></i></button>
           </div>
           <!-- Hidden native date inputs for filter logic -->
@@ -3796,14 +3808,14 @@
         </div>
         <div class="vp-filter-row" style="margin-top:4px;gap:6px">
           <button class="btn btn-outline" id="vpSelectAllBtn" onclick="vpToggleSelectAll()"
-            title="Select / Deselect all" style="display:none"><i class="fas fa-check-square"></i>
+            data-tip="Select / Deselect all" style="display:none"><i class="fas fa-check-square"></i>
             Select</button>
           <button class="btn btn-outline vp-bulk-clear-btn" onclick="vpBulkClear()" id="vpBulkClearBtn"
-            title="Delete filtered entries" style="display:none">
+            data-tip="Delete filtered entries" style="display:none">
             <i class="fas fa-trash-alt"></i> <span id="vpBulkClearLabel">Clear</span>
           </button>
           <button class="btn btn-outline" id="vpBulkAddVisitsBtn" onclick="vpBulkAddToVisits()"
-            title="Add selected to School Visits" style="display:none; margin-left:8px;"><i class="fas fa-school"></i>
+            data-tip="Add selected to School Visits" style="display:none; margin-left:8px;"><i class="fas fa-school"></i>
             Add Selected</button>
         </div>
       </div>
@@ -4067,11 +4079,11 @@
           <input type="text" id="contactSearchInput" class="filter-input" placeholder="Search contacts..."
             oninput="_pageState.contacts=1;renderContacts()">
           <button class="btn btn-outline" onclick="extractContactsFromObservations()"
-            title="Extract teacher contacts from imported DMT observations">
+            data-tip="Extract teacher contacts from imported DMT observations">
             <i class="fas fa-file-import"></i> Extract from Observations
           </button>
           <button class="btn btn-danger-outline" onclick="openBulkDeleteContacts()"
-            title="Delete multiple contacts by filter">
+            data-tip="Delete multiple contacts by filter">
             <i class="fas fa-trash-alt"></i> Bulk Delete
           </button>
           <button class="btn btn-primary" onclick="openContactModal()">
@@ -4092,19 +4104,19 @@
           <p class="section-subtitle">Maintain a complete database of teachers add, edit, import from Excel
           </p>
           <button class="btn btn-outline" onclick="extractTeachersFromObservations()"
-            title="Extract teacher records from imported DMT observations"
+            data-tip="Extract teacher records from imported DMT observations"
             style="margin-top:8px;align-self:flex-start;">
             <i class="fas fa-file-import"></i> Extract from Observations
           </button>
         </div>
         <div class="tr-header-actions">
           <button class="btn btn-outline" onclick="document.getElementById('trImportFileInput').click()"
-            title="Import teachers from Excel file">
+            data-tip="Import teachers from Excel file">
             <i class="fas fa-file-excel"></i> Import Excel
           </button>
           <input id="trImportFileInput" type="file" accept=".xlsx,.xls,.csv" onchange="importTeacherRecordsExcel(event)"
             style="display:none">
-          <button class="btn btn-outline" onclick="exportTeacherRecordsExcel()" title="Export all teachers to Excel">
+          <button class="btn btn-outline" onclick="exportTeacherRecordsExcel()" data-tip="Export all teachers to Excel">
             <i class="fas fa-download"></i> Export
           </button>
           <button class="btn btn-primary" onclick="openTeacherRecordModal()">
@@ -4144,7 +4156,7 @@
           <input type="text" id="trSearchInput" class="filter-input" placeholder=" Search teachers..."
             oninput="_pageState.teacherrecords=1;renderTeacherRecords()">
           <button class="btn btn-danger-outline btn-sm" onclick="bulkDeleteTeacherRecords()"
-            title="Delete filtered teachers">
+            data-tip="Delete filtered teachers">
             <i class="fas fa-trash-alt"></i> Bulk Delete
           </button>
         </div>
@@ -4211,7 +4223,7 @@
             <div class="sync-room-code-display">
               <span class="sync-room-label">Room Code</span>
               <span class="sync-room-code" id="syncRoomCodeDisplay">------</span>
-              <button class="btn-icon-sm" onclick="copySyncCode()" title="Copy code"><i
+              <button class="btn-icon-sm" onclick="copySyncCode()" data-tip="Copy code"><i
                   class="fas fa-copy"></i></button>
             </div>
             <div class="sync-room-meta">
@@ -4252,11 +4264,11 @@
         <!-- Sync Actions -->
         <div class="sync-action-bar">
           <button class="btn btn-primary" onclick="sendSyncData()" id="btnSendSync"
-            title="Manually push all data to connected devices">
+            data-tip="Manually push all data to connected devices">
             <i class="fas fa-upload"></i> Push All Data
           </button>
           <button class="btn btn-outline" onclick="requestSyncData()" id="btnRequestSync"
-            title="Pull all data from the connected device">
+            data-tip="Pull all data from the connected device">
             <i class="fas fa-download"></i> Pull All Data
           </button>
           <button class="btn btn-danger" onclick="disconnectSync()" id="btnDisconnect">
@@ -5402,7 +5414,7 @@ function getOrCreateFolder() {
               <span id="sarvamStatusBadge"
                 style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);letter-spacing:0.4px;">NOT
                 CONFIGURED</span>
-              <span class="sarvam-status-dot" id="sarvamStatusDot" title="Not configured"
+              <span class="sarvam-status-dot" id="sarvamStatusDot" data-tip="Not configured"
                 style="width:10px;height:10px;border-radius:50%;background:#64748b;flex-shrink:0;"></span>
             </div>
           </div>
@@ -5764,7 +5776,7 @@ function getOrCreateFolder() {
           <div class="tg-config-title">
             <i class="fab fa-telegram-plane"></i>
             <span>Telegram Bot Integration</span>
-            <span class="tg-status-dot" id="tgStatusDot" title="Not configured"></span>
+            <span class="tg-status-dot" id="tgStatusDot" data-tip="Not configured"></span>
           </div>
           <i class="fas fa-chevron-down tg-config-chevron" id="tgChevron"></i>
         </div>
@@ -6396,7 +6408,7 @@ function getOrCreateFolder() {
             <div class="form-group relative-group">
               <label for="visitNotes">Notes / Key Observations <button type="button"
                   class="btn btn-sm btn-ghost ai-voice-btn" onclick="toggleVoiceRecording('visitNotes')"
-                  title="Dictate with AI"><i class="fas fa-microphone"></i></button></label>
+                  data-tip="Dictate with AI"><i class="fas fa-microphone"></i></button></label>
               <textarea id="visitNotes" rows="3"
                 placeholder="Describe your observations, discussions, and action points..."></textarea>
             </div>
@@ -6643,7 +6655,7 @@ function getOrCreateFolder() {
         <div class="modal-footer">
           <span id="attCount" style="color:var(--text-secondary);font-size:13px;"></span>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-outline" onclick="exportAttendanceExcel()" title="Export attendance to Excel">
+            <button class="btn btn-outline" onclick="exportAttendanceExcel()" data-tip="Export attendance to Excel">
               <i class="fas fa-download"></i> Export
             </button>
             <button class="btn btn-ghost" onclick="closeModal('trainingAttendanceModal')">Close</button>
@@ -6856,7 +6868,7 @@ function getOrCreateFolder() {
             <div class="obs-form-section-label"><i class="fas fa-pencil-alt"></i> Notes & Feedback</div>
             <div class="form-group relative-group">
               <label for="observationNotes">Field Notes <button type="button" class="btn btn-sm btn-ghost ai-voice-btn"
-                  onclick="toggleVoiceRecording('observationNotes')" title="Dictate with AI"><i
+                  onclick="toggleVoiceRecording('observationNotes')" data-tip="Dictate with AI"><i
                     class="fas fa-microphone"></i></button></label>
               <textarea id="observationNotes" rows="3"
                 placeholder="Classroom observation notes in detail..."></textarea>
@@ -7015,7 +7027,7 @@ function getOrCreateFolder() {
         <div class="modal-footer"
           style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-top:1px solid var(--border);">
           <button class="btn btn-ghost btn-sm" onclick="WidgetBuilder.resetLayout()"
-            title="Restore factory default widgets and order">
+            data-tip="Restore factory default widgets and order">
             <i class="fas fa-undo"></i> Reset to Default
           </button>
           <button class="btn btn-primary btn-sm" onclick="closeModal('widgetCustomizerModal'); WidgetBuilder.render();">
@@ -7031,7 +7043,7 @@ function getOrCreateFolder() {
 
     <!-- Floating Live Sync Indicator -->
     <div class="sync-floating-indicator" id="syncFloatingIndicator" style="display:none;"
-      onclick="navigateTo('livesync')" title="Live Sync active click to view">
+      onclick="navigateTo('livesync')" data-tip="Live Sync active click to view">
       <div class="sync-float-icon"><i class="fas fa-sync-alt"></i></div>
       <div class="sync-float-body">
         <span class="sync-float-status">Offline</span>
@@ -7940,7 +7952,7 @@ function getOrCreateFolder() {
     </div>
 
     <!-- Quick Capture FAB -->
-    <button class="quick-capture-fab" id="quickCaptureFab" onclick="openQuickCapture()" title="Quick Observation">
+    <button class="quick-capture-fab" id="quickCaptureFab" onclick="openQuickCapture()" data-tip="Quick Observation">
       <i class="fas fa-plus"></i>
     </button>
 
@@ -8273,10 +8285,10 @@ function getOrCreateFolder() {
               <textarea id="aiChatInput" placeholder="Type your message... (supports Hindi, Tamil, Telugu, etc.)"
                 rows="1" onkeydown="handleAIChatKeydown(event)" oninput="autoResizeTextarea(this)"></textarea>
               <button class="ai-chat-mic-btn ai-voice-btn" onclick="toggleVoiceRecording('aiChatInput')"
-                title="Voice input">
+                data-tip="Voice input">
                 <i class="fas fa-microphone"></i>
               </button>
-              <button class="ai-chat-send-btn" onclick="sendAIChat()" id="aiChatSendBtn" title="Send message">
+              <button class="ai-chat-send-btn" onclick="sendAIChat()" id="aiChatSendBtn" data-tip="Send message">
                 <i class="fas fa-paper-plane"></i>
               </button>
             </div>
@@ -8311,7 +8323,7 @@ function getOrCreateFolder() {
                   <option value="ur-IN">Urdu</option>
                 </select>
               </div>
-              <button class="ai-translate-swap" onclick="swapTranslateLanguages()" title="Swap languages">
+              <button class="ai-translate-swap" onclick="swapTranslateLanguages()" data-tip="Swap languages">
                 <i class="fas fa-exchange-alt"></i>
               </button>
               <div class="ai-translate-lang-group">
@@ -8338,7 +8350,7 @@ function getOrCreateFolder() {
                   maxlength="2000" oninput="updateTranslateCharCount()"></textarea>
                 <div class="ai-translate-panel-footer">
                   <span id="aiTranslateCharCount">0/2000</span>
-                  <button class="btn btn-sm" onclick="clearTranslateInput()" title="Clear"><i
+                  <button class="btn btn-sm" onclick="clearTranslateInput()" data-tip="Clear"><i
                       class="fas fa-times"></i></button>
                 </div>
               </div>
@@ -8347,9 +8359,9 @@ function getOrCreateFolder() {
                   here...
                 </div>
                 <div class="ai-translate-panel-footer">
-                  <button class="btn btn-sm" onclick="copyTranslateOutput()" title="Copy"><i class="fas fa-copy"></i>
+                  <button class="btn btn-sm" onclick="copyTranslateOutput()" data-tip="Copy"><i class="fas fa-copy"></i>
                     Copy</button>
-                  <button class="btn btn-sm" onclick="playTranslateTTS()" title="Listen" id="aiTTSBtn"><i
+                  <button class="btn btn-sm" onclick="playTranslateTTS()" data-tip="Listen" id="aiTTSBtn"><i
                       class="fas fa-volume-up"></i> Listen</button>
                 </div>
               </div>
@@ -8598,9 +8610,9 @@ function getOrCreateFolder() {
             <div class="ai-insight-output-header">
               <h3 id="aiInsightOutputTitle"><i class="fas fa-magic"></i> AI Insight</h3>
               <div style="display:flex;gap:8px;">
-                <button class="btn btn-sm btn-outline" onclick="copyInsightOutput()" title="Copy"><i
+                <button class="btn btn-sm btn-outline" onclick="copyInsightOutput()" data-tip="Copy"><i
                     class="fas fa-copy"></i> Copy</button>
-                <button class="btn btn-sm btn-outline" onclick="closeInsightOutput()" title="Close"><i
+                <button class="btn btn-sm btn-outline" onclick="closeInsightOutput()" data-tip="Close"><i
                     class="fas fa-times"></i></button>
               </div>
             </div>
@@ -8634,14 +8646,14 @@ function getOrCreateFolder() {
                   <span id="aiPolisherCharCount">0/2000</span>
                   <button class="btn btn-sm"
                     onclick="document.getElementById('aiPolisherInput').value=''; document.getElementById('aiPolisherOutput').textContent='Polished text will appear here...'; document.getElementById('aiPolisherCharCount').textContent='0/2000';"
-                    title="Clear"><i class="fas fa-trash"></i></button>
+                    data-tip="Clear"><i class="fas fa-trash"></i></button>
                 </div>
               </div>
               <div class="ai-translate-panel ai-translate-output-panel">
                 <div id="aiPolisherOutput" class="ai-translate-output-text" style="white-space: pre-wrap;">Polished text
                   will appear here...</div>
                 <div class="ai-translate-panel-footer">
-                  <button class="btn btn-sm" onclick="copyPolisherOutput()" title="Copy"><i class="fas fa-copy"></i>
+                  <button class="btn btn-sm" onclick="copyPolisherOutput()" data-tip="Copy"><i class="fas fa-copy"></i>
                     Copy</button>
                 </div>
               </div>
@@ -8886,7 +8898,7 @@ function getOrCreateFolder() {
               <i class="fas fa-robot"></i> Generate with Sarvam AI
             </button>
             <button class="btn lp-weekly-btn" id="lpWeeklyBtn" onclick="lpGenerateWeeklyPlanAI()"
-              title="Generate Mon–Fri connected lesson plans">
+              data-tip="Generate Mon–Fri connected lesson plans">
               <i class="fas fa-calendar-week"></i> Weekly Plan
             </button>
             <button class="btn btn-secondary lp-clear-btn" onclick="lpClearPlan()">

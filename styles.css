@@ -1,5 +1,8 @@
 /* ===== CSS Variables & Design System ===== */
 :root {
+    /* Tell the browser which theme native UI (selects, scrollbars, inputs)
+       should render in — prevents white select boxes in dark mode */
+    color-scheme: dark;
     /* Colors — Dark mode with warm amber/orange accent */
     /* Need Analysis (Power BI-style) palette */
     --na-row-a: rgba(148, 163, 184, 0.14);
@@ -62,6 +65,7 @@
 
 /* ===== Light Mode Theme ===== */
 body.light-mode {
+    color-scheme: light;
     --bg-primary: #f5f6fa;
     --bg-secondary: #ffffff;
     --bg-tertiary: #f1f5f9;
@@ -236,7 +240,7 @@ body.light-mode .chart-filter-bar {
 body.light-mode .axis-ctrl select,
 body.light-mode .filter-col-select select,
 body.light-mode .chart-limit-ctrl select {
-    background: rgba(0, 0, 0, 0.03);
+    background-color: rgba(0, 0, 0, 0.03);
     border-color: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
 }
@@ -244,7 +248,7 @@ body.light-mode .chart-limit-ctrl select {
 body.light-mode .axis-ctrl select option,
 body.light-mode .filter-col-select select option,
 body.light-mode .chart-limit-ctrl select option {
-    background: #fff;
+    background-color: #fff;
     color: #1a1d2e;
 }
 
@@ -1202,7 +1206,7 @@ body.light-mode .howto-icon {
 .filter-bar input[type="text"],
 .obj-toolbar select,
 .obj-toolbar input[type="text"] {
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 10px 14px;
@@ -1889,7 +1893,7 @@ body.light-mode .howto-icon {
 
 /* Pill-shaped selects */
 .visit-filter-bar select {
-    background: var(--bg-secondary);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 8px 14px;
@@ -4016,7 +4020,7 @@ body.light-mode .cluster-cb-item:hover {
 .unload-filters-grid select {
     width: 100%;
     padding: 8px 12px;
-    background: var(--bg-secondary);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text-primary);
@@ -4101,7 +4105,7 @@ body.light-mode .unload-preview {
 }
 
 body.light-mode .unload-filters-grid select {
-    background: #ffffff;
+    background-color: #ffffff;
     border-color: #e2e8f0;
 }
 
@@ -5466,7 +5470,7 @@ body.light-mode .sp-cal-add-row input {
 
 /* ===== Observation Light Mode ===== */
 body.light-mode .obs-stat-pill {
-    background: #ffffff;
+    background-color: #ffffff;
     border-color: #e2e8f0;
 }
 
@@ -5660,7 +5664,7 @@ body.light-mode .obs-form-section-label {
 }
 
 .report-filters select {
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 10px 14px;
@@ -6554,7 +6558,7 @@ body.modal-open {
 .form-group select,
 .form-group textarea {
     width: 100%;
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 10px 14px;
@@ -7778,7 +7782,7 @@ body.modal-open {
 /* ===== Sidebar Nav Divider ===== */
 .nav-divider {
     height: 1px;
-    background: var(--border);
+    background-color: var(--border);
     margin: 8px 16px;
 }
 
@@ -8397,7 +8401,7 @@ body.modal-open {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.04);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3b8'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 6px center;
@@ -8416,7 +8420,7 @@ body.modal-open {
 }
 
 .custom-control-group select option {
-    background: #1a1d2e;
+    background-color: #1a1d2e;
     color: #e2e8f0;
     padding: 6px 10px;
     font-size: 12px;
@@ -8853,7 +8857,7 @@ body.modal-open {
 }
 
 .chart-limit-ctrl select {
-    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 5px;
     color: var(--text-secondary);
@@ -8884,7 +8888,7 @@ body.modal-open {
 }
 
 .chart-limit-ctrl select option {
-    background: #1a1d2e;
+    background-color: #1a1d2e;
     color: #e2e8f0;
 }
 
@@ -8913,7 +8917,7 @@ body.modal-open {
 }
 
 .filter-col-select select {
-    background: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     color: var(--text-secondary);
@@ -8944,7 +8948,7 @@ body.modal-open {
 }
 
 .filter-col-select select option {
-    background: #1a1d2e;
+    background-color: #1a1d2e;
     color: #e2e8f0;
 }
 
@@ -9179,7 +9183,7 @@ body.modal-open {
     align-items: center;
     gap: 14px;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.02);
+    background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 10px;
     margin-bottom: 12px;
@@ -9212,7 +9216,7 @@ body.modal-open {
 }
 
 .axis-ctrl select {
-    background: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     color: var(--text-secondary);
@@ -9235,7 +9239,7 @@ body.modal-open {
 }
 
 .axis-ctrl select option {
-    background: #1a1d2e;
+    background-color: #1a1d2e;
     color: #e2e8f0;
     padding: 6px 10px;
     font-size: 11px;
@@ -9245,7 +9249,7 @@ body.modal-open {
 #excelSection select option,
 .tab-custom-controls select option,
 .builder-field select option {
-    background: #1a1d2e;
+    background-color: #1a1d2e;
     color: #e2e8f0;
     padding: 6px 10px;
 }
@@ -9682,7 +9686,7 @@ body.modal-open {
 
 .builder-grid .form-group select {
     padding: 10px 14px;
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--text-primary);
@@ -11435,7 +11439,7 @@ body.modal-open {
 }
 
 .planner-add-task select {
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
@@ -11687,7 +11691,7 @@ body.modal-open {
 }
 
 .filter-select {
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
@@ -12247,7 +12251,7 @@ body.modal-open {
     padding: 6px 10px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     color: var(--text-primary);
     font-size: 12px;
     cursor: pointer;
@@ -18809,7 +18813,7 @@ body.ls-wide * {
 
 .settings-select {
     padding: 8px 12px;
-    background: var(--bg-input, var(--bg-tertiary));
+    background-color: var(--bg-input, var(--bg-tertiary));
     color: var(--text-primary);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -22421,7 +22425,7 @@ body.light-mode .gdrive-auto-row {
 .marai-fg select,
 .marai-fg textarea {
     width: 100%;
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1.5px solid var(--border);
     color: var(--text-primary);
     padding: 11px 14px;
@@ -22438,7 +22442,7 @@ body.light-mode .gdrive-auto-row {
     outline: none;
     border-color: var(--marai-modal-accent);
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
-    background: rgba(37, 42, 58, 0.9);
+    background-color: rgba(37, 42, 58, 0.9);
 }
 
 .marai-fg input::placeholder,
@@ -22514,7 +22518,7 @@ body.light-mode .marai-modal-footer {
 body.light-mode .marai-fg input:focus,
 body.light-mode .marai-fg select:focus,
 body.light-mode .marai-fg textarea:focus {
-    background: #fff;
+    background-color: #fff;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
 }
 
@@ -23116,7 +23120,7 @@ body.light-mode .marai-fg textarea:focus {
 .sw-fg select,
 .sw-fg textarea {
     width: 100%;
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1.5px solid var(--border);
     color: var(--text-primary);
     padding: 10px 14px;
@@ -23940,7 +23944,7 @@ body.light-mode .sw-status-pill.active[data-status="in-progress"] { color: #111;
 .sw-view-btn:hover { color: var(--text-primary); }
 
 .sw-sort-wrap select {
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1.5px solid var(--border);
     color: var(--text-primary);
     padding: 8px 32px 8px 12px;
@@ -24562,7 +24566,7 @@ body:not(.light-mode) .sw-status-pill.active { background: #fff !important; colo
 .sw-view-btn { width: 28px !important; height: 26px !important; border-radius: 6px !important; }
 .sw-view-btn.active { background: var(--bg-card) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important; border: 1px solid var(--border) !important; }
 .sw-sort-wrap select {
-  background: var(--bg-input) !important;
+  background-color: var(--bg-input) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   padding: 7px 28px 7px 10px !important;
@@ -26490,7 +26494,7 @@ body.light-mode .vp-select-chk input[type="checkbox"].vp-select-entry:checked {
     padding: 9px 12px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: var(--bg-main);
+    background-color: var(--bg-main);
     color: var(--text);
     font-size: 0.85rem;
     font-family: inherit;
@@ -26498,23 +26502,23 @@ body.light-mode .vp-select-chk input[type="checkbox"].vp-select-entry:checked {
 }
 
 .vp-fg select option {
-    background: #1e1e2e;
+    background-color: #1e1e2e;
     color: #e2e8f0;
     padding: 8px 12px;
 }
 
 .vp-fg select option:checked {
-    background: #6366f1;
+    background-color: #6366f1;
     color: #fff;
 }
 
 body.light-mode .vp-fg select option {
-    background: #fff;
+    background-color: #fff;
     color: #1e293b;
 }
 
 body.light-mode .vp-fg select option:checked {
-    background: #6366f1;
+    background-color: #6366f1;
     color: #fff;
 }
 
@@ -28151,7 +28155,7 @@ body.light-mode .rr-visit-details {
 
 .cb-filter-bar select {
     padding: 9px 12px;
-    background: var(--bg-main);
+    background-color: var(--bg-main);
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--text);
@@ -28167,13 +28171,13 @@ body.light-mode .rr-visit-details {
 }
 
 .cb-filter-bar select option {
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     color: var(--text);
     padding: 8px 12px;
 }
 
 body.light-mode .cb-filter-bar select option {
-    background: #fff;
+    background-color: #fff;
     color: #1e293b;
 }
 
@@ -28487,7 +28491,7 @@ body.light-mode .cb-search-wrap input {
 }
 
 body.light-mode .cb-filter-bar select {
-    background: #f8fafc;
+    background-color: #f8fafc;
 }
 
 body.light-mode .cb-entry-card {
@@ -29596,7 +29600,7 @@ body.light-mode .cb-entry-meta-item {
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 0 10px;
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     color: var(--text-primary);
     font-size: 12px;
     font-family: inherit;
@@ -30136,7 +30140,7 @@ body.light-mode .cb-entry-meta-item {
     padding: 10px 12px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     color: var(--text-primary);
     font-size: 13px;
     font-family: inherit;
@@ -32283,7 +32287,7 @@ body.light-mode .wi-meta {
     padding: 9px 12px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     color: var(--text-primary);
     font-size: 13px;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -32529,7 +32533,7 @@ body.light-mode .wi-meta {
     padding: 10px 14px;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     color: var(--text-primary);
     font-size: 13px;
     outline: none;
@@ -32545,7 +32549,7 @@ body.light-mode .wi-meta {
 .lp-field-row-2col select option,
 .lp-config-group select option,
 .lp-autosuggest-field select option {
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     color: var(--text-primary);
 }
 
@@ -32986,7 +32990,7 @@ body.light-mode .wi-meta {
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid var(--border);
-    background: var(--bg-tertiary);
+    background-color: var(--bg-tertiary);
     color: var(--text-primary);
     font-size: 13px;
     font-family: inherit;
@@ -35540,12 +35544,12 @@ body.light-mode .lp-weekly-day-left {
   padding-right: 24px;
 }
 .obj-comment-add-row select option {
-  background: var(--bg-secondary, #1e293b);
+  background-color: var(--bg-secondary, #1e293b);
   color: var(--text-primary, #f1f5f9);
   padding: 8px;
 }
 body.light-mode .obj-comment-add-row select option {
-  background: #fff;
+  background-color: #fff;
   color: #1e293b;
 }
 .obj-stat-pill {
@@ -35855,7 +35859,7 @@ body.light-mode .obj-comment-add-row select option {
 .obj-comment-add-row select {
   padding: 5px 8px;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-primary);
@@ -35957,7 +35961,7 @@ body.light-mode .obj-toolbar-label {
 body.light-mode .obj-ap-add input,
 body.light-mode .obj-comment-add textarea,
 body.light-mode .obj-comment-add-row select {
-  background: #f8fafc;
+  background-color: #f8fafc;
   border-color: #e2e8f0;
   color: #1e293b;
 }
@@ -36386,8 +36390,8 @@ body.light-mode .obj-tpl-pill {
   flex-shrink: 0;
 }
 .smap-select {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-light);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 12px;
@@ -36397,7 +36401,7 @@ body.light-mode .obj-tpl-pill {
   outline: none;
   max-width: 140px;
 }
-.smap-select option { background: #1a1d2e; }
+.smap-select option { background-color: var(--bg-secondary); color: var(--text-primary); }
 
 /* Hotspot toggle switch */
 .smap-toggle-wrap {
@@ -38300,7 +38304,7 @@ body.light-mode .swh-search input {
 }
 
 .swh-filterbar-right select {
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-secondary);
     padding: 8px 30px 8px 12px;
@@ -38799,7 +38803,7 @@ body.light-mode .ri-card { box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04); }
 
 /* Header month select */
 .swh-head-actions select {
-    background: var(--bg-card);
+    background-color: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-secondary);
     padding: 9px 32px 9px 12px;
@@ -39317,7 +39321,7 @@ body:not(.light-mode) .gtl-target-row input[type="number"] {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-primary);
-  background: var(--bg-input);
+  background-color: var(--bg-input);
   outline: none;
   cursor: pointer;
   transition: var(--transition);
@@ -39724,9 +39728,9 @@ body:not(.light-mode) .gtl-target-row input[type="number"] {
 
 .na-counts span:hover { transform: scale(1.08); }
 
-.na-c-obs  { background: #64748b; }
-.na-c-yes  { background: #16a34a; }
-.na-c-no   { background: #ef4444; }
+.na-counts .na-c-obs  { background: #64748b; }
+.na-counts .na-c-yes  { background: #16a34a; }
+.na-counts .na-c-no   { background: #ef4444; }
 
 .na-table-empty {
   padding: 36px 16px;
@@ -39760,4 +39764,815 @@ body.light-mode .na-teacher-row:nth-child(even) { background: rgba(15, 23, 42, 0
   .na-head-teacher span:nth-child(3),
   .na-teacher-row .na-t-cluster { display: none; }
   .na-kpi-value { font-size: 26px; }
+}
+
+/* ===== Need Analysis — usability refinements ===== */
+/* Filter cards: single row — equal widths, shrink instead of wrap */
+.na-filter-rail { flex-wrap: wrap; }
+.na-filter-card {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+}
+
+.na-filter-card select {
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.na-filter-card label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Rail head: keep export visible without squeezing the title */
+.na-rail-head { flex-wrap: wrap; }
+.na-rail-head h3 { flex: 1 1 auto; }
+
+/* KPI tiles: subtler hover (no large lift) */
+.na-kpi:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.na-kpi:hover::before { height: 3px; }
+
+/* Stage chips: readable in both themes */
+body.light-mode .na-stage-chip {
+  background: rgba(217, 119, 6, 0.08);
+  border-color: rgba(217, 119, 6, 0.35);
+  color: #92400e;
+}
+body.light-mode .na-stage-chip:hover {
+  background: rgba(217, 119, 6, 0.15);
+  border-color: rgba(217, 119, 6, 0.55);
+}
+body.light-mode .na-stage-chip.active {
+  background: rgba(217, 119, 6, 0.18);
+  border-color: #d97706;
+  color: #78350f;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+}
+body.light-mode .na-stage-count { background: rgba(0, 0, 0, 0.08); }
+
+/* Tables: calmer hover, no layout shift */
+.na-practice-row:hover,
+.na-teacher-row:hover { background: var(--bg-card-hover); transform: none; }
+
+/* Charts: never overflow narrow screens */
+.na-charts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+
+/* Card hover: keep elevation change only */
+.na-chart-card:hover,
+.na-table-card:hover { transform: none; }
+
+/* Tabs: horizontal scroll on small screens instead of overflow */
+.obs-tabs {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.obs-tab { white-space: nowrap; flex: 0 0 auto; }
+
+@media (max-width: 700px) {
+  .na-filter-card { max-width: none; flex: 1 1 calc(50% - 10px); }
+  .na-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .na-rail-head .na-export-btn { margin-left: 0 !important; }
+}
+
+@media (max-width: 420px) {
+  .na-filter-card { flex: 1 1 100%; }
+  .obs-tab { padding: 10px 14px; font-size: 13px; }
+}
+
+/* ============================================================
+   Field Notes & Observations — Modern UI refresh
+   ============================================================ */
+
+/* ---------- Segmented pill tabs ---------- */
+#section-observations .obs-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 5px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+#section-observations .obs-tab {
+  border-radius: 999px;
+  padding: 8px 18px;
+  margin-bottom: 0;
+  border-bottom: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+#section-observations .obs-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+#section-observations .obs-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-bottom: none;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+#section-observations .obs-tab.active:hover { background: var(--accent-hover); }
+
+/* ---------- Modern stats pills ---------- */
+#section-observations .obs-stat-pill {
+  border-radius: 999px;
+  padding: 9px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+#section-observations .obs-stat-pill:hover {
+  border-color: var(--border-light);
+  transform: translateY(-1px);
+}
+
+/* ---------- Filter rail: inset field cards ---------- */
+.na-filter-rail {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  gap: 12px;
+}
+
+.na-rail-head h3 { font-size: 15px; letter-spacing: -0.01em; }
+
+.na-clear-all {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 7px 14px;
+}
+
+.na-clear-all:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: none;
+  filter: none;
+}
+
+.na-export-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.08);
+  box-shadow: none;
+  padding: 7px 14px;
+  font-weight: 700;
+}
+
+.na-export-btn:hover {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #16a34a;
+  transform: none;
+  box-shadow: none;
+}
+
+.na-filter-card {
+  background: var(--bg-tertiary);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 10px 14px 12px;
+}
+
+.na-filter-card::before { display: none; }
+
+.na-filter-card:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-light);
+}
+
+.na-filter-card:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.na-filter-card select {
+  border: none;
+  background-color: transparent;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 22px 4px 0;
+  background-position: right 2px center;
+}
+
+.na-filter-card select:hover { border: none; }
+.na-filter-card select:focus { box-shadow: none; }
+
+.na-rail-note { align-items: center; }
+
+/* ---------- KPI tiles: icon chip + left-aligned text ---------- */
+.na-kpi-grid {
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.na-kpi {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.na-kpi::before { display: none; }
+
+.na-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-light);
+}
+
+.na-kpi-icon {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+
+.na-kpi-total .na-kpi-icon { background: rgba(245, 158, 11, 0.14); color: #f59e0b; }
+.na-kpi-no    .na-kpi-icon { background: rgba(239, 68, 68, 0.13); color: #ef4444; }
+.na-kpi-tp    .na-kpi-icon { background: rgba(168, 85, 247, 0.14); color: #a855f7; }
+.na-kpi-yes   .na-kpi-icon { background: rgba(16, 185, 129, 0.14); color: #10b981; }
+
+body.light-mode .na-kpi-total .na-kpi-icon { color: #d97706; }
+body.light-mode .na-kpi-no    .na-kpi-icon { color: #dc2626; }
+body.light-mode .na-kpi-tp    .na-kpi-icon { color: #9333ea; }
+body.light-mode .na-kpi-yes   .na-kpi-icon { color: #059669; }
+
+.na-kpi-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.na-kpi-label {
+  text-align: left;
+  margin: 0;
+  font-size: 10.5px;
+}
+
+.na-kpi-value {
+  text-align: left;
+  margin: 0;
+  font-size: 28px;
+}
+
+.na-kpi-sub { text-align: left; }
+
+/* ---------- Stage chips: segmented control ---------- */
+.na-stage-bar {
+  border-radius: 18px;
+  padding: 8px 12px;
+  gap: 6px;
+  box-shadow: var(--shadow);
+}
+
+.na-stage-chip {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 7px 14px;
+  border-radius: 999px;
+  backdrop-filter: none;
+}
+
+.na-stage-chip:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transform: none;
+}
+
+.na-stage-chip.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.na-stage-chip.active:hover { background: var(--accent-hover); }
+.na-stage-chip.active .na-stage-count { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.na-stage-count { background: var(--bg-tertiary); }
+
+body.light-mode .na-stage-chip { background: transparent; color: var(--text-secondary); border: none; }
+body.light-mode .na-stage-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+body.light-mode .na-stage-chip.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px var(--accent-glow); }
+body.light-mode .na-stage-chip.active .na-stage-count { background: rgba(255, 255, 255, 0.25); color: #fff; }
+body.light-mode .na-stage-count { background: rgba(0, 0, 0, 0.06); }
+
+/* ---------- Tables: neutral modern headers + soft badges ---------- */
+.na-table-card {
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.na-table-head {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  padding: 12px 18px;
+  box-shadow: none;
+}
+
+.na-head-practice,
+.na-head-teacher {
+  background: var(--bg-tertiary);
+  box-shadow: none;
+}
+
+.na-head-title,
+.na-th-counts { color: var(--text-secondary); }
+.na-head-title i { color: var(--accent); opacity: 1; }
+
+.na-table-body { max-height: 420px; }
+
+.na-practice-row,
+.na-teacher-row { padding: 12px 18px; }
+
+.na-counts span {
+  box-shadow: none;
+  font-weight: 700;
+  padding: 3px 9px;
+}
+
+.na-counts .na-c-obs { background: rgba(100, 116, 139, 0.16); color: #94a3b8; }
+.na-counts .na-c-yes { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.na-counts .na-c-no  { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+body.light-mode .na-counts .na-c-obs { background: rgba(100, 116, 139, 0.12); color: #475569; }
+body.light-mode .na-counts .na-c-yes { background: rgba(5, 150, 105, 0.1); color: #059669; }
+body.light-mode .na-counts .na-c-no  { background: rgba(220, 38, 38, 0.09); color: #dc2626; }
+
+/* ---------- Chart cards: clean minimal ---------- */
+.na-charts-grid { gap: 16px; }
+
+.na-chart-card {
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  box-shadow: var(--shadow);
+}
+
+.na-chart-card::before { display: none; }
+
+.na-chart-card:hover { box-shadow: var(--shadow-lg); }
+
+.na-chart-card h4 {
+  font-size: 13px;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.na-chart-card h4 i { color: var(--accent); font-size: 12px; }
+
+/* ---------- Small screens ---------- */
+@media (max-width: 700px) {
+  .na-kpi { padding: 14px 16px; gap: 12px; }
+  .na-kpi-icon { width: 40px; height: 40px; font-size: 15px; border-radius: 12px; }
+  .na-kpi-value { font-size: 24px; }
+  #section-observations .obs-tab { padding: 8px 14px; }
+}
+
+/* ============================================================
+   School Map — route info panel (theme-aware)
+   ============================================================ */
+.smap-route-panel {
+  background: rgba(15, 17, 23, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.smap-route-chip-dist {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+.smap-route-chip-eta {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+
+body.light-mode .smap-route-panel {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.16);
+}
+
+body.light-mode .smap-route-chip-dist {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #4f46e5;
+}
+
+body.light-mode .smap-route-chip-eta {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.3);
+  color: #15803d;
+}
+
+/* School Map — light-mode legend, popups & map surface */
+body.light-mode #apf-school-map { background: #eef2f7; }
+
+body.light-mode .smap-legend {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #334155;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .smap-legend-title { color: #64748b; }
+
+body.light-mode .leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.16) !important;
+  color: #334155 !important;
+}
+
+body.light-mode .leaflet-popup-tip { background: #ffffff !important; }
+body.light-mode .leaflet-popup-close-button { color: #64748b !important; }
+body.light-mode .smap-popup-name { color: #1e293b; }
+body.light-mode .smap-popup-meta { color: #64748b; }
+body.light-mode .smap-popup-meta b { color: #334155; }
+
+/* Region label chip (top-left map overlay) — theme-aware */
+.smap-region-label {
+  background: rgba(15, 17, 23, 0.82);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.light-mode .smap-region-label {
+  background: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+}
+
+/* Search autocomplete dropdown — light mode */
+body.light-mode .smap-search-drop {
+  background: #ffffff;
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.15);
+}
+
+body.light-mode .smap-drop-item { border-bottom-color: rgba(0, 0, 0, 0.05); }
+body.light-mode .smap-drop-item:hover { background: rgba(99, 102, 241, 0.08); }
+
+/* ============================================================
+   MODERN DROPDOWNS — app-wide select styling
+   Element-level base; class rules (e.g. .na-filter-card select)
+   still win for their layout specifics.
+   ============================================================ */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 9px 34px 9px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  /* Chevron (light stroke for dark theme) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239ca3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+select:hover {
+  border-color: var(--border-light);
+  background-color: var(--bg-card-hover);
+}
+
+select:focus,
+select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Dropdown option list — theme-aware (works in Chromium/Firefox) */
+select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+/* Light theme: darker chevron stroke */
+body.light-mode select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+body.light-mode select:hover { background-color: #ffffff; }
+
+/* Preserve specialized chevron placement for compact filter cards */
+.na-filter-card select {
+  background-position: right 7px center;
+}
+
+/* Small modifier for dense toolbars */
+select.filter-select-sm {
+  padding: 6px 30px 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  background-position: right 9px center;
+}
+
+/* Classed selects whose own padding would collide with the chevron —
+   guarantee right-side chevron clearance */
+.filter-bar select,
+.obj-toolbar select,
+.visit-filter-bar select,
+.report-filters select,
+.unload-filters-grid select,
+.chart-limit-ctrl select,
+.custom-control-group select,
+select.filter-select,
+select.settings-select,
+select.att-input,
+select.ai-translate-select,
+select.smap-dark-input,
+select.form-control,
+select.smap-select {
+  padding-right: 32px;
+}
+
+/* Multi-selects keep native behavior (no chevron, auto height) */
+select[multiple] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  background-image: none;
+  padding: 8px 10px;
+}
+
+/* ============================================================
+   MODERN DROPDOWN v2 — premium select styling (final layer)
+   Wins the cascade over all legacy rules below it.
+   ============================================================ */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-color: var(--bg-input) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239ca3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 12px 8px !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  min-height: 38px;
+  padding: 8px 36px 8px 14px !important;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+select:hover {
+  border-color: var(--accent) !important;
+  background-color: var(--bg-card-hover) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23fbbf24' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+select:focus,
+select:focus-visible {
+  outline: none !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-light), 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+
+select:active { transform: translateY(0.5px); }
+
+select:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.4);
+}
+
+/* Dropdown option list — theme-aware */
+select option {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 12px;
+}
+
+select option:checked {
+  background: var(--accent-light) !important;
+  color: var(--accent) !important;
+  font-weight: 700;
+}
+
+/* Light theme variant */
+body.light-mode select {
+  background-color: #ffffff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+body.light-mode select:hover {
+  background-color: #fefce8 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23d97706' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode select option {
+  background: #ffffff !important;
+  color: #1e293b !important;
+}
+
+body.light-mode select option:checked {
+  background: rgba(217, 119, 6, 0.1) !important;
+  color: #b45309 !important;
+}
+
+/* Multi-selects keep native behavior */
+select[multiple] {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  background-image: none !important;
+  padding: 8px 10px !important;
+  min-height: 0;
+}
+
+/* Reduced motion: drop the transitions */
+@media (prefers-reduced-motion: reduce) {
+  select { transition: none !important; }
+}
+
+/* ============================================================
+   MODERN DROPDOWN v3 — custom option-list popup
+   (native <select> list is OS-drawn; this renders our own)
+   ============================================================ */
+.mdd-list {
+  position: fixed;
+  z-index: 99999;
+  min-width: 120px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 5px;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  pointer-events: none;
+  scrollbar-width: thin;
+}
+.mdd-list.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.mdd-list.drop-up { transform: translateY(4px) scale(0.98); }
+.mdd-list.drop-up.open { transform: translateY(0) scale(1); }
+
+.mdd-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.mdd-option:hover,
+.mdd-option.highlighted {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.mdd-option.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+.mdd-option.selected::after {
+  content: '\2713';
+  font-size: 11px;
+  margin-left: 8px;
+}
+.mdd-option.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+body.light-mode .mdd-list {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+body.light-mode .mdd-option { color: #1e293b; }
+body.light-mode .mdd-option:hover,
+body.light-mode .mdd-option.highlighted {
+  background: rgba(217, 119, 6, 0.1);
+  color: #b45309;
+}
+body.light-mode .mdd-option.selected {
+  background: #d97706;
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdd-list { transition: none; }
+}
+
+
+/* ============================================================
+   APP-WIDE STYLED TOOLTIP — floating singleton (.app-tip)
+   Rendered by the tooltip module in app.js for [data-tip] hosts
+   ============================================================ */
+.app-tip {
+  position: fixed;
+  z-index: 999999;
+  max-width: 460px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  text-align: left;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  pointer-events: none;
+}
+.app-tip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+body.light-mode .app-tip {
+  background: #ffffff;
+  color: #1e293b;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-tip { transition: none; }
 }

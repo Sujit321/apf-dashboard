@@ -1810,13 +1810,13 @@ function renderObjectives() {
     const commentCount = (obj.comments || []).length;
 
     const aiButtonsHtml = (typeof SarvamAI !== 'undefined' && SarvamAI.isConfigured()) ? `
-      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAIActionPointers('${obj.id}')" title="AI Action Pointers">
+      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAIActionPointers('${obj.id}')" data-tip="AI Action Pointers">
         <i class="fas fa-robot"></i> AI Actions
       </button>
-      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAIReviewComments('${obj.id}')" title="AI Review Comments">
+      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAIReviewComments('${obj.id}')" data-tip="AI Review Comments">
         <i class="fas fa-pen-fancy"></i> AI Review
       </button>
-      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAISmartSuggestions('${obj.id}')" title="AI Smart Suggestions">
+      <button class="obj-card-action-btn obj-ai-btn" onclick="event.stopPropagation();generateAISmartSuggestions('${obj.id}')" data-tip="AI Smart Suggestions">
         <i class="fas fa-lightbulb"></i> AI Insights
       </button>
     ` : '';
@@ -1835,9 +1835,9 @@ function renderObjectives() {
           <span class="obj-year-badge"><i class="fas fa-calendar-alt"></i> ${escapeHtml(obj.year)}</span>
         </div>
         <div class="obj-card-actions">
-          <button class="obj-card-action-btn" onclick="event.stopPropagation();openObjectiveModal('${obj.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-          <button class="obj-card-action-btn" onclick="event.stopPropagation();generatePerformanceReview('${obj.id}')" title="Generate Review PDF"><i class="fas fa-file-pdf"></i></button>
-          <button class="obj-card-action-btn obj-del-btn" onclick="event.stopPropagation();deleteObjective('${obj.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+          <button class="obj-card-action-btn" onclick="event.stopPropagation();openObjectiveModal('${obj.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+          <button class="obj-card-action-btn" onclick="event.stopPropagation();generatePerformanceReview('${obj.id}')" data-tip="Generate Review PDF"><i class="fas fa-file-pdf"></i></button>
+          <button class="obj-card-action-btn obj-del-btn" onclick="event.stopPropagation();deleteObjective('${obj.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
         </div>
       </div>
       <h3 class="obj-card-title">${escapeHtml(obj.title)}</h3>
@@ -1856,7 +1856,7 @@ function renderObjectives() {
         <div class="obj-ap-section">
           <div class="obj-ap-header">
             <span><i class="fas fa-tasks"></i> Action Points (${apDone}/${apTotal})</span>
-            <button class="obj-card-action-btn" onclick="event.stopPropagation();toggleObjSection(this,'ap-${obj.id}')" title="Toggle"><i class="fas fa-chevron-down"></i></button>
+            <button class="obj-card-action-btn" onclick="event.stopPropagation();toggleObjSection(this,'ap-${obj.id}')" data-tip="Toggle"><i class="fas fa-chevron-down"></i></button>
           </div>
           <div class="obj-ap-list" id="ap-${obj.id}" style="display:none">
             ${(obj.actionPoints || []).map(ap => `
@@ -1866,7 +1866,7 @@ function renderObjectives() {
                   <span>${escapeHtml(ap.text)}</span>
                 </label>
                 ${ap.dueDate ? `<span class="obj-ap-due"><i class="fas fa-clock"></i> ${ap.dueDate}</span>` : ''}
-                <button class="obj-ap-del" onclick="event.stopPropagation();deleteActionPoint('${obj.id}','${ap.id}')" title="Remove"><i class="fas fa-times"></i></button>
+                <button class="obj-ap-del" onclick="event.stopPropagation();deleteActionPoint('${obj.id}','${ap.id}')" data-tip="Remove"><i class="fas fa-times"></i></button>
               </div>
             `).join('')}
             <div class="obj-ap-add">
@@ -1888,7 +1888,7 @@ function renderObjectives() {
       <div class="obj-comments-section">
         <div class="obj-comments-header">
           <span><i class="fas fa-comments"></i> Comments & Notes (${commentCount})</span>
-          <button class="obj-card-action-btn" onclick="event.stopPropagation();toggleObjSection(this,'cm-${obj.id}')" title="Toggle"><i class="fas fa-chevron-down"></i></button>
+          <button class="obj-card-action-btn" onclick="event.stopPropagation();toggleObjSection(this,'cm-${obj.id}')" data-tip="Toggle"><i class="fas fa-chevron-down"></i></button>
         </div>
         <div class="obj-comments-list" id="cm-${obj.id}" style="display:none">
           ${(obj.comments || []).map(c => `
@@ -1896,7 +1896,7 @@ function renderObjectives() {
               <div class="obj-comment-meta">
                 <span class="obj-comment-type"><i class="fas ${c.type === 'review' ? 'fa-star' : c.type === 'observation' ? 'fa-eye' : 'fa-comment'}"></i> ${c.type || 'comment'}</span>
                 <span class="obj-comment-date">${c.date ? parseLocalDate(c.date).toLocaleDateString('en-IN') : ''}</span>
-                <button class="obj-ap-del" onclick="event.stopPropagation();deleteComment('${obj.id}','${c.id}')" title="Remove"><i class="fas fa-times"></i></button>
+                <button class="obj-ap-del" onclick="event.stopPropagation();deleteComment('${obj.id}','${c.id}')" data-tip="Remove"><i class="fas fa-times"></i></button>
               </div>
               <p>${escapeHtml(c.text)}</p>
             </div>
@@ -2758,6 +2758,8 @@ function toggleTheme() {
   const s = getAppSettings();
   const accent = ACCENT_COLORS.find(c => c.value === s.accentColor);
   if (accent) applyAccentColorToCSS(accent.value, accent.css);
+  // Swap map tiles to match the new theme
+  if (typeof smapRefreshTiles === 'function') smapRefreshTiles();
 }
 
 function restoreTheme() {
@@ -3945,7 +3947,7 @@ const WidgetBuilder = {
     } else {
       const linkHtml = this._getWidgetLink(w);
       inner = `<div class="widget-card-header">
- <span class="widget-drag-handle" title="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
+ <span class="widget-drag-handle" data-tip="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
  <span class="widget-title"><i class="fas ${w.icon}"></i> ${escapeHtml(w.title)}</span>
  ${linkHtml}
  </div>
@@ -4510,7 +4512,7 @@ const WidgetBuilder = {
       widgets.forEach(w => {
         const isOn = !layout.hidden.includes(w.id);
         html += `<div class="wc-widget-item" data-wid="${w.id}" draggable="true">
- <span class="wc-drag" title="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
+ <span class="wc-drag" data-tip="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
  <div class="wc-icon"><i class="fas ${w.icon}"></i></div>
  <div class="wc-info"><div class="wc-name">${escapeHtml(w.title)}</div><div class="wc-desc">${escapeHtml(w.desc)}</div></div>
  <div class="wc-toggle">
@@ -5279,7 +5281,7 @@ function renderVisits() {
     return `<div class="visit-item" data-id="${v.id}" onclick="toggleVisitDetailPanel('${v.id}')">
  <div style="display:${window._appBulkDeleteEnabled ? 'flex' : 'none'};align-items:center;padding:0 6px 0 0;">
  <input type="checkbox" class="visit-select-entry" data-id="${v.id}" ${isSelected ? 'checked' : ''}
- onclick="event.stopPropagation(); toggleVisitSelect('${v.id}', this.checked)" title="Select for bulk action"
+ onclick="event.stopPropagation(); toggleVisitSelect('${v.id}', this.checked)" data-tip="Select for bulk action"
  style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;">
  </div>
  <div class="visit-date-badge">
@@ -5303,11 +5305,11 @@ function renderVisits() {
  <div class="visit-actions">
  ${hmBadge}
  <span class="badge ${badgeClass}">${v.status}</span>
- ${SarvamAI.isConfigured() ? `<button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateAIVisitReport('${v.id}')" title="AI Visit Report"><i class="fas fa-robot"></i> Report</button>
- <button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateSmartFollowups('visit','${v.id}')" title="Smart Follow-ups"><i class="fas fa-magic"></i></button>` : ''}
- <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); openReflectiveReport('visit','${v.id}')" title="Reflective Report" style="${v.reflectiveReport ? 'border-color:#22c55e;color:#22c55e' : ''}"><i class="fas fa-file-signature"></i>${v.reflectiveReport ? ' <span style="color:#22c55e;font-size:10px"></span>' : ''}</button>
- <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); openVisitModal('${v.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteVisit('${v.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ ${SarvamAI.isConfigured() ? `<button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateAIVisitReport('${v.id}')" data-tip="AI Visit Report"><i class="fas fa-robot"></i> Report</button>
+ <button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateSmartFollowups('visit','${v.id}')" data-tip="Smart Follow-ups"><i class="fas fa-magic"></i></button>` : ''}
+ <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); openReflectiveReport('visit','${v.id}')" data-tip="Reflective Report" style="${v.reflectiveReport ? 'border-color:#22c55e;color:#22c55e' : ''}"><i class="fas fa-file-signature"></i>${v.reflectiveReport ? ' <span style="color:#22c55e;font-size:10px"></span>' : ''}</button>
+ <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); openVisitModal('${v.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+ <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteVisit('${v.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>`;
   }).join('') + renderPaginationControls('visits', pg, 'renderVisits');
@@ -5569,25 +5571,25 @@ function renderVisitCalendar() {
  <div class="vc-day-visits">
  ${dayVisits.map(v => {
       const statusCls = v.status === 'completed' ? 'completed' : v.status === 'cancelled' ? 'cancelled' : 'planned';
-      return `<div class="vc-visit ${statusCls}" onclick="openVisitModal('${v.id}')" title="${escapeHtml(v.school)} ${v.purpose || ''}">
+      return `<div class="vc-visit ${statusCls}" onclick="openVisitModal('${v.id}')" data-tip="${escapeHtml(v.school)} ${v.purpose || ''}">
  <i class="fas fa-school"></i> ${escapeHtml((v.school || '').substring(0, 16))}${(v.school || '').length > 16 ? '...' : ''}
  </div>`;
     }).join('')}
  </div>
- ${!dayVisits.length && dk >= todayStr ? `<button class="vc-add" onclick="openVisitModal();document.getElementById('visitDate').value='${dk}'" title="Add visit"><i class="fas fa-plus"></i></button>` : ''}
+ ${!dayVisits.length && dk >= todayStr ? `<button class="vc-add" onclick="openVisitModal();document.getElementById('visitDate').value='${dk}'" data-tip="Add visit"><i class="fas fa-plus"></i></button>` : ''}
  </div>`);
   }
 
   calEl.innerHTML = `
  <div class="vc-header">
  <div style="display:flex;gap:6px">
- <button class="vc-nav" onclick="_visitCalMonthOffset-=12;renderVisitCalendar()" title="Prev year"><i class="fas fa-angle-double-left"></i></button>
- <button class="vc-nav" onclick="navVisitCalendar(-1)" title="Prev month"><i class="fas fa-chevron-left"></i></button>
+ <button class="vc-nav" onclick="_visitCalMonthOffset-=12;renderVisitCalendar()" data-tip="Prev year"><i class="fas fa-angle-double-left"></i></button>
+ <button class="vc-nav" onclick="navVisitCalendar(-1)" data-tip="Prev month"><i class="fas fa-chevron-left"></i></button>
  </div>
  <span class="vc-month">${monthStr}</span>
  <div style="display:flex;gap:6px">
- <button class="vc-nav" onclick="navVisitCalendar(1)" title="Next month"><i class="fas fa-chevron-right"></i></button>
- <button class="vc-nav" onclick="_visitCalMonthOffset+=12;renderVisitCalendar()" title="Next year"><i class="fas fa-angle-double-right"></i></button>
+ <button class="vc-nav" onclick="navVisitCalendar(1)" data-tip="Next month"><i class="fas fa-chevron-right"></i></button>
+ <button class="vc-nav" onclick="_visitCalMonthOffset+=12;renderVisitCalendar()" data-tip="Next year"><i class="fas fa-angle-double-right"></i></button>
  </div>
  </div>
  <div class="vc-grid">
@@ -5671,15 +5673,15 @@ function renderVisitCalendar() {
     return `
       <div class="vdr-popup-header">
         <div class="vdr-nav-group">
-          <button class="vdr-nav" onclick="VDR._nav(-12)" title="Prev Year"><i class="fas fa-angle-double-left"></i></button>
-          <button class="vdr-nav" onclick="VDR._nav(-1)"  title="Prev Month"><i class="fas fa-chevron-left"></i></button>
+          <button class="vdr-nav" onclick="VDR._nav(-12)" data-tip="Prev Year"><i class="fas fa-angle-double-left"></i></button>
+          <button class="vdr-nav" onclick="VDR._nav(-1)"  data-tip="Prev Month"><i class="fas fa-chevron-left"></i></button>
         </div>
-        <div class="vdr-month-label" onclick="VDR._switchView('months')" title="Pick month / year">
+        <div class="vdr-month-label" onclick="VDR._switchView('months')" data-tip="Pick month / year">
           ${MONTHS[m]} ${y} <i class="fas fa-caret-down"></i>
         </div>
         <div class="vdr-nav-group">
-          <button class="vdr-nav" onclick="VDR._nav(1)"   title="Next Month"><i class="fas fa-chevron-right"></i></button>
-          <button class="vdr-nav" onclick="VDR._nav(12)"  title="Next Year"><i class="fas fa-angle-double-right"></i></button>
+          <button class="vdr-nav" onclick="VDR._nav(1)"   data-tip="Next Month"><i class="fas fa-chevron-right"></i></button>
+          <button class="vdr-nav" onclick="VDR._nav(12)"  data-tip="Next Year"><i class="fas fa-angle-double-right"></i></button>
         </div>
       </div>
       <div class="vdr-selecting-label">${picking}</div>
@@ -5707,13 +5709,13 @@ function renderVisitCalendar() {
     return `
       <div class="vdr-popup-header">
         <div class="vdr-nav-group">
-          <button class="vdr-nav" onclick="VDR._navYear(-1)" title="Prev Year"><i class="fas fa-chevron-left"></i></button>
+          <button class="vdr-nav" onclick="VDR._navYear(-1)" data-tip="Prev Year"><i class="fas fa-chevron-left"></i></button>
         </div>
-        <div class="vdr-month-label" onclick="VDR._switchView('years')" title="Pick year">
+        <div class="vdr-month-label" onclick="VDR._switchView('years')" data-tip="Pick year">
           ${y} <i class="fas fa-caret-down"></i>
         </div>
         <div class="vdr-nav-group">
-          <button class="vdr-nav" onclick="VDR._navYear(1)" title="Next Year"><i class="fas fa-chevron-right"></i></button>
+          <button class="vdr-nav" onclick="VDR._navYear(1)" data-tip="Next Year"><i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
       <div class="vdr-mv-grid">${cells}</div>
@@ -5736,11 +5738,11 @@ function renderVisitCalendar() {
     return `
       <div class="vdr-popup-header">
         <div class="vdr-nav-group">
-          <button class="vdr-nav" onclick="VDR._navYearPage(-12)" title="Prev"><i class="fas fa-chevron-left"></i></button>
+          <button class="vdr-nav" onclick="VDR._navYearPage(-12)" data-tip="Prev"><i class="fas fa-chevron-left"></i></button>
         </div>
         <div class="vdr-month-label" style="cursor:default">${base} – ${base + 11}</div>
         <div class="vdr-nav-group">
-          <button class="vdr-nav" onclick="VDR._navYearPage(12)"  title="Next"><i class="fas fa-chevron-right"></i></button>
+          <button class="vdr-nav" onclick="VDR._navYearPage(12)"  data-tip="Next"><i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
       <div class="vdr-mv-grid">${cells}</div>
@@ -6591,7 +6593,7 @@ function _attRenderList(trainingId) {
  <td>${escapeHtml(a.designation || '')}</td>
  <td>${a.phone ? `<a href="tel:${a.phone}" onclick="event.stopPropagation()">${escapeHtml(a.phone)}</a>` : ''}</td>
  <td>${[a.cluster, a.block].filter(Boolean).map(x => escapeHtml(x)).join(' / ') || ''}</td>
- <td><button class="btn btn-sm btn-danger" onclick="removeTrainingAttendee('${trainingId}', ${i})" title="Remove"><i class="fas fa-times"></i></button></td>
+ <td><button class="btn btn-sm btn-danger" onclick="removeTrainingAttendee('${trainingId}', ${i})" data-tip="Remove"><i class="fas fa-times"></i></button></td>
  </tr>`).join('');
 }
 
@@ -7488,7 +7490,11 @@ async function deleteObservation(id) {
 
 // ===== Observation Tabs =====
 function switchObsTab(tab) {
-  document.querySelectorAll('.obs-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.obs-tab').forEach(t => {
+    const isActive = t.dataset.tab === tab;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
   document.querySelectorAll('.obs-tab-content').forEach(c => c.classList.remove('active'));
   const tabMap = { list: 'obsTabList', analytics: 'obsTabAnalytics', planner: 'obsTabPlanner', aianalysis: 'obsTabAianalysis', needs: 'obsTabNeeds', needanalysis: 'obsTabNeedAnalysis' };
   const el = document.getElementById(tabMap[tab] || 'obsTabList');
@@ -7600,7 +7606,7 @@ function renderObservations() {
  <div class="observation-meta-row obs-meta-row-2">
  ${o.engagementLevel ? `<span class="obs-engagement-badge ${engClass}"><i class="fas fa-fire"></i> ${escapeHtml(o.engagementLevel)}</span>` : ''}
  ${o.practiceType ? `<span class="obs-practice-type-badge">${escapeHtml(o.practiceType)}</span>` : ''}
- ${o.practiceSerial ? `<span class="obs-serial-badge" style="cursor:pointer" onclick="event.stopPropagation(); navigateToTP('${escapeHtml(o.subject || '')}','${escapeHtml(o.practiceSerial)}')" title="View in Teaching Practices"><i class="fas fa-link" style="font-size:9px;margin-right:3px"></i>${escapeHtml(o.practiceSerial)}</span>` : ''}
+ ${o.practiceSerial ? `<span class="obs-serial-badge" style="cursor:pointer" onclick="event.stopPropagation(); navigateToTP('${escapeHtml(o.subject || '')}','${escapeHtml(o.practiceSerial)}')" data-tip="View in Teaching Practices"><i class="fas fa-link" style="font-size:9px;margin-right:3px"></i>${escapeHtml(o.practiceSerial)}</span>` : ''}
  ${o.observedWhileTeaching === 'True' ? `<span class="obs-teaching-badge"><i class="fas fa-chalkboard"></i> While Teaching</span>` : ''}
  ${o.observer ? `<span><i class="fas fa-user-tie"></i> ${escapeHtml(o.observer)}</span>` : ''}
  </div>
@@ -7612,8 +7618,8 @@ function renderObservations() {
  </div>` : ''}
  ${preview ? `<div class="observation-notes-preview">${escapeHtml(preview.substring(0, 150))}${preview.length > 150 ? '...' : ''}</div>` : ''}
  <div class="observation-item-actions">
- ${SarvamAI.isConfigured() ? `<button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateAICoachNote('${o.id}')" title="AI Coach Note"><i class="fas fa-robot"></i> Coach</button>
- <button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateSmartFollowups('observation','${o.id}')" title="Smart Follow-ups"><i class="fas fa-magic"></i></button>` : ''}
+ ${SarvamAI.isConfigured() ? `<button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateAICoachNote('${o.id}')" data-tip="AI Coach Note"><i class="fas fa-robot"></i> Coach</button>
+ <button class="btn btn-sm btn-outline ai-action-btn" onclick="event.stopPropagation(); generateSmartFollowups('observation','${o.id}')" data-tip="Smart Follow-ups"><i class="fas fa-magic"></i></button>` : ''}
  <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); openObservationModal('${o.id}')"><i class="fas fa-edit"></i> Edit</button>
  <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); printObsFeedback('${o.id}')"><i class="fas fa-print"></i> Feedback</button>
  <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteObservation('${o.id}')"><i class="fas fa-trash"></i> Delete</button>
@@ -7830,7 +7836,7 @@ function renderNeedAnalysis() {
   }
 
   // If the static skeleton is gone (e.g. empty-state was rendered earlier), rebuild it
-  if (!document.getElementById('naFilterBlock')) {
+  if (!root.querySelector('.na-layout')) {
     root.innerHTML = _naBuildSkeletonHTML();
   }
 
@@ -7883,8 +7889,10 @@ function renderNeedAnalysis() {
   _naRenderCharts(filtered, practiceMaster, teacherList);
 
   // ---- Stage chips ----
+  // Count stages across ALL observations so chips never disappear when one
+  // stage is selected (they act as independent quick filters).
   const stageCounts = {};
-  stageScope.forEach(o => { const st = _naNorm(o.teacherStage); if (st) stageCounts[st] = (stageCounts[st] || 0) + 1; });
+  allObs.forEach(o => { const st = _naNorm(o.teacherStage); if (st) stageCounts[st] = (stageCounts[st] || 0) + 1; });
   const stageOrder = ['ECE', 'Primary', 'Upper Primary', 'Secondary', 'Senior Secondary'];
   const stageKeys = [...stageOrder.filter(s => stageCounts[s]), ...Object.keys(stageCounts).filter(s => !stageOrder.includes(s)).sort()];
   const stageBar = document.getElementById('naStageBar');
@@ -7906,11 +7914,11 @@ function renderNeedAnalysis() {
       practiceEl.innerHTML = practiceMaster.map((p, i) => `
         <div class="na-practice-row${i % 2 === 1 ? ' alt' : ''}${p.obs === 0 ? ' na-row-muted' : ''}">
           <span class="na-serial">${escapeHtml(p.serial)}</span>
-          <span class="na-practice-text" title="${escapeHtml(p.practice)}">${escapeHtml(p.practice) || '<em>(no practice text)</em>'}</span>
+          <span class="na-practice-text" data-tip="${escapeHtml(p.practice)}">${escapeHtml(p.practice) || '<em>(no practice text)</em>'}</span>
           <span class="na-counts">
-            <span class="na-c-obs" title="Observations">${p.obs.toLocaleString('en-IN')}</span>
-            <span class="na-c-yes" title="Yes">${p.yes.toLocaleString('en-IN')}</span>
-            <span class="na-c-no" title="No">${p.no.toLocaleString('en-IN')}</span>
+            <span class="na-c-obs" data-tip="Observations">${p.obs.toLocaleString('en-IN')}</span>
+            <span class="na-c-yes" data-tip="Yes">${p.yes.toLocaleString('en-IN')}</span>
+            <span class="na-c-no" data-tip="No">${p.no.toLocaleString('en-IN')}</span>
           </span>
         </div>`).join('');
     }
@@ -7928,9 +7936,9 @@ function renderNeedAnalysis() {
           <span class="na-t-school">${escapeHtml(t.school) || '<em>—</em>'}</span>
           <span class="na-t-cluster">${escapeHtml(t.cluster) || '<em>—</em>'}</span>
           <span class="na-counts">
-            <span class="na-c-obs" title="Observations">${t.obs.toLocaleString('en-IN')}</span>
-            <span class="na-c-yes" title="Yes">${t.yes.toLocaleString('en-IN')}</span>
-            <span class="na-c-no" title="No">${t.no.toLocaleString('en-IN')}</span>
+            <span class="na-c-obs" data-tip="Observations">${t.obs.toLocaleString('en-IN')}</span>
+            <span class="na-c-yes" data-tip="Yes">${t.yes.toLocaleString('en-IN')}</span>
+            <span class="na-c-no" data-tip="No">${t.no.toLocaleString('en-IN')}</span>
           </span>
         </div>`).join('');
     }
@@ -7980,24 +7988,36 @@ function _naBuildSkeletonHTML() {
       <div class="na-main">
         <div class="na-kpi-grid">
           <div class="na-kpi na-kpi-total">
-            <div class="na-kpi-label">Total Observation</div>
-            <div class="na-kpi-value" id="naKpiTotal">0</div>
-            <div class="na-kpi-sub" id="naKpiTotalSub"></div>
+            <span class="na-kpi-icon"><i class="fas fa-clipboard-list"></i></span>
+            <div class="na-kpi-text">
+              <div class="na-kpi-label">Total Observation</div>
+              <div class="na-kpi-value" id="naKpiTotal">0</div>
+              <div class="na-kpi-sub" id="naKpiTotalSub"></div>
+            </div>
           </div>
           <div class="na-kpi na-kpi-no">
-            <div class="na-kpi-label">Observation 'NO'</div>
-            <div class="na-kpi-value" id="naKpiNo">0</div>
-            <div class="na-kpi-sub" id="naKpiNoSub"></div>
+            <span class="na-kpi-icon"><i class="fas fa-circle-xmark"></i></span>
+            <div class="na-kpi-text">
+              <div class="na-kpi-label">Observation 'NO'</div>
+              <div class="na-kpi-value" id="naKpiNo">0</div>
+              <div class="na-kpi-sub" id="naKpiNoSub"></div>
+            </div>
           </div>
           <div class="na-kpi na-kpi-tp">
-            <div class="na-kpi-label">Teaching Practices</div>
-            <div class="na-kpi-value" id="naKpiTp">0</div>
-            <div class="na-kpi-sub" id="naKpiTpSub"></div>
+            <span class="na-kpi-icon"><i class="fas fa-list-check"></i></span>
+            <div class="na-kpi-text">
+              <div class="na-kpi-label">Teaching Practices</div>
+              <div class="na-kpi-value" id="naKpiTp">0</div>
+              <div class="na-kpi-sub" id="naKpiTpSub"></div>
+            </div>
           </div>
           <div class="na-kpi na-kpi-yes">
-            <div class="na-kpi-label">Observation 'YES'</div>
-            <div class="na-kpi-value" id="naKpiYes">0</div>
-            <div class="na-kpi-sub" id="naKpiYesSub"></div>
+            <span class="na-kpi-icon"><i class="fas fa-circle-check"></i></span>
+            <div class="na-kpi-text">
+              <div class="na-kpi-label">Observation 'YES'</div>
+              <div class="na-kpi-value" id="naKpiYes">0</div>
+              <div class="na-kpi-sub" id="naKpiYesSub"></div>
+            </div>
           </div>
         </div>
         <div class="na-stage-bar" id="naStageBar"></div>
@@ -8062,6 +8082,7 @@ function _naBuildSkeletonHTML() {
  */
 let _naActiveCharts = {};
 let _naDynamicCards = [];
+let _naStaticChartsHTML = null; // pristine chart grid, captured once for recovery
 function _naDestroyCharts() {
   Object.values(_naActiveCharts).forEach(c => { try { c.destroy(); } catch (e) { } });
   _naActiveCharts = {};
@@ -8072,11 +8093,19 @@ function _naDestroyCharts() {
 function _naRenderCharts(filtered, practiceMaster, teacherList) {
   const grid = document.getElementById('naChartsGrid');
   if (!grid) return;
+  // Capture the pristine static grid once, before any empty-state overwrite
+  if (!_naStaticChartsHTML && grid.querySelector('#naChartEngagement')) {
+    _naStaticChartsHTML = grid.innerHTML;
+  }
+  _naDestroyCharts();
   if (filtered.length === 0) {
     grid.innerHTML = '<div class="na-table-empty"><i class="fas fa-chart-bar"></i>No data to chart in current scope</div>';
     return;
   }
-  _naDestroyCharts();
+  // Restore static canvases if a previous empty-state wiped them
+  if (!grid.querySelector('#naChartEngagement') && _naStaticChartsHTML) {
+    grid.innerHTML = _naStaticChartsHTML;
+  }
 
   const palette = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1', '#d946ef', '#84cc16'];
 
@@ -8736,6 +8765,7 @@ async function unloadImportedData() {
   DB.set('observations', manual);
   renderObservations();
   renderDashboard();
+  refreshNeedAnalysisIfVisible();
   showToast(`Unloaded ${imported.length.toLocaleString()} imported observations. ${manual.length} manual records kept.`, 'success', 5000);
 }
 
@@ -8897,6 +8927,7 @@ async function executeFilteredUnload() {
   closeModal('unloadModal');
   renderObservations();
   renderDashboard();
+  refreshNeedAnalysisIfVisible();
   showToast(`Unloaded ${matches.length.toLocaleString()} records (${filterDesc}). ${remaining.length.toLocaleString()} records remaining.`, 'success', 6000);
 }
 
@@ -8913,6 +8944,7 @@ async function clearAllObservations() {
   DB.set('observations', []);
   renderObservations();
   renderDashboard();
+  refreshNeedAnalysisIfVisible();
   showToast('All observations cleared', 'info');
 }
 
@@ -9230,10 +9262,10 @@ function renderSpCalendar() {
 
   wrap.innerHTML = `
  <div class="sp-cal-header">
- <button class="sp-cal-nav" onclick="spCalNav(-1)" title="Previous"><i class="fas fa-chevron-left"></i></button>
+ <button class="sp-cal-nav" onclick="spCalNav(-1)" data-tip="Previous"><i class="fas fa-chevron-left"></i></button>
  <span class="sp-cal-title"> ${startStr} ${endStr}</span>
- <button class="sp-cal-nav" onclick="spCalNav(0)" title="Today"><i class="fas fa-dot-circle"></i></button>
- <button class="sp-cal-nav" onclick="spCalNav(1)" title="Next"><i class="fas fa-chevron-right"></i></button>
+ <button class="sp-cal-nav" onclick="spCalNav(0)" data-tip="Today"><i class="fas fa-dot-circle"></i></button>
+ <button class="sp-cal-nav" onclick="spCalNav(1)" data-tip="Next"><i class="fas fa-chevron-right"></i></button>
  </div>
  <div class="sp-cal-grid">
  ${days.map((day, idx) => {
@@ -9260,11 +9292,11 @@ function renderSpCalendar() {
  <div class="sp-cal-sug-label"><i class="fas fa-magic"></i> Suggested</div>
  <div class="sp-cal-sug-cluster"><i class="fas fa-layer-group"></i> ${escapeHtml(sugCluster.name)}</div>
  ${sugSchools.map(s => `<div class="sp-cal-sug-school">${escapeHtml(s.name)}</div>`).join('')}
- <button class="sp-cal-add-btn" onclick="spAddSuggestedVisit('${day.dk}','${escapeHtml(sugSchools[0]?.name || '')}','${escapeHtml(sugCluster.name)}')" title="Add to planner"><i class="fas fa-plus"></i> Add to Planner</button>
+ <button class="sp-cal-add-btn" onclick="spAddSuggestedVisit('${day.dk}','${escapeHtml(sugSchools[0]?.name || '')}','${escapeHtml(sugCluster.name)}')" data-tip="Add to planner"><i class="fas fa-plus"></i> Add to Planner</button>
  </div>` : ''}
  ${!isWeekend ? `<div class="sp-cal-add-row">
  <input type="text" class="sp-cal-input" id="spCalInput-${day.dk}" placeholder="Quick add..." onkeydown="if(event.key==='Enter')spQuickAddTask('${day.dk}')">
- <button onclick="spQuickAddTask('${day.dk}')" title="Add"><i class="fas fa-plus"></i></button>
+ <button onclick="spQuickAddTask('${day.dk}')" data-tip="Add"><i class="fas fa-plus"></i></button>
  </div>` : ''}
  </div>
  </div>`;
@@ -9624,7 +9656,7 @@ function buildSmartPlannerHTML(a, obs) {
  </div>
  </div>
  <div class="sp-visit-score" style="color:${engColor(s.avgEngagement)}">${engLabel(s.avgEngagement)}</div>
- <button class="sp-expand-btn" onclick="toggleSpDetail(this)" title="Details"><i class="fas fa-chevron-down"></i></button>
+ <button class="sp-expand-btn" onclick="toggleSpDetail(this)" data-tip="Details"><i class="fas fa-chevron-down"></i></button>
  <div class="sp-detail-panel" style="display:none">
  <div class="sp-detail-grid">
  <div class="sp-detail-item"><strong>Total Observations:</strong> ${s.observations.length}</div>
@@ -9662,7 +9694,7 @@ function buildSmartPlannerHTML(a, obs) {
  </div>
  <div class="sp-followup-reasons">${reasons.map(r => `<span class="sp-reason-tag">${r}</span>`).join('')}</div>
  <div class="sp-followup-eng" style="color:${engColor(t.avgEngagement)}">${engLabel(t.avgEngagement)}</div>
- <button class="sp-expand-btn" onclick="toggleSpDetail(this)" title="Details"><i class="fas fa-chevron-down"></i></button>
+ <button class="sp-expand-btn" onclick="toggleSpDetail(this)" data-tip="Details"><i class="fas fa-chevron-down"></i></button>
  <div class="sp-detail-panel" style="display:none">
  <div class="sp-detail-grid">
  <div class="sp-detail-item"><strong>NID:</strong> ${escapeHtml(t.nid || '')}</div>
@@ -9805,7 +9837,7 @@ function buildSmartPlannerHTML(a, obs) {
  <div class="sp-training-topic">${escapeHtml(g.topic)}</div>
  <div class="sp-training-type">${escapeHtml(g.type)} ${g.sessions} session${g.sessions > 1 ? 's' : ''} recommended</div>
  </div>
- <button class="sp-expand-btn" onclick="toggleSpDetail(this)" title="Details"><i class="fas fa-chevron-down"></i></button>
+ <button class="sp-expand-btn" onclick="toggleSpDetail(this)" data-tip="Details"><i class="fas fa-chevron-down"></i></button>
  </div>
  <div class="sp-training-reason"><i class="fas fa-info-circle"></i> ${escapeHtml(g.reason)}</div>
  <div class="sp-detail-panel" style="display:none">
@@ -10428,13 +10460,13 @@ function renderObsNeedAnalysis() {
                 ${item.practiceSerial ? '<span class="obs-serial-badge"><i class="fas fa-link"></i> ' + escapeHtml(item.practiceSerial) + '</span>' : ''}
               </div>
               <div class="obs-need-actions">
-                <button class="btn btn-sm btn-outline" onclick="createTaskFromNeed('${encodeURIComponent(item.teacherNeed)}', '${encodeURIComponent(item.teacher)}', '${encodeURIComponent(item.school)}')" title="Add mentoring visit to Planner">
+                <button class="btn btn-sm btn-outline" onclick="createTaskFromNeed('${encodeURIComponent(item.teacherNeed)}', '${encodeURIComponent(item.teacher)}', '${encodeURIComponent(item.school)}')" data-tip="Add mentoring visit to Planner">
                   <i class="fas fa-calendar-plus"></i> Plan Task
                 </button>
-                <button class="btn btn-sm btn-outline" onclick="createFollowupFromNeed('${encodeURIComponent(item.teacherNeed)}', '${encodeURIComponent(item.teacher)}', '${encodeURIComponent(item.school)}')" title="Add action to Follow-ups">
+                <button class="btn btn-sm btn-outline" onclick="createFollowupFromNeed('${encodeURIComponent(item.teacherNeed)}', '${encodeURIComponent(item.teacher)}', '${encodeURIComponent(item.school)}')" data-tip="Add action to Follow-ups">
                   <i class="fas fa-clock"></i> Follow-up
                 </button>
-                ${item.obsId ? `<button class="btn btn-sm btn-ghost" onclick="openObservationModal('${item.obsId}')" title="View parent observation"><i class="fas fa-eye"></i></button>` : ''}
+                ${item.obsId ? `<button class="btn btn-sm btn-ghost" onclick="openObservationModal('${item.obsId}')" data-tip="View parent observation"><i class="fas fa-eye"></i></button>` : ''}
               </div>
             </div>
           </div>`;
@@ -10466,7 +10498,7 @@ function renderObsNeedAnalysis() {
         <button class="btn btn-outline" onclick="exportNeedsAnalysisToExcel()">
           <i class="fas fa-file-excel"></i> Export Needs (.xlsx)
         </button>
-        <button class="btn btn-ghost" onclick="renderObsNeedAnalysis()" title="Refresh">
+        <button class="btn btn-ghost" onclick="renderObsNeedAnalysis()" data-tip="Refresh">
           <i class="fas fa-sync-alt"></i>
         </button>
       </div>
@@ -10516,7 +10548,7 @@ function renderObsNeedAnalysis() {
     <div class="obs-needs-synthesis-card" id="obsNeedsSynthesisCard">
       <div class="obs-needs-synthesis-header">
         <span><i class="fas fa-robot"></i> Needs Synthesis & Executive Summary</span>
-        <button class="btn btn-sm btn-ghost" onclick="generateAINeedAnalysis(true)" title="Run AI synthesis">
+        <button class="btn btn-sm btn-ghost" onclick="generateAINeedAnalysis(true)" data-tip="Run AI synthesis">
           <i class="fas fa-magic"></i> Generate AI Insight
         </button>
       </div>
@@ -13981,7 +14013,7 @@ function renderPlanner() {
 
   const headerEl = document.getElementById('plannerWeekHeader');
   headerEl.innerHTML = `<span class="week-label"> Week of ${startStr} ${endStr}</span>
- ${SarvamAI.isConfigured() ? `<button class="btn btn-sm btn-outline ai-action-btn" onclick="generateAIWeeklyPlan()" title="Get text weekly plan from AI" style="margin-left:auto;"><i class="fas fa-magic"></i> AI Text Plan</button>` : ''}`;
+ ${SarvamAI.isConfigured() ? `<button class="btn btn-sm btn-outline ai-action-btn" onclick="generateAIWeeklyPlan()" data-tip="Get text weekly plan from AI" style="margin-left:auto;"><i class="fas fa-magic"></i> AI Text Plan</button>` : ''}`;
 
   // Build grid
   const gridEl = document.getElementById('plannerGrid');
@@ -14013,7 +14045,7 @@ function renderPlanner() {
  ${autoTasks.map(t => `
  <div class="planner-task type-${t.type} ${t.status === 'completed' ? 'completed' : ''}">
  <span class="planner-task-text">${escapeHtml(t.text)}</span>
- ${t.id ? `<button class="planner-task-delete planner-task-delete-auto" onclick="deletePlannerAutoTask('${t.source}', '${t.id}')" title="Delete source entry">
+ ${t.id ? `<button class="planner-task-delete planner-task-delete-auto" onclick="deletePlannerAutoTask('${t.source}', '${t.id}')" data-tip="Delete source entry">
  <i class="fas fa-trash"></i>
  </button>` : ''}
  </div>
@@ -14024,7 +14056,7 @@ function renderPlanner() {
  ${t.done ? '<i class="fas fa-check"></i>' : ''}
  </div>
  <span class="planner-task-text">${escapeHtml(t.text)}</span>
- <button class="planner-task-delete" onclick="deletePlannerTask('${t.id}')" title="Delete">
+ <button class="planner-task-delete" onclick="deletePlannerTask('${t.id}')" data-tip="Delete">
  <i class="fas fa-times"></i>
  </button>
  </div>
@@ -14038,7 +14070,7 @@ function renderPlanner() {
  <option value="observation">Obs.</option>
  <option value="meeting">Meeting</option>
  </select>
- <button onclick="addPlannerTask('${day.dateKey}')" title="Add">
+ <button onclick="addPlannerTask('${day.dateKey}')" data-tip="Add">
  <i class="fas fa-plus"></i>
  </button>
  </div>
@@ -14521,9 +14553,9 @@ function renderRecordInsights() {
       </div>
       <div class="ri-spark"><canvas id="riSpark_${m.key}"></canvas></div>
       <div class="ri-card-foot">
-        <span title="${m.thisMonth} this month"><i class="fas fa-calendar-plus"></i>${m.thisMonth} mo</span>
-        <span class="${m.delta > 0 ? 'up' : m.delta < 0 ? 'down' : ''}" title="vs previous month"><i class="fas ${m.delta > 0 ? 'fa-arrow-up' : m.delta < 0 ? 'fa-arrow-down' : 'fa-minus'}"></i>${Math.abs(m.delta)}</span>
-        <span title="Last entry"><i class="fas fa-clock"></i>${m.lastDate ? new Date(m.lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
+        <span data-tip="${m.thisMonth} this month"><i class="fas fa-calendar-plus"></i>${m.thisMonth} mo</span>
+        <span class="${m.delta > 0 ? 'up' : m.delta < 0 ? 'down' : ''}" data-tip="vs previous month"><i class="fas ${m.delta > 0 ? 'fa-arrow-up' : m.delta < 0 ? 'fa-arrow-down' : 'fa-minus'}"></i>${Math.abs(m.delta)}</span>
+        <span data-tip="Last entry"><i class="fas fa-clock"></i>${m.lastDate ? new Date(m.lastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</span>
       </div>
     </div>`).join('');
 
@@ -16303,32 +16335,32 @@ function renderFollowups() {
 
   const statsEl = document.getElementById('followupStats');
   if (statsEl) statsEl.innerHTML = `
- <div class="followup-stat-card fsc-pending" onclick="document.getElementById('followupFilter').value='pending';_pageState.followups=1;renderFollowups()" title="Show pending">
+ <div class="followup-stat-card fsc-pending" onclick="document.getElementById('followupFilter').value='pending';_pageState.followups=1;renderFollowups()" data-tip="Show pending">
  <div class="followup-stat-icon pending"><i class="fas fa-hourglass-half"></i></div>
  <div class="followup-stat-value">${pendingCount}</div>
  <div class="followup-stat-label">Pending</div>
  </div>
- <div class="followup-stat-card fsc-inprog" onclick="document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" title="Show in progress">
+ <div class="followup-stat-card fsc-inprog" onclick="document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" data-tip="Show in progress">
  <div class="followup-stat-icon inprog"><i class="fas fa-spinner"></i></div>
  <div class="followup-stat-value">${inProgressCount}</div>
  <div class="followup-stat-label">In Progress</div>
  </div>
- <div class="followup-stat-card fsc-blocked" onclick="document.getElementById('followupFilter').value='blocked';_pageState.followups=1;renderFollowups()" title="Show blocked">
+ <div class="followup-stat-card fsc-blocked" onclick="document.getElementById('followupFilter').value='blocked';_pageState.followups=1;renderFollowups()" data-tip="Show blocked">
  <div class="followup-stat-icon blocked"><i class="fas fa-ban"></i></div>
  <div class="followup-stat-value">${blockedCount}</div>
  <div class="followup-stat-label">Blocked</div>
  </div>
- <div class="followup-stat-card fsc-overdue" onclick="document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" title="Show active overdue">
+ <div class="followup-stat-card fsc-overdue" onclick="document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" data-tip="Show active overdue">
  <div class="followup-stat-icon overdue"><i class="fas fa-triangle-exclamation"></i></div>
  <div class="followup-stat-value">${overdueCount}</div>
  <div class="followup-stat-label">SLA Overdue</div>
  </div>
- <div class="followup-stat-card fsc-high" onclick="document.getElementById('followupPriorityFilter').value='high';document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" title="Show high priority">
+ <div class="followup-stat-card fsc-high" onclick="document.getElementById('followupPriorityFilter').value='high';document.getElementById('followupFilter').value='active';_pageState.followups=1;renderFollowups()" data-tip="Show high priority">
  <div class="followup-stat-icon high"><i class="fas fa-fire"></i></div>
  <div class="followup-stat-value">${highPriCount}</div>
  <div class="followup-stat-label">High Priority</div>
  </div>
- <div class="followup-stat-card fsc-done" onclick="document.getElementById('followupFilter').value='done';_pageState.followups=1;renderFollowups()" title="Show completed">
+ <div class="followup-stat-card fsc-done" onclick="document.getElementById('followupFilter').value='done';_pageState.followups=1;renderFollowups()" data-tip="Show completed">
  <div class="followup-stat-icon done"><i class="fas fa-check-circle"></i></div>
  <div class="followup-stat-value">${doneCount}</div>
  <div class="followup-stat-label">Completed</div>
@@ -16338,7 +16370,7 @@ function renderFollowups() {
  <div class="followup-stat-value">${autoClosedCount}</div>
  <div class="followup-stat-label">Auto Closed</div>
  </div>
- <div class="followup-stat-card fsc-rate" onclick="document.getElementById('followupFilter').value='all';_pageState.followups=1;renderFollowups()" title="Show all">
+ <div class="followup-stat-card fsc-rate" onclick="document.getElementById('followupFilter').value='all';_pageState.followups=1;renderFollowups()" data-tip="Show all">
  <div class="followup-stat-icon total"><i class="fas fa-list"></i></div>
  <div class="followup-stat-value">${totalCount}</div>
  <div class="followup-stat-label">Total</div>
@@ -16456,7 +16488,7 @@ function _renderFollowupCard(f) {
  <div class="fu-note-item">
  <span class="fu-note-text">${escapeHtml(n.text)}</span>
  <span class="fu-note-time">${escapeHtml(formatFollowupHistoryTime(n.ts))}</span>
- <button class="fu-note-del" onclick="deleteFollowupNote('${f.id}','${n.id}')" title="Delete note">&times;</button>
+ <button class="fu-note-del" onclick="deleteFollowupNote('${f.id}','${n.id}')" data-tip="Delete note">&times;</button>
  </div>`).join('');
 
   const historyEvents = (f.history || []).slice().sort((a, b) => new Date(b.ts || 0) - new Date(a.ts || 0)).slice(0, 6);
@@ -16465,8 +16497,8 @@ function _renderFollowupCard(f) {
     : '<div class="followup-history-empty">No events yet.</div>';
 
   return `<div class="followup-item fu-rich ${f.done ? 'done' : ''} ${f.urgency} ${f.pinned ? 'fu-pinned' : ''}" style="border-left:3px solid ${priColor}">
- ${f.pinned ? `<div class="fu-pin-badge" title="Pinned"><i class="fas fa-thumbtack"></i></div>` : ''}
- <div class="followup-check" onclick="setFollowupRichStatus('${f.id}','${f.done ? 'pending' : 'done'}')" title="${f.done ? 'Re-open' : 'Mark complete'}">
+ ${f.pinned ? `<div class="fu-pin-badge" data-tip="Pinned"><i class="fas fa-thumbtack"></i></div>` : ''}
+ <div class="followup-check" onclick="setFollowupRichStatus('${f.id}','${f.done ? 'pending' : 'done'}')" data-tip="${f.done ? 'Re-open' : 'Mark complete'}">
  ${f.done ? '<i class="fas fa-check-circle" style="color:var(--success)"></i>' : '<i class="far fa-circle"></i>'}
  </div>
  <div class="followup-body">
@@ -16478,26 +16510,26 @@ function _renderFollowupCard(f) {
  <div class="fu-badges">
  <span class="fu-priority-badge" style="background:${priColor}20;color:${priColor};border:1px solid ${priColor}40"><i class="fas ${priIcons[f.priority] || 'fa-circle'}"></i> ${priLabels[f.priority] || 'Medium'}</span>
  <span class="fu-status-badge" style="background:${statusColor}20;color:${statusColor};border:1px solid ${statusColor}40"><i class="fas ${statusIcons[richStatus] || 'fa-circle'}"></i> ${statusLabels[richStatus] || richStatus}</span>
- ${suggestHigh ? `<span class="fu-ai-suggest" title="AI detected high-priority keywords in this text"><i class="fas fa-bolt"></i> Suggest: High Priority</span>` : ''}
+ ${suggestHigh ? `<span class="fu-ai-suggest" data-tip="AI detected high-priority keywords in this text"><i class="fas fa-bolt"></i> Suggest: High Priority</span>` : ''}
  </div>
  </div>
  <p class="followup-text">${escapeHtml(f.text)}</p>
  <div class="followup-footer">
  <span class="followup-date"><i class="fas fa-calendar"></i> ${dateStr}</span>
  ${!f.done && f.daysSinceSource > 0 ? `<span class="followup-age ${f.urgency}">${f.daysSinceSource}d ago</span>` : ''}
- <span class="followup-owner" onclick="setFollowupOwner('${f.id}')" title="Click to reassign" style="cursor:pointer"><i class="fas fa-user-tag"></i> ${escapeHtml(f.owner)}</span>
- <span class="followup-sla ${dueClass}" onclick="setFollowupDueDate('${f.id}')" title="Click to set SLA" style="cursor:pointer"><i class="fas fa-hourglass-half"></i> ${slaText} · ${dueText}</span>
+ <span class="followup-owner" onclick="setFollowupOwner('${f.id}')" data-tip="Click to reassign" style="cursor:pointer"><i class="fas fa-user-tag"></i> ${escapeHtml(f.owner)}</span>
+ <span class="followup-sla ${dueClass}" onclick="setFollowupDueDate('${f.id}')" data-tip="Click to set SLA" style="cursor:pointer"><i class="fas fa-hourglass-half"></i> ${slaText} · ${dueText}</span>
  ${f.done && f.closureLabel ? `<span class="followup-closure ${f.closureMode === 'auto' ? 'auto' : ''}"><i class="fas fa-link"></i> ${escapeHtml(f.closureLabel)}</span>` : ''}
  </div>
  ${f.notes && f.notes.length > 0 ? `<div class="fu-notes-section"><div class="fu-notes-title"><i class="fas fa-sticky-note"></i> Notes (${f.notes.length})</div><div class="fu-notes-list">${notesHtml}</div></div>` : ''}
  <div class="followup-actions-row">
- <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)" title="Change status">
+ <select class="fu-status-select" onchange="setFollowupRichStatus('${f.id}',this.value)" data-tip="Change status">
  <option value="pending" ${richStatus === 'pending' ? 'selected' : ''}>Pending</option>
  <option value="in-progress" ${richStatus === 'in-progress' ? 'selected' : ''}>In Progress</option>
  <option value="blocked" ${richStatus === 'blocked' ? 'selected' : ''}>Blocked</option>
  <option value="done" ${richStatus === 'done' ? 'selected' : ''}>Done</option>
  </select>
- <select class="fu-priority-select" onchange="setFollowupPriority('${f.id}',this.value)" title="Set priority">
+ <select class="fu-priority-select" onchange="setFollowupPriority('${f.id}',this.value)" data-tip="Set priority">
  <option value="high" ${f.priority === 'high' ? 'selected' : ''}>High</option>
  <option value="medium" ${f.priority === 'medium' ? 'selected' : ''}>Medium</option>
  <option value="low" ${f.priority === 'low' ? 'selected' : ''}>Low</option>
@@ -16506,8 +16538,8 @@ function _renderFollowupCard(f) {
  <button class="btn btn-ghost btn-sm" onclick="setFollowupDueDate('${f.id}')"><i class="fas fa-calendar-day"></i> SLA</button>
  <button class="btn btn-ghost btn-sm" onclick="addFollowupNotePrompt('${f.id}')"><i class="fas fa-sticky-note"></i> Note</button>
  <button class="btn btn-ghost btn-sm" onclick="linkFollowupEvidence('${f.id}')"><i class="fas fa-link"></i> Link</button>
- <button class="btn btn-ghost btn-sm" onclick="toggleFollowupPin('${f.id}')" title="${f.pinned ? 'Unpin' : 'Pin to top'}"><i class="fas fa-thumbtack" ${f.pinned ? 'style="color:var(--warning)"' : ''}></i></button>
- ${isManual ? `<button class="btn btn-ghost btn-sm" onclick="editManualFollowup('${f.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-ghost btn-sm" onclick="deleteManualFollowup('${f.id}')" style="color:var(--danger)"><i class="fas fa-trash"></i></button>` : f.hidden ? `<button class="btn btn-sm" style="background:var(--warning-light,#fef3c7);color:var(--warning,#d97706);border:1px solid var(--warning,#d97706)" onclick="unhideFollowup('${f.id}')" title="Restore this follow-up"><i class="fas fa-eye"></i> Unhide</button>` : `<button class="btn btn-ghost btn-sm" onclick="hideFollowup('${f.id}')" title="Hide" style="color:var(--text-muted)"><i class="fas fa-eye-slash"></i></button>`}
+ <button class="btn btn-ghost btn-sm" onclick="toggleFollowupPin('${f.id}')" data-tip="${f.pinned ? 'Unpin' : 'Pin to top'}"><i class="fas fa-thumbtack" ${f.pinned ? 'style="color:var(--warning)"' : ''}></i></button>
+ ${isManual ? `<button class="btn btn-ghost btn-sm" onclick="editManualFollowup('${f.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-ghost btn-sm" onclick="deleteManualFollowup('${f.id}')" style="color:var(--danger)"><i class="fas fa-trash"></i></button>` : f.hidden ? `<button class="btn btn-sm" style="background:var(--warning-light,#fef3c7);color:var(--warning,#d97706);border:1px solid var(--warning,#d97706)" onclick="unhideFollowup('${f.id}')" data-tip="Restore this follow-up"><i class="fas fa-eye"></i> Unhide</button>` : `<button class="btn btn-ghost btn-sm" onclick="hideFollowup('${f.id}')" data-tip="Hide" style="color:var(--text-muted)"><i class="fas fa-eye-slash"></i></button>`}
  </div>
  <details class="fu-timeline-details">
  <summary class="followup-history-title"><i class="fas fa-clock-rotate-left"></i> Closure Timeline</summary>
@@ -16776,12 +16808,12 @@ function buildIdeaCard(idea) {
  <span class="idea-status-badge ${idea.status}">${statusLabels[idea.status] || escapeHtml(idea.status)}</span>
  <span class="idea-card-date">${dateStr}</span>
  <div class="idea-card-actions" onclick="event.stopPropagation()">
- <button onclick="openIdeaModal('${idea.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+ <button onclick="openIdeaModal('${idea.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
  ${idea.status === 'archived'
-      ? `<button onclick="unarchiveIdea('${idea.id}')" title="Unarchive" class="unarchive-btn"><i class="fas fa-box-open"></i></button>`
-      : `<button onclick="archiveIdea('${idea.id}')" title="Archive" class="archive-btn"><i class="fas fa-archive"></i></button>`
+      ? `<button onclick="unarchiveIdea('${idea.id}')" data-tip="Unarchive" class="unarchive-btn"><i class="fas fa-box-open"></i></button>`
+      : `<button onclick="archiveIdea('${idea.id}')" data-tip="Archive" class="archive-btn"><i class="fas fa-archive"></i></button>`
     }
- <button class="delete-btn" onclick="deleteIdea('${idea.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="delete-btn" onclick="deleteIdea('${idea.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>
  </div>
@@ -16891,12 +16923,12 @@ function renderIdeaList(ideas, container) {
  <span class="idea-card-category">${escapeHtml(idea.category || 'Other')}</span>
  <span class="idea-card-date">${new Date(idea.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
  <div class="idea-card-actions" onclick="event.stopPropagation()" style="opacity:1;">
- <button onclick="openIdeaModal('${idea.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+ <button onclick="openIdeaModal('${idea.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
  ${idea.status === 'archived'
-      ? `<button onclick="unarchiveIdea('${idea.id}')" title="Unarchive" class="unarchive-btn"><i class="fas fa-box-open"></i></button>`
-      : `<button onclick="archiveIdea('${idea.id}')" title="Archive" class="archive-btn"><i class="fas fa-archive"></i></button>`
+      ? `<button onclick="unarchiveIdea('${idea.id}')" data-tip="Unarchive" class="unarchive-btn"><i class="fas fa-box-open"></i></button>`
+      : `<button onclick="archiveIdea('${idea.id}')" data-tip="Archive" class="archive-btn"><i class="fas fa-archive"></i></button>`
     }
- <button class="delete-btn" onclick="deleteIdea('${idea.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="delete-btn" onclick="deleteIdea('${idea.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>
  `).join('')}</div>` + renderPaginationControls('ideas', pg, 'renderIdeas');
@@ -17640,7 +17672,7 @@ function renderSchoolProfiles() {
 
     return `
  <div class="school-profile-card" onclick="showSchoolDetail('${safeKey}')">
- <div class="school-card-delete" onclick="event.stopPropagation(); deleteSchoolProfile('${safeKey}')" title="Delete this school"><i class="fas fa-times"></i></div>
+ <div class="school-card-delete" onclick="event.stopPropagation(); deleteSchoolProfile('${safeKey}')" data-tip="Delete this school"><i class="fas fa-times"></i></div>
  <div class="school-card-name"><i class="fas fa-school"></i> ${escapeHtml(school.name)}</div>
  <div class="school-card-block">${escapeHtml(school.block || 'Block not specified')}${school.cluster ? ` <span class="school-card-cluster"><i class="fas fa-layer-group"></i> ${escapeHtml(school.cluster)}</span>` : ''}</div>
  <div class="school-card-metrics">
@@ -18003,7 +18035,7 @@ function renderClusterProfiles() {
     });
     const engLevels = {};
     Object.values(teacherLatestLevel).forEach(v => { engLevels[v.level] = (engLevels[v.level] || 0) + 1; });
-    const engBar = Object.keys(engLevels).length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;" title="Teachers by engagement level (latest observation per teacher)">${Object.entries(engLevels).map(([lvl, cnt]) => {
+    const engBar = Object.keys(engLevels).length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;" data-tip="Teachers by engagement level (latest observation per teacher)">${Object.entries(engLevels).map(([lvl, cnt]) => {
       const lc = lvl.toLowerCase();
       const color = lc.includes('more') ? '#10b981' : lc === 'engaged' || lc.includes('medium') ? '#3b82f6' : lc.includes('less') || lc.includes('low') ? '#f59e0b' : '#ef4444';
       return `<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:${color}22;color:${color};font-weight:600;">${escapeHtml(lvl)} ${cnt}</span>`;
@@ -18011,7 +18043,7 @@ function renderClusterProfiles() {
 
     return `
  <div class="school-profile-card" onclick="showClusterDetail('${safeKey}')">
- <div class="school-card-delete" onclick="event.stopPropagation(); deleteClusterProfile('${safeKey}')" title="Delete this cluster"><i class="fas fa-times"></i></div>
+ <div class="school-card-delete" onclick="event.stopPropagation(); deleteClusterProfile('${safeKey}')" data-tip="Delete this cluster"><i class="fas fa-times"></i></div>
  <div class="school-card-name"><i class="fas fa-layer-group" style="color:var(--amber);"></i> ${escapeHtml(cluster.name)}</div>
  <div class="school-card-block">${escapeHtml(cluster.block || 'Block not specified')}</div>
  <div class="school-card-metrics">
@@ -18351,7 +18383,7 @@ function renderSSRClassToggles() {
   const cfg = s.ssrClasses || getDefaultSettings().ssrClasses;
   container.innerHTML = SSR_CLASSES.map(cls => {
     const checked = cfg[cls] !== false;
-    return `<label class="ssr-class-toggle-item ${checked ? 'active' : ''}" title="Class ${cls}">
+    return `<label class="ssr-class-toggle-item ${checked ? 'active' : ''}" data-tip="Class ${cls}">
  <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSSRClass('${cls}', this.checked)">
  <span class="ssr-class-toggle-label">Class ${cls}</span>
  </label>`;
@@ -18403,8 +18435,8 @@ function _buildLevelMiniBar(sr, total) {
     pct: total > 0 ? (t[l.key] / total * 100) : 0
   })).filter(l => l.count > 0);
 
-  return `<div class="ssr-mini-bar" title="${levels.map(l => l.label + ': ' + l.count).join(' | ')}">
- ${levels.map(l => `<div class="ssr-mini-seg" style="width:${l.pct}%;background:${l.color};" title="${l.label}: ${l.count} (${l.pct.toFixed(0)}%)"></div>`).join('')}
+  return `<div class="ssr-mini-bar" data-tip="${levels.map(l => l.label + ': ' + l.count).join(' | ')}">
+ ${levels.map(l => `<div class="ssr-mini-seg" style="width:${l.pct}%;background:${l.color};" data-tip="${l.label}: ${l.count} (${l.pct.toFixed(0)}%)"></div>`).join('')}
  </div>`;
 }
 
@@ -18806,8 +18838,8 @@ function renderMeetings() {
  <span class="meeting-type-badge" style="background:${color}20;color:${color};border:1px solid ${color}40;">${escapeHtml(m.type || 'Meeting')}</span>
  <span class="meeting-date"><i class="fas fa-calendar-alt"></i> ${m.date ? parseLocalDate(m.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
  <div class="meeting-card-actions">
- <button class="btn-icon-sm" onclick="openMeetingModal('${m.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- <button class="btn-icon-sm" onclick="deleteMeeting('${m.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="btn-icon-sm" onclick="openMeetingModal('${m.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+ <button class="btn-icon-sm" onclick="deleteMeeting('${m.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>
  <div class="meeting-card-title">${escapeHtml(m.title || 'Untitled Meeting')}</div>
@@ -18870,12 +18902,12 @@ function getMeetingActionItemHtml(index, text, assignee, done) {
   return `<div class="meeting-action-row" data-index="${index}">
  <input type="text" class="form-control meeting-action-text" placeholder="Action item..." value="${escapeHtml(text || '')}" style="flex:1;">
  <input type="text" class="form-control meeting-action-assignee" placeholder="Assigned to..." value="${escapeHtml(assignee || '')}" style="width:140px;">
- <label class="settings-toggle" style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;cursor:pointer" title="Mark Done">
+ <label class="settings-toggle" style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;cursor:pointer" data-tip="Mark Done">
  <input type="checkbox" class="meeting-action-done" ${done ? 'checked' : ''}>
  <span class="settings-toggle-slider" style="width:40px;height:22px;flex-shrink:0"></span>
  <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">Done</span>
  </label>
- <button type="button" class="btn-icon-sm" onclick="this.closest('.meeting-action-row').remove()" title="Remove"><i class="fas fa-times"></i></button>
+ <button type="button" class="btn-icon-sm" onclick="this.closest('.meeting-action-row').remove()" data-tip="Remove"><i class="fas fa-times"></i></button>
  </div>`;
 }
 
@@ -19978,9 +20010,9 @@ function renderTeacherRecords() {
  <td>${r.experience ? r.experience + 'y' : ''}</td>
  <td>${escapeHtml(r.nid || '')}</td>
  <td class="tr-actions-cell">
- ${r.phone ? `<button class="tr-action-btn" onclick="window.open('tel:${r.phone.replace(/[^\d+\-\s()]/g, '')}')" title="Call"><i class="fas fa-phone"></i></button>` : ''}
- <button class="tr-action-btn" onclick="openTeacherRecordModal('${r.id}')" title="Edit"><i class="fas fa-pen"></i></button>
- <button class="tr-action-btn tr-del" onclick="deleteTeacherRecord('${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ ${r.phone ? `<button class="tr-action-btn" onclick="window.open('tel:${r.phone.replace(/[^\d+\-\s()]/g, '')}')" data-tip="Call"><i class="fas fa-phone"></i></button>` : ''}
+ <button class="tr-action-btn" onclick="openTeacherRecordModal('${r.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
+ <button class="tr-action-btn tr-del" onclick="deleteTeacherRecord('${r.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </td>
  </tr>`;
   }).join('')}
@@ -20782,10 +20814,10 @@ function renderMaraiTracking() {
   const smartChipsEl = document.getElementById('maraiSmartFilters');
   if (smartChipsEl) {
     smartChipsEl.innerHTML = chipData.map(c =>
-      `<button class="marai-smart-chip ${smartFilter === c.key ? 'active' : ''}" style="--chip-color:${c.color}" onclick="window._maraiSmartFilter = window._maraiSmartFilter === '${c.key}' ? 'none' : '${c.key}'; _pageState.marai=1; renderMaraiTracking()" title="${c.desc}">
+      `<button class="marai-smart-chip ${smartFilter === c.key ? 'active' : ''}" style="--chip-color:${c.color}" onclick="window._maraiSmartFilter = window._maraiSmartFilter === '${c.key}' ? 'none' : '${c.key}'; _pageState.marai=1; renderMaraiTracking()" data-tip="${c.desc}">
  ${c.label} <span class="marai-chip-count">${c.count}</span>
  </button>`
-    ).join('') + (smartFilter !== 'none' ? `<button class="marai-smart-chip marai-chip-clear" onclick="window._maraiSmartFilter='none';_pageState.marai=1;renderMaraiTracking()" title="Clear filter"><i class="fas fa-times"></i> Clear</button>` : '');
+    ).join('') + (smartFilter !== 'none' ? `<button class="marai-smart-chip marai-chip-clear" onclick="window._maraiSmartFilter='none';_pageState.marai=1;renderMaraiTracking()" data-tip="Clear filter"><i class="fas fa-times"></i> Clear</button>` : '');
   }
 
   // Summary stats
@@ -20824,7 +20856,7 @@ function renderMaraiTracking() {
     const progressDots = MARAI_STAGES.map((s, i) => {
       const reached = i <= stageIdx;
       const isCurrent = i === stageIdx;
-      return `<div class="marai-dot ${reached ? 'reached' : ''} ${isCurrent ? 'current' : ''}" style="--dot-color:${s.color}" title="${s.label}">
+      return `<div class="marai-dot ${reached ? 'reached' : ''} ${isCurrent ? 'current' : ''}" style="--dot-color:${s.color}" data-tip="${s.label}">
  <span class="marai-dot-emoji">${s.emoji}</span>
  </div>`;
     }).join('<div class="marai-connector"></div>');
@@ -20843,7 +20875,7 @@ function renderMaraiTracking() {
  ${t.school ? `<span class="marai-school"><i class="fas fa-school"></i> ${escapeHtml(t.school)}</span>` : ''}
  </div>
  <div class="marai-card-actions">
- <button class="btn btn-sm btn-accent" onclick="showMaraiPlanModal('${teacherKey}')" title="View Intervention Plan"><i class="fas fa-clipboard-list"></i> Plan</button>
+ <button class="btn btn-sm btn-accent" onclick="showMaraiPlanModal('${teacherKey}')" data-tip="View Intervention Plan"><i class="fas fa-clipboard-list"></i> Plan</button>
  <button class="btn btn-sm btn-primary" onclick="openMaraiRecordModal('${teacherKey}')"><i class="fas fa-plus"></i> Update Stage</button>
  </div>
  </div>
@@ -20853,7 +20885,7 @@ function renderMaraiTracking() {
  ${currentStage ? `${currentStage.emoji} ${currentStage.label}` : ' Not Yet Tracked'}
  </span>
  <span class="marai-last-date"><i class="fas fa-calendar-alt"></i> ${lastDate}</span>
- ${lastNote ? `<span class="marai-last-note" title="${escapeHtml(lastNote)}"><i class="fas fa-sticky-note"></i> ${escapeHtml(lastNote.substring(0, 60))}${lastNote.length > 60 ? '...' : ''}</span>` : ''}
+ ${lastNote ? `<span class="marai-last-note" data-tip="${escapeHtml(lastNote)}"><i class="fas fa-sticky-note"></i> ${escapeHtml(lastNote.substring(0, 60))}${lastNote.length > 60 ? '...' : ''}</span>` : ''}
  </div>
  ${suggSnippet}
  ${sorted.length > 0 ? `<div class="marai-history-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')"><i class="fas fa-chevron-down"></i> ${sorted.length} record${sorted.length !== 1 ? 's' : ''}</div>
@@ -20863,7 +20895,7 @@ function renderMaraiTracking() {
  <span class="marai-history-badge" style="background:${s?.color || '#6b7280'}20;color:${s?.color || '#6b7280'}">${s?.emoji || ''} ${s?.label || r.stage}</span>
  <span class="marai-history-date">${parseLocalDate(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
  ${r.notes ? `<span class="marai-history-note">${escapeHtml(r.notes)}</span>` : ''}
- <button class="btn-icon-sm" onclick="deleteMaraiRecord('${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="btn-icon-sm" onclick="deleteMaraiRecord('${r.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>`;
     }).join('')}</div>` : ''}
  </div>`;
@@ -20940,9 +20972,9 @@ function renderMaraiTracking() {
  <div style="font-weight:600;font-size:13px;color:var(--text-primary);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.name)}</div>
  <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fas fa-school"></i> ${escapeHtml(t.school)}</div>
  <div style="display:flex;gap:10px;font-size:11px;color:var(--text-secondary);margin-bottom:12px">
- <span title="${t.yesCount} 'Yes' teaching practice marks"><strong style="color:#10b981">${t.yesCount}</strong> Yes</span>
- <span title="${t.trainCount} trainings attended"><strong style="color:#f59e0b">${t.trainCount}</strong> Trainings</span>
- <span title="${t.visitCount} visits recorded"><strong style="color:#6366f1">${t.visitCount}</strong> Visits</span>
+ <span data-tip="${t.yesCount} 'Yes' teaching practice marks"><strong style="color:#10b981">${t.yesCount}</strong> Yes</span>
+ <span data-tip="${t.trainCount} trainings attended"><strong style="color:#f59e0b">${t.trainCount}</strong> Trainings</span>
+ <span data-tip="${t.visitCount} visits recorded"><strong style="color:#6366f1">${t.visitCount}</strong> Visits</span>
  </div>
  <button onclick="document.getElementById('maraiSearchInput').value='${escapeHtml(t.name)}'; openMaraiRecordModal('${encodeURIComponent(t.name)}');" class="btn btn-sm" style="width:100%;background:rgba(99,102,241,0.1);color:#6366f1;border:none"><i class="fas fa-plus"></i> Start Tracking</button>
  </div>
@@ -21035,7 +21067,7 @@ function updateMaraiStagePreview() {
   previewEl.innerHTML = MARAI_STAGES.map((s, i) => {
     const reached = i <= stageIdx;
     const isCurrent = i === stageIdx;
-    return `<div class="marai-pv-step ${reached ? 'reached' : ''} ${isCurrent ? 'current' : ''}" style="--pv-color:${s.color}" title="${s.label}">
+    return `<div class="marai-pv-step ${reached ? 'reached' : ''} ${isCurrent ? 'current' : ''}" style="--pv-color:${s.color}" data-tip="${s.label}">
  <div class="marai-pv-dot">${s.emoji}</div>
  <span class="marai-pv-label">${s.label}</span>
  </div>${i < MARAI_STAGES.length - 1 ? '<div class="marai-pv-line' + (reached && i < stageIdx ? ' reached' : '') + '"></div>' : ''}`;
@@ -21487,22 +21519,22 @@ function renderSchoolWork() {
       <header class="swh-card-top">
         <span class="swh-card-type"><i class="${typeInfo.emoji.match(/class="([^"]+)"/)?.[1] || 'fas fa-tag'}"></i>${escapeHtml(typeInfo.label)}</span>
         <div class="swh-card-tools">
-          <button class="swh-iconbtn" onclick="openSchoolWorkModal('${r.id}')" title="Edit"><i class="fas fa-pen"></i></button>
-          <button class="swh-iconbtn swh-iconbtn--danger" onclick="deleteSchoolWork('${r.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+          <button class="swh-iconbtn" onclick="openSchoolWorkModal('${r.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
+          <button class="swh-iconbtn swh-iconbtn--danger" onclick="deleteSchoolWork('${r.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
         </div>
       </header>
       <h4 class="swh-card-title">${escapeHtml(r.title || typeInfo.label)}</h4>
       ${r.description ? `<p class="swh-card-desc">${escapeHtml((r.description || '').length > 130 ? r.description.slice(0, 130) + '…' : r.description)}</p>` : ''}
       <div class="swh-card-meta">
-        <span title="School"><i class="fas fa-school"></i>${escapeHtml(r.school || '—')}</span>
-        <span title="Date"><i class="fas fa-calendar"></i>${escapeHtml(dateStr)}</span>
-        ${r.participants ? `<span title="Students"><i class="fas fa-user-group"></i>${r.participants}</span>` : ''}
-        ${r.photos ? `<span title="Photos"><i class="fas fa-camera"></i>${r.photos}</span>` : ''}
+        <span data-tip="School"><i class="fas fa-school"></i>${escapeHtml(r.school || '—')}</span>
+        <span data-tip="Date"><i class="fas fa-calendar"></i>${escapeHtml(dateStr)}</span>
+        ${r.participants ? `<span data-tip="Students"><i class="fas fa-user-group"></i>${r.participants}</span>` : ''}
+        ${r.photos ? `<span data-tip="Photos"><i class="fas fa-camera"></i>${r.photos}</span>` : ''}
       </div>
       ${teachers.length ? `<div class="swh-card-teachers">${teachers.slice(0, 3).map(t => `<span><i class="fas fa-user"></i>${escapeHtml(t)}</span>`).join('')}${teachers.length > 3 ? `<span class="more">+${teachers.length - 3}</span>` : ''}</div>` : ''}
       <footer class="swh-card-foot">
         <span class="swh-card-status" style="--sc:${s.color}"><i class="fas ${s.icon}"></i>${s.label}</span>
-        ${r.outcome ? `<span class="swh-card-outcome" title="${escapeHtml(r.outcome)}"><i class="fas fa-seedling"></i>${escapeHtml(r.outcome.length > 60 ? r.outcome.slice(0, 60) + '…' : r.outcome)}</span>` : '<span></span>'}
+        ${r.outcome ? `<span class="swh-card-outcome" data-tip="${escapeHtml(r.outcome)}"><i class="fas fa-seedling"></i>${escapeHtml(r.outcome.length > 60 ? r.outcome.slice(0, 60) + '…' : r.outcome)}</span>` : '<span></span>'}
       </footer>
     </article>`;
   }).join('') + renderPaginationControls('schoolWork', pg, 'renderSchoolWork');
@@ -21596,7 +21628,7 @@ function renderSwTeacherTags() {
     return;
   }
   container.innerHTML = window._swTeachers.map((t, i) =>
-    `<span class="sw-teacher-tag-modal"><i class="fas fa-user"></i> ${escapeHtml(t)} <button type="button" onclick="removeSwTeacher(${i})" title="Remove"><i class="fas fa-times"></i></button></span>`
+    `<span class="sw-teacher-tag-modal"><i class="fas fa-user"></i> ${escapeHtml(t)} <button type="button" onclick="removeSwTeacher(${i})" data-tip="Remove"><i class="fas fa-times"></i></button></span>`
   ).join('');
 }
 
@@ -22526,21 +22558,21 @@ function _vpRenderQuickBar(opts) {
   const badge = (all, filtered, sent) => {
     let b = `<span class="vp-half-badge">${all.length}</span>`;
     if (filtered !== null) {
-      b += `<span class="vp-half-badge vp-half-badge-filtered" title="Matching date filter">${filtered.length} filtered</span>`;
+      b += `<span class="vp-half-badge vp-half-badge-filtered" data-tip="Matching date filter">${filtered.length} filtered</span>`;
     }
     if (sent > 0) {
-      b += `<span class="vp-half-badge vp-half-badge-sent" title="Added to School Visits"><i class="fas fa-school"></i> ${sent}</span>`;
+      b += `<span class="vp-half-badge vp-half-badge-sent" data-tip="Added to School Visits"><i class="fas fa-school"></i> ${sent}</span>`;
     }
     return b;
   };
 
   let html = '<div class="vp-bulk-half-actions">';
   html += `<div class="vp-half-group">
- <button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" title="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half → Visits</button>
+ <button class="vp-bulk-half-btn vp-bulk-half-first" onclick="vpBulkAddHalfToVisits('First Half')" data-tip="Bulk add all planned First Half entries to School Visits"><i class="fas fa-sun"></i> First Half → Visits</button>
  <div class="vp-half-counts">${badge(firstAll, firstFiltered, firstSent)}</div>
  </div>`;
   html += `<div class="vp-half-group">
- <button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" title="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half → Visits</button>
+ <button class="vp-bulk-half-btn vp-bulk-half-second" onclick="vpBulkAddHalfToVisits('Second Half')" data-tip="Bulk add all planned Second Half entries to School Visits"><i class="fas fa-moon"></i> Second Half → Visits</button>
  <div class="vp-half-counts">${badge(secondAll, secondFiltered, secondSent)}</div>
  </div>`;
 
@@ -22552,13 +22584,13 @@ function _vpRenderQuickBar(opts) {
   const svActiveLeft = svFilter === 'left';
   html += `<div class="vp-half-group vp-school-visits-summary">
  <span class="vp-school-chip"><i class="fas fa-school"></i> Visits Added
- <button class="vp-half-badge vp-half-badge-sent${svActiveAdded ? ' vp-sv-active' : ''}" onclick="vpToggleSvFilter('added')" title="Click to filter: already added to School Visits">${svSentCount}${svSentFiltered !== null ? ` <span style='opacity:.7;font-size:10px'>(${svSentFiltered})</span>` : ''}</button>`;
+ <button class="vp-half-badge vp-half-badge-sent${svActiveAdded ? ' vp-sv-active' : ''}" onclick="vpToggleSvFilter('added')" data-tip="Click to filter: already added to School Visits">${svSentCount}${svSentFiltered !== null ? ` <span style='opacity:.7;font-size:10px'>(${svSentFiltered})</span>` : ''}</button>`;
   if (svLeftCount > 0) {
-    html += ` <button class="vp-half-badge vp-half-badge-left${svActiveLeft ? ' vp-sv-active' : ''}" onclick="vpToggleSvFilter('left')" title="Click to filter: not yet added (planned/executed only)">${svLeftCount} left</button>`;
+    html += ` <button class="vp-half-badge vp-half-badge-left${svActiveLeft ? ' vp-sv-active' : ''}" onclick="vpToggleSvFilter('left')" data-tip="Click to filter: not yet added (planned/executed only)">${svLeftCount} left</button>`;
   } else {
     html += ` <span class="vp-half-badge vp-half-badge-done"><i class="fas fa-check"></i> all added</span>`;
   }
-  html += `</span>${svActiveAdded || svActiveLeft ? ` <button class="vp-sv-clear-btn" onclick="vpToggleSvFilter(null)" title="Clear filter"><i class="fas fa-times"></i></button>` : ''}
+  html += `</span>${svActiveAdded || svActiveLeft ? ` <button class="vp-sv-clear-btn" onclick="vpToggleSvFilter(null)" data-tip="Clear filter"><i class="fas fa-times"></i></button>` : ''}
  </div>`;
 
   html += '</div>';
@@ -23408,7 +23440,7 @@ function renderVisitPlan() {
     // Helper: render stat number with optional filtered sub-count
     const statNum = (total, filt) =>
       filt !== null
-        ? `${total}<span class="vp-stat-filtered" title="Matching date filter">${filt} <i class="fas fa-filter" style="font-size:9px"></i></span>`
+        ? `${total}<span class="vp-stat-filtered" data-tip="Matching date filter">${filt} <i class="fas fa-filter" style="font-size:9px"></i></span>`
         : `${total}`;
 
     // --- Bulk Clear Button ---
@@ -23433,7 +23465,7 @@ function renderVisitPlan() {
  <div class="vp-stat-card vp-stat-empty"><div class="vp-stat-num">${empty}</div><div class="vp-stat-label">Unfilled</div></div>
  <div class="vp-stat-card vp-stat-first-half"><div class="vp-stat-num">${statNum(firstHalfAll, firstHalfFiltered)}</div><div class="vp-stat-label"><i class="fas fa-sun"></i> First Half</div></div>
  <div class="vp-stat-card vp-stat-second-half"><div class="vp-stat-num">${statNum(secondHalfAll, secondHalfFiltered)}</div><div class="vp-stat-label"><i class="fas fa-moon"></i> Second Half</div></div>
- <div class="vp-stat-card vp-stat-school-visits"><div class="vp-stat-num">${statNum(schoolVisitsSent, schoolVisitsSentFiltered)}</div><div class="vp-stat-label"><i class="fas fa-school"></i> Visits Added</div>${schoolVisitsLeft > 0 ? `<div class="vp-stat-left" title="Planned/Executed entries not yet added to School Visits">${hasDateFilter && schoolVisitsLeftFiltered !== null ? schoolVisitsLeftFiltered : schoolVisitsLeft} left to add</div>` : `<div class="vp-stat-left vp-stat-left-done"><i class="fas fa-check"></i> All added</div>`}</div>
+ <div class="vp-stat-card vp-stat-school-visits"><div class="vp-stat-num">${statNum(schoolVisitsSent, schoolVisitsSentFiltered)}</div><div class="vp-stat-label"><i class="fas fa-school"></i> Visits Added</div>${schoolVisitsLeft > 0 ? `<div class="vp-stat-left" data-tip="Planned/Executed entries not yet added to School Visits">${hasDateFilter && schoolVisitsLeftFiltered !== null ? schoolVisitsLeftFiltered : schoolVisitsLeft} left to add</div>` : `<div class="vp-stat-left vp-stat-left-done"><i class="fas fa-check"></i> All added</div>`}</div>
  <div class="vp-stat-card"><div class="vp-stat-num">${domains}</div><div class="vp-stat-label">Domains</div></div>
  <div class="vp-stat-card"><div class="vp-stat-num">${clusters}</div><div class="vp-stat-label">Clusters</div></div>
  `;
@@ -23497,10 +23529,10 @@ function renderVisitPlan() {
  ${e.review ? `<div class="vp-entry-review"><i class="fas fa-check-double"></i> ${e.review.substring(0, 80)}${e.review.length > 80 ? '...' : ''}</div>` : ''}
  </div>
  <div class="vp-entry-actions">
- <button class="vp-act-btn vp-act-send" onclick="vpSendToSchoolVisits('${e.id}')" title="Add to School Visits"><i class="fas fa-school"></i></button>
- <button class="vp-act-btn vp-act-train" onclick="vpSendToTraining('${e.id}')" title="Add to Teacher Training"><i class="fas fa-chalkboard-teacher"></i></button>
- <button class="vp-act-btn" onclick="openVisitPlanModal('${e.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- <button class="vp-act-btn vp-act-del" onclick="deleteVisitPlanEntry('${e.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="vp-act-btn vp-act-send" onclick="vpSendToSchoolVisits('${e.id}')" data-tip="Add to School Visits"><i class="fas fa-school"></i></button>
+ <button class="vp-act-btn vp-act-train" onclick="vpSendToTraining('${e.id}')" data-tip="Add to Teacher Training"><i class="fas fa-chalkboard-teacher"></i></button>
+ <button class="vp-act-btn" onclick="openVisitPlanModal('${e.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+ <button class="vp-act-btn vp-act-del" onclick="deleteVisitPlanEntry('${e.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>`;
       });
@@ -24553,7 +24585,7 @@ function renderSettings() {
     colorGrid.innerHTML = ACCENT_COLORS.map(c =>
       `<div class="settings-color-swatch ${s.accentColor === c.value ? 'active' : ''}" 
  style="background:${c.value};" 
- title="${c.name}" 
+ data-tip="${c.name}" 
  onclick="setAccentColor('${c.value}', '${c.css}')">
  ${s.accentColor === c.value ? '<i class="fas fa-check"></i>' : ''}
  </div>`
@@ -24846,7 +24878,7 @@ function setAccentColor(hex, cssRgb) {
     colorGrid.innerHTML = ACCENT_COLORS.map(c =>
       `<div class="settings-color-swatch ${hex === c.value ? 'active' : ''}" 
  style="background:${c.value};" 
- title="${c.name}" 
+ data-tip="${c.name}" 
  onclick="setAccentColor('${c.value}', '${c.css}')">
  ${hex === c.value ? '<i class="fas fa-check"></i>' : ''}
  </div>`
@@ -24942,7 +24974,7 @@ function renderSplashThemeSwatches(active) {
   grid.innerHTML = SPLASH_THEMES.map(t =>
     `<div class="settings-color-swatch splash-theme-swatch ${active === t.key ? 'active' : ''}"
  style="background:${t.swatch};"
- title="${t.name}"
+ data-tip="${t.name}"
  onclick="setSplashTheme('${t.key}')">
  ${active === t.key ? '<i class=\'fas fa-check\' style=\'color:#fff;font-size:12px;\'></i>' : ''}
  </div>`
@@ -25067,7 +25099,7 @@ function renderSidebarSectionToggles() {
   const hidden = getAppSettings().hiddenSections || [];
   container.innerHTML = SIDEBAR_SECTIONS.map(sec => {
     const visible = !hidden.includes(sec.key);
-    return `<label class="ssr-class-toggle-item ${visible ? 'active' : ''}" title="${sec.label}">
+    return `<label class="ssr-class-toggle-item ${visible ? 'active' : ''}" data-tip="${sec.label}">
  <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleSidebarSection('${sec.key}', this.checked)">
  <span class="ssr-class-toggle-label"><i class="fas ${sec.icon}" style="margin-right:5px;opacity:0.7;"></i>${sec.label}</span>
  </label>`;
@@ -26736,7 +26768,7 @@ function lpShowRefineMenu(btn) {
   <button onclick="lpRefineSection(this,'questions')"><i class="fas fa-circle-question"></i> Add questions</button>
   <div class="lp-refine-custom-row">
    <input type="text" class="lp-refine-custom-input" placeholder="Describe your changes…" onkeydown="if(event.key==='Enter'){lpRefineSection(this,'custom')}" />
-   <button class="lp-refine-custom-go" onclick="lpRefineSection(this,'custom')" title="Apply custom refinement"><i class="fas fa-arrow-right"></i></button>
+   <button class="lp-refine-custom-go" onclick="lpRefineSection(this,'custom')" data-tip="Apply custom refinement"><i class="fas fa-arrow-right"></i></button>
   </div>`;
   section.appendChild(menu);
 
@@ -27158,8 +27190,8 @@ function lpRenderHistory() {
    <div class="lp-history-card-top">
     <div class="lp-history-title">${p.title || 'Untitled Plan'}</div>
     <div class="lp-history-actions">
-     <button class="lp-history-action" title="Load this plan" onclick="lpLoadSavedPlan('${p.id}')"><i class="fas fa-eye"></i></button>
-     <button class="lp-history-action lp-history-del" title="Delete" onclick="lpDeleteSavedPlan('${p.id}')"><i class="fas fa-trash-alt"></i></button>
+     <button class="lp-history-action" data-tip="Load this plan" onclick="lpLoadSavedPlan('${p.id}')"><i class="fas fa-eye"></i></button>
+     <button class="lp-history-action lp-history-del" data-tip="Delete" onclick="lpDeleteSavedPlan('${p.id}')"><i class="fas fa-trash-alt"></i></button>
     </div>
    </div>
    <div class="lp-history-meta">
@@ -27316,7 +27348,7 @@ function renderLPAnalytics() {
   const barColors = [_ac, '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#0ea5e9', '#14b8a6', '#a855f7'];
   const subjBars = subjEntries.map((e, i) => {
     const pct = Math.round((e[1] / subjMax) * 100);
-    return `<div class="lpa-bar-row"><div class="lpa-bar-label" title="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[i % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
+    return `<div class="lpa-bar-row"><div class="lpa-bar-label" data-tip="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[i % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
   }).join('');
 
   // ── Plans per Teacher ──
@@ -27326,7 +27358,7 @@ function renderLPAnalytics() {
   const tchrMax = tchrEntries.length ? tchrEntries[0][1] : 1;
   const tchrBars = tchrEntries.map((e, i) => {
     const pct = Math.round((e[1] / tchrMax) * 100);
-    return `<div class="lpa-bar-row"><div class="lpa-bar-label" title="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[(i + 3) % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
+    return `<div class="lpa-bar-row"><div class="lpa-bar-label" data-tip="${escapeHtml(e[0])}">${escapeHtml(e[0])}</div><div class="lpa-bar-track"><div class="lpa-bar-fill" style="width:${pct}%;background:${barColors[(i + 3) % barColors.length]}"></div></div><div class="lpa-bar-val">${e[1]}</div></div>`;
   }).join('') || '<div class="lpa-empty"><i class="fas fa-user"></i>No teacher data linked</div>';
 
   // ── Most-used TPs ──
@@ -27339,7 +27371,7 @@ function renderLPAnalytics() {
     const name = tp ? (tp.practice || tp.serialNo || e[0]) : e[0];
     const subj = tp ? (tp.subject || '') : '';
     const obsCount = observations.filter(o => o.practiceSerial === e[0]).length;
-    return `<div class="lpa-rank-item"><div class="lpa-rank-num">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" title="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + '…' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}${obsCount ? ' · ' + obsCount + ' obs' : ''}</div></div><div class="lpa-rank-badge">${e[1]}×</div></div>`;
+    return `<div class="lpa-rank-item"><div class="lpa-rank-num">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" data-tip="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + '…' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}${obsCount ? ' · ' + obsCount + ' obs' : ''}</div></div><div class="lpa-rank-badge">${e[1]}×</div></div>`;
   }).join('') || '<div class="lpa-empty"><i class="fas fa-layer-group"></i>No TP data yet</div>';
 
   // ── Most-used LOs ──
@@ -27351,7 +27383,7 @@ function renderLPAnalytics() {
     const lo = loData.find(l => l.serialNo === e[0] || l.id === e[0]);
     const name = lo ? (lo.outcome || lo.serialNo || e[0]) : e[0];
     const subj = lo ? (lo.subject || '') : '';
-    return `<div class="lpa-rank-item"><div class="lpa-rank-num" style="background:linear-gradient(135deg,#10b981,#14b8a6)">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" title="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + '…' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}</div></div><div class="lpa-rank-badge" style="background:rgba(16,185,129,0.12);color:#10b981">${e[1]}×</div></div>`;
+    return `<div class="lpa-rank-item"><div class="lpa-rank-num" style="background:linear-gradient(135deg,#10b981,#14b8a6)">${i + 1}</div><div class="lpa-rank-info"><div class="lpa-rank-name" data-tip="${escapeHtml(name)}">${escapeHtml(name.length > 50 ? name.substring(0, 47) + '…' : name)}</div><div class="lpa-rank-sub">${escapeHtml(subj)}</div></div><div class="lpa-rank-badge" style="background:rgba(16,185,129,0.12);color:#10b981">${e[1]}×</div></div>`;
   }).join('') || '<div class="lpa-empty"><i class="fas fa-bullseye"></i>No LO data yet</div>';
 
   // ── Plans vs Observations per Teacher ──
@@ -29484,7 +29516,7 @@ async function generateDashboardDigest(forceRefresh = false) {
     const localContent = generateLocalDigest(digestCtx);
     const html = `<div class="ai-digest-header">
       <span><i class="fas fa-robot"></i> Daily Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(139,92,246,0.15);color:#8b5cf6;">Smart Local</span></span>
-      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" data-tip="Refresh"><i class="fas fa-sync-alt"></i></button>
     </div>
     <div class="ai-digest-body">${formatAIResponse(localContent)}</div>`;
     _cachedDigestHtml = html;
@@ -29534,7 +29566,7 @@ Output ONLY the bullet points directly. Do not include thinking, reasoning steps
 
     const html = `<div class="ai-digest-header">
       <span><i class="fas fa-robot"></i> AI Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(139,92,246,0.15);color:#8b5cf6;">AI Generated</span></span>
-      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" data-tip="Refresh"><i class="fas fa-sync-alt"></i></button>
     </div>
     <div class="ai-digest-body">${formatAIResponse(reply)}</div>`;
 
@@ -29546,8 +29578,8 @@ Output ONLY the bullet points directly. Do not include thinking, reasoning steps
     console.warn('[AI Digest] AI generation failed or returned incomplete output, falling back to smart local digest:', err);
     const localContent = generateLocalDigest(digestCtx);
     const html = `<div class="ai-digest-header">
-      <span><i class="fas fa-robot"></i> Daily Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(234,179,8,0.15);color:#ca8a04;" title="AI unavailable: ${escapeHtml(err.message || 'offline')}">Smart Local</span></span>
-      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" title="Retry AI generation"><i class="fas fa-sync-alt"></i> Retry AI</button>
+      <span><i class="fas fa-robot"></i> Daily Digest <span class="badge" style="font-size:10px;font-weight:normal;opacity:0.85;margin-left:6px;background:rgba(234,179,8,0.15);color:#ca8a04;" data-tip="AI unavailable: ${escapeHtml(err.message || 'offline')}">Smart Local</span></span>
+      <button class="btn btn-sm btn-ghost" onclick="generateDashboardDigest(true)" data-tip="Retry AI generation"><i class="fas fa-sync-alt"></i> Retry AI</button>
     </div>
     <div class="ai-digest-body">
       ${formatAIResponse(localContent)}
@@ -29911,13 +29943,13 @@ function renderFeedbackList() {
  <td class="fb-title-cell">${escapeHtml(r.title)}</td>
  <td>${escapeHtml(r.section || '')}</td>
  <td><span class="fb-prio ${prioClass}">${r.priority}</span></td>
- <td><span class="fb-status ${statusClass}" onclick="toggleFeedbackStatus('${r.id}')" style="cursor:pointer" title="Click to toggle">${statusLabel}</span></td>
+ <td><span class="fb-status ${statusClass}" onclick="toggleFeedbackStatus('${r.id}')" style="cursor:pointer" data-tip="Click to toggle">${statusLabel}</span></td>
  <td class="fb-date">${date}</td>
  <td class="fb-actions">
- <button class="btn btn-ghost btn-sm" onclick="emailFeedback(${JSON.stringify(r).replace(/"/g, '&quot;')})" title="Email Developer"><i class="fas fa-envelope"></i></button>
- <button class="btn btn-ghost btn-sm" onclick="sendFeedbackToTelegram(${JSON.stringify(r).replace(/"/g, '&quot;')})" title="Send to Telegram" ${isTelegramConfigured() ? '' : 'disabled style="opacity:0.3"'}><i class="fab fa-telegram-plane"></i></button>
- <button class="btn btn-ghost btn-sm" onclick="editFeedback('${r.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- <button class="btn btn-ghost btn-sm" onclick="deleteFeedback('${r.id}')" title="Delete" style="color:#ef4444"><i class="fas fa-trash"></i></button>
+ <button class="btn btn-ghost btn-sm" onclick="emailFeedback(${JSON.stringify(r).replace(/"/g, '&quot;')})" data-tip="Email Developer"><i class="fas fa-envelope"></i></button>
+ <button class="btn btn-ghost btn-sm" onclick="sendFeedbackToTelegram(${JSON.stringify(r).replace(/"/g, '&quot;')})" data-tip="Send to Telegram" ${isTelegramConfigured() ? '' : 'disabled style="opacity:0.3"'}><i class="fab fa-telegram-plane"></i></button>
+ <button class="btn btn-ghost btn-sm" onclick="editFeedback('${r.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+ <button class="btn btn-ghost btn-sm" onclick="deleteFeedback('${r.id}')" data-tip="Delete" style="color:#ef4444"><i class="fas fa-trash"></i></button>
  </td>
  </tr>`;
   });
@@ -30305,11 +30337,11 @@ function renderGrowthTimeline(assessments) {
  </div>
  <div class="growth-timeline-score">Average: <strong>${avg}/4</strong></div>
  <div class="growth-timeline-dims">
- ${GROWTH_DIMENSIONS.map(d => `<span style="color:${d.color};" title="${d.shortName}: L${a.levels[d.id] || 1}"><i class="fas ${d.icon}"></i> L${a.levels[d.id] || 1}</span>`).join('')}
+ ${GROWTH_DIMENSIONS.map(d => `<span style="color:${d.color};" data-tip="${d.shortName}: L${a.levels[d.id] || 1}"><i class="fas ${d.icon}"></i> L${a.levels[d.id] || 1}</span>`).join('')}
  </div>
  <div class="growth-timeline-actions">
- <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); editGrowthAssessment('${a.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- ${idx !== 0 ? `<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); deleteGrowthAssessment('${a.id}')" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+ <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); editGrowthAssessment('${a.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+ ${idx !== 0 ? `<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); deleteGrowthAssessment('${a.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>` : ''}
  </div>
  </div>
  </div>`;
@@ -30749,7 +30781,7 @@ function renderGrowthActionPlans() {
 
     return `<div class="growth-action-card ${statusClass} ${isOverdue ? 'overdue' : ''}">
  <div class="growth-action-check">
- <button class="growth-action-toggle" onclick="toggleGrowthAction('${a.id}')" title="${a.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}">
+ <button class="growth-action-toggle" onclick="toggleGrowthAction('${a.id}')" data-tip="${a.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}">
  <i class="fas ${statusIcon}" style="color:${a.status === 'completed' ? '#10b981' : a.status === 'in-progress' ? '#3b82f6' : 'var(--text-muted)'}"></i>
  </button>
  </div>
@@ -30764,8 +30796,8 @@ function renderGrowthActionPlans() {
  ${a.steps ? `<div class="growth-action-steps"><i class="fas fa-list"></i> ${escapeHtml(a.steps).substring(0, 120)}${a.steps.length > 120 ? '...' : ''}</div>` : ''}
  </div>
  <div class="growth-action-actions">
- <button class="btn btn-ghost btn-xs" onclick="openGrowthActionPlan('${a.id}')" title="Edit"><i class="fas fa-edit"></i></button>
- <button class="btn btn-ghost btn-xs" onclick="deleteGrowthAction('${a.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="btn btn-ghost btn-xs" onclick="openGrowthActionPlan('${a.id}')" data-tip="Edit"><i class="fas fa-edit"></i></button>
+ <button class="btn btn-ghost btn-xs" onclick="deleteGrowthAction('${a.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>`;
   }).join('');
@@ -31362,7 +31394,7 @@ function renderWorkLog() {
  <div class="wl-day-body">
  <span class="wl-day-placeholder">${d.isSunday ? '<i class="fas fa-moon"></i> Sunday' : '<i class="fas fa-minus"></i> No entry'}</span>
  </div>
- <button class="wl-day-add" onclick="addWorkLogEntry('${d.date}')" title="Add entry"><i class="fas fa-plus"></i></button>
+ <button class="wl-day-add" onclick="addWorkLogEntry('${d.date}')" data-tip="Add entry"><i class="fas fa-plus"></i></button>
  </div>`;
     }
 
@@ -31389,7 +31421,7 @@ function renderWorkLog() {
  <div class="wl-detail-header">
  <span class="wl-badge" style="--badge-color:${color}"><i class="fas ${icon}"></i> ${escapeHtml(a.type)}</span>
  ${a.location ? `<span class="wl-detail-loc"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(a.location)}</span>` : ''}
- ${a.source === 'manual' ? `<button class="wl-detail-del" onclick="deleteWorkLogEntry('${a.id}')" title="Delete"><i class="fas fa-trash-alt"></i></button>` : ''}
+ ${a.source === 'manual' ? `<button class="wl-detail-del" onclick="deleteWorkLogEntry('${a.id}')" data-tip="Delete"><i class="fas fa-trash-alt"></i></button>` : ''}
  </div>
  ${a.description ? `<div class="wl-detail-desc">${escapeHtml(a.description)}</div>` : ''}
  ${a.outcome ? `<div class="wl-detail-outcome"><i class="fas fa-check-circle"></i> ${escapeHtml(a.outcome)}</div>` : ''}
@@ -31406,7 +31438,7 @@ function renderWorkLog() {
  <div class="wl-day-preview">${preview.location ? `<span class="wl-loc-chip"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(preview.location)}</span>` : ''}${shortDesc ? `<span class="wl-desc-text">${shortDesc}</span>` : ''}</div>
  </div>
  <div class="wl-day-actions">
- <button class="wl-day-toggle" onclick="toggleWorklogDay('${d.date}')" title="${expanded ? 'Collapse' : 'Expand'}"><i class="fas fa-chevron-${expanded ? 'up' : 'down'}"></i></button>
+ <button class="wl-day-toggle" onclick="toggleWorklogDay('${d.date}')" data-tip="${expanded ? 'Collapse' : 'Expand'}"><i class="fas fa-chevron-${expanded ? 'up' : 'down'}"></i></button>
  </div>
  ${expanded ? `<div class="wl-day-details">
  <div class="wl-details-toolbar"><button class="btn btn-sm btn-outline" onclick="addWorkLogEntry('${d.date}')"><i class="fas fa-plus"></i> Add entry</button></div>
@@ -32422,7 +32454,7 @@ function toggleTeacherDetail(idx) {
  <td>${escapeHtml(o.subject || '')}</td>
  <td style="font-family:monospace;font-size:0.78rem;color:#84cc16">${escapeHtml(o.practiceSerial || '')}</td>
  <td style="text-align:center">${obsBadge}</td>
- <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--text-muted);cursor:default" title="${escapeHtml(o.notes || '')}">${escapeHtml(o.notes || '')}</td>
+ <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--text-secondary);cursor:default" data-tip="${escapeHtml(o.practice || o.notes || '')}">${escapeHtml(o.practice || '')}</td>
  </tr>`;
   };
   const historyRows = allObs.slice(0, 20).map(_buildHistRow).join('');
@@ -32486,7 +32518,7 @@ function toggleTeacherDetail(idx) {
  <div class="tg2-tab-pane" data-tab="history">
  <div style="overflow-x:auto">
  <table class="tg2-history-table">
- <thead><tr><th>Date</th><th>Subject</th><th>Practice Serial</th><th style="text-align:center">Observation</th><th>Comments</th></tr></thead>
+ <thead><tr><th>Date</th><th>Subject</th><th>Practice Serial</th><th style="text-align:center">Observation</th><th>Practice</th></tr></thead>
  <tbody>${historyRows}${loadMoreBtn}${obsSummaryRow}</tbody>
  </table>
  </div>
@@ -32541,7 +32573,7 @@ function tgLoadMoreHistory(idx, btn) {
  <td>${escapeHtml(o.subject || '')}</td>
  <td style="font-family:monospace;font-size:0.78rem;color:#84cc16">${escapeHtml(o.practiceSerial || '')}</td>
  <td style="text-align:center">${obsBadge}</td>
- <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--text-muted);cursor:default" title="${escapeHtml(o.notes || '')}">${escapeHtml(o.notes || '')}</td>`;
+ <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem;color:var(--text-secondary);cursor:default" data-tip="${escapeHtml(o.practice || o.notes || '')}">${escapeHtml(o.practice || '')}</td>`;
     fragment.appendChild(tr);
   });
   if (loadMoreRow) loadMoreRow.remove();
@@ -32648,7 +32680,7 @@ function openPdfEditor(bodyHtml, title) {
   const bgColors = ['transparent', '#fef3c7', '#fce7f3', '#dbeafe', '#d1fae5', '#e0e7ff', '#fef9c3', '#ffe4e6', '#f3e8ff', '#ccfbf1'];
 
   const colorGrid = (colors, cmd) => colors.map(c =>
-    `<button class="pdf-ed-color-swatch" style="background:${c === 'transparent' ? '#fff' : c};${c === 'transparent' ? 'border:2px dashed #cbd5e1;' : ''}" data-color="${c}" data-colorcmd="${cmd}" title="${c === 'transparent' ? 'Remove' : c}"></button>`
+    `<button class="pdf-ed-color-swatch" style="background:${c === 'transparent' ? '#fff' : c};${c === 'transparent' ? 'border:2px dashed #cbd5e1;' : ''}" data-color="${c}" data-colorcmd="${cmd}" data-tip="${c === 'transparent' ? 'Remove' : c}"></button>`
   ).join('');
 
   const overlay = document.createElement('div');
@@ -32694,48 +32726,48 @@ function openPdfEditor(bodyHtml, title) {
  <option value="pre">Code</option>
  </select>
  <div class="pdf-ed-sep"></div>
- <button class="pdf-ed-tbtn" data-cmd="bold" title="Bold"><i class="fas fa-bold"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="italic" title="Italic"><i class="fas fa-italic"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="underline" title="Underline"><i class="fas fa-underline"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="strikeThrough" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="superscript" title="Superscript"><i class="fas fa-superscript"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="subscript" title="Subscript"><i class="fas fa-subscript"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="bold" data-tip="Bold"><i class="fas fa-bold"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="italic" data-tip="Italic"><i class="fas fa-italic"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="underline" data-tip="Underline"><i class="fas fa-underline"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="strikeThrough" data-tip="Strikethrough"><i class="fas fa-strikethrough"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="superscript" data-tip="Superscript"><i class="fas fa-superscript"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="subscript" data-tip="Subscript"><i class="fas fa-subscript"></i></button>
  <div class="pdf-ed-sep"></div>
  <div class="pdf-ed-dropdown-wrap">
- <button class="pdf-ed-tbtn" id="pdfEdTextColorBtn" title="Text Color"><i class="fas fa-font" style="border-bottom:3px solid #ef4444"></i></button>
+ <button class="pdf-ed-tbtn" id="pdfEdTextColorBtn" data-tip="Text Color"><i class="fas fa-font" style="border-bottom:3px solid #ef4444"></i></button>
  <div class="pdf-ed-dropdown" id="pdfEdTextColorDrop">
  <div class="pdf-ed-color-label">Text Color</div>
  <div class="pdf-ed-color-grid">${colorGrid(textColors, 'foreColor')}</div>
  </div>
  </div>
  <div class="pdf-ed-dropdown-wrap">
- <button class="pdf-ed-tbtn" id="pdfEdBgColorBtn" title="Highlight"><i class="fas fa-highlighter" style="color:#f59e0b"></i></button>
+ <button class="pdf-ed-tbtn" id="pdfEdBgColorBtn" data-tip="Highlight"><i class="fas fa-highlighter" style="color:#f59e0b"></i></button>
  <div class="pdf-ed-dropdown" id="pdfEdBgColorDrop">
  <div class="pdf-ed-color-label">Highlight Color</div>
  <div class="pdf-ed-color-grid">${colorGrid(bgColors, 'hiliteColor')}</div>
  </div>
  </div>
  <div class="pdf-ed-sep"></div>
- <button class="pdf-ed-tbtn" data-cmd="insertUnorderedList" title="Bullet List"><i class="fas fa-list-ul"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="insertOrderedList" title="Numbered List"><i class="fas fa-list-ol"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="justifyLeft" title="Left"><i class="fas fa-align-left"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="justifyCenter" title="Center"><i class="fas fa-align-center"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="justifyRight" title="Right"><i class="fas fa-align-right"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="justifyFull" title="Justify"><i class="fas fa-align-justify"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="insertUnorderedList" data-tip="Bullet List"><i class="fas fa-list-ul"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="insertOrderedList" data-tip="Numbered List"><i class="fas fa-list-ol"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="justifyLeft" data-tip="Left"><i class="fas fa-align-left"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="justifyCenter" data-tip="Center"><i class="fas fa-align-center"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="justifyRight" data-tip="Right"><i class="fas fa-align-right"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="justifyFull" data-tip="Justify"><i class="fas fa-align-justify"></i></button>
  <div class="pdf-ed-sep"></div>
- <button class="pdf-ed-tbtn" data-cmd="indent" title="Indent"><i class="fas fa-indent"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="outdent" title="Outdent"><i class="fas fa-outdent"></i></button>
- <button class="pdf-ed-tbtn" id="pdfEdLinkBtn" title="Insert Link"><i class="fas fa-link"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="unlink" title="Remove Link"><i class="fas fa-unlink"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="insertHorizontalRule" title="Line"><i class="fas fa-minus"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="indent" data-tip="Indent"><i class="fas fa-indent"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="outdent" data-tip="Outdent"><i class="fas fa-outdent"></i></button>
+ <button class="pdf-ed-tbtn" id="pdfEdLinkBtn" data-tip="Insert Link"><i class="fas fa-link"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="unlink" data-tip="Remove Link"><i class="fas fa-unlink"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="insertHorizontalRule" data-tip="Line"><i class="fas fa-minus"></i></button>
  <div class="pdf-ed-sep"></div>
- <button class="pdf-ed-tbtn" id="pdfEdTableBtn" title="Insert Table"><i class="fas fa-table"></i></button>
- <button class="pdf-ed-tbtn pdf-ed-tbtn-photo" id="pdfEdPhotoBtn" title="Insert Photo"><i class="fas fa-image"></i> Photo</button>
+ <button class="pdf-ed-tbtn" id="pdfEdTableBtn" data-tip="Insert Table"><i class="fas fa-table"></i></button>
+ <button class="pdf-ed-tbtn pdf-ed-tbtn-photo" id="pdfEdPhotoBtn" data-tip="Insert Photo"><i class="fas fa-image"></i> Photo</button>
  <input type="file" id="pdfEdPhotoInput" accept="image/*" multiple style="display:none">
  <div class="pdf-ed-sep"></div>
- <button class="pdf-ed-tbtn" data-cmd="removeFormat" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="undo" title="Undo"><i class="fas fa-undo"></i></button>
- <button class="pdf-ed-tbtn" data-cmd="redo" title="Redo"><i class="fas fa-redo"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="removeFormat" data-tip="Clear Formatting"><i class="fas fa-eraser"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="undo" data-tip="Undo"><i class="fas fa-undo"></i></button>
+ <button class="pdf-ed-tbtn" data-cmd="redo" data-tip="Redo"><i class="fas fa-redo"></i></button>
  </div>
  <div class="pdf-editor-body">
  <div class="pdf-editor-content" contenteditable="true" id="pdfEdContent">${contentHtml}</div>
@@ -33117,10 +33149,10 @@ function printTeacherSummary(idx) {
  <div><strong>Stage:</strong> ${escapeHtml(t.stage || 'N/A')}</div>
  </div>
  <h3 style="font-size:13px;color:#6366f1;margin-bottom:4px">Observation History</h3>
- <table><thead><tr><th>Date</th><th>Subject</th><th>Practice Serial</th><th>Observation</th><th>Comments</th></tr></thead><tbody>
+ <table><thead><tr><th>Date</th><th>Subject</th><th>Practice Serial</th><th>Observation</th><th>Practice</th></tr></thead><tbody>
  ${t.observations.slice().reverse().map(o => {
     const obsStat = o.observationStatus === 'Yes' ? 'Yes' : o.observationStatus === 'Not_Observed' ? 'Not Observed' : o.observationStatus === 'No' ? 'No' : '';
-    return `<tr><td>${parseLocalDate(o.date).toLocaleDateString('en-IN')}</td><td>${escapeHtml(o.subject || '')}</td><td>${escapeHtml(o.practiceSerial || '')}</td><td>${obsStat}</td><td style="max-width:250px;word-wrap:break-word">${escapeHtml(o.notes || '')}</td></tr>`;
+    return `<tr><td>${parseLocalDate(o.date).toLocaleDateString('en-IN')}</td><td>${escapeHtml(o.subject || '')}</td><td>${escapeHtml(o.practiceSerial || '')}</td><td>${obsStat}</td><td style="max-width:250px;word-wrap:break-word">${escapeHtml(o.practice || '')}</td></tr>`;
   }).join('')}
  </tbody></table>
  <div class="footer">Generated by ${escapeHtml(profile.name || 'APF Resource Person')} APF Dashboard</div>
@@ -33305,21 +33337,21 @@ function renderTeachingPractices() {
  <div style="flex:1">
  <p style="margin:0 0 8px;color:var(--text-primary);font-size:14px;line-height:1.5">${escapeHtml(p.practice || '')}</p>
  <div style="display:flex;gap:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;align-items:center">
- ${p.classes ? `<span title="Applicable Classes"><i class="fas fa-users" style="color:#94a3b8"></i> Classes: ${escapeHtml(p.classes)}</span>` : ''}
- <span style="color:${obsData.count > 0 ? '#10b981' : '#94a3b8'}" title="Observation count"><i class="fas fa-eye"></i> ${obsData.count} obs</span>
- ${teacherCount > 0 ? `<span style="color:#6366f1" title="Teachers observed"><i class="fas fa-chalkboard-teacher"></i> ${teacherCount} teacher${teacherCount > 1 ? 's' : ''}</span>` : ''}
- ${obsData.lastDate ? `<span style="color:#8b5cf6" title="Last observed"><i class="fas fa-calendar-check"></i> ${obsData.lastDate}</span>` : ''}
- ${p.effectTracking === 'y' ? `<span style="color:#10b981" title="Effect Tracking"><i class="fas fa-chart-line"></i> Effect</span>` : ''}
+ ${p.classes ? `<span data-tip="Applicable Classes"><i class="fas fa-users" style="color:#94a3b8"></i> Classes: ${escapeHtml(p.classes)}</span>` : ''}
+ <span style="color:${obsData.count > 0 ? '#10b981' : '#94a3b8'}" data-tip="Observation count"><i class="fas fa-eye"></i> ${obsData.count} obs</span>
+ ${teacherCount > 0 ? `<span style="color:#6366f1" data-tip="Teachers observed"><i class="fas fa-chalkboard-teacher"></i> ${teacherCount} teacher${teacherCount > 1 ? 's' : ''}</span>` : ''}
+ ${obsData.lastDate ? `<span style="color:#8b5cf6" data-tip="Last observed"><i class="fas fa-calendar-check"></i> ${obsData.lastDate}</span>` : ''}
+ ${p.effectTracking === 'y' ? `<span style="color:#10b981" data-tip="Effect Tracking"><i class="fas fa-chart-line"></i> Effect</span>` : ''}
  ${diff ? `<span class="tp-difficulty-badge ${diff}">${diff.charAt(0).toUpperCase() + diff.slice(1)}</span>` : ''}
- ${pri > 0 ? `<span style="color:#ec4899" title="Priority ${pri}"><i class="fas fa-star"></i> ${'<i class="fas fa-star"></i>'.repeat(pri)}</span>` : ''}
- ${(p.tags || []).length > 0 ? `<span style="color:#6366f1" title="Tags"><i class="fas fa-tags"></i> ${(p.tags || []).map(t => escapeHtml(t)).join(', ')}</span>` : ''}
- ${p.expectedOutcome ? `<span style="color:#14b8a6" title="Expected: ${escapeHtml(p.expectedOutcome)}"><i class="fas fa-bullseye"></i> Outcome</span>` : ''}
+ ${pri > 0 ? `<span style="color:#ec4899" data-tip="Priority ${pri}"><i class="fas fa-star"></i> ${'<i class="fas fa-star"></i>'.repeat(pri)}</span>` : ''}
+ ${(p.tags || []).length > 0 ? `<span style="color:#6366f1" data-tip="Tags"><i class="fas fa-tags"></i> ${(p.tags || []).map(t => escapeHtml(t)).join(', ')}</span>` : ''}
+ ${p.expectedOutcome ? `<span style="color:#14b8a6" data-tip="Expected: ${escapeHtml(p.expectedOutcome)}"><i class="fas fa-bullseye"></i> Outcome</span>` : ''}
  </div>
  </div>
  <div style="display:flex;gap:8px">
- <button class="btn btn-ghost btn-sm" onclick="togglePracticeDrillDown('${escapeHtml(p.serialNo)}','${escapeHtml(p.subject || activeSubject || '')}', this)" title="View linked observations" style="color:#6366f1"><i class="fas fa-eye"></i> <span style="font-size:10px">${obsData.count}</span></button>
- <button class="btn btn-ghost btn-sm" onclick="editTP('${p.id}')" title="Edit Practice"><i class="fas fa-pen"></i></button>
- <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteTP('${p.id}')" title="Delete Practice"><i class="fas fa-trash"></i></button>
+ <button class="btn btn-ghost btn-sm" onclick="togglePracticeDrillDown('${escapeHtml(p.serialNo)}','${escapeHtml(p.subject || activeSubject || '')}', this)" data-tip="View linked observations" style="color:#6366f1"><i class="fas fa-eye"></i> <span style="font-size:10px">${obsData.count}</span></button>
+ <button class="btn btn-ghost btn-sm" onclick="editTP('${p.id}')" data-tip="Edit Practice"><i class="fas fa-pen"></i></button>
+ <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteTP('${p.id}')" data-tip="Delete Practice"><i class="fas fa-trash"></i></button>
  </div>
  </div>
  <div id="tp-drilldown-${escapeHtml(p.serialNo)}" style="display:none"></div>
@@ -33454,10 +33486,10 @@ function renderTpAIRecommendations() {
  <p style="margin:0;font-size:12px;color:var(--text-muted)">Top ${top.length} practices to focus on for <strong>${escapeHtml(subject)}</strong> based on observation gaps, adoption rates & recency</p>
  </div>
  ${SarvamAI.isConfigured() ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
- <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAITpDeepAnalysis('${escapeHtml(subject)}')" title="AI-powered deep analysis of all practices">
+ <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAITpDeepAnalysis('${escapeHtml(subject)}')" data-tip="AI-powered deep analysis of all practices">
  <i class="fas fa-brain"></i> AI Deep Analysis
  </button>
- <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAIPracticeGapReport('${escapeHtml(subject)}')" title="Generate AI gap report for PDF export">
+ <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAIPracticeGapReport('${escapeHtml(subject)}')" data-tip="Generate AI gap report for PDF export">
  <i class="fas fa-file-medical-alt"></i> AI Gap Report
  </button>
  </div>` : `<div style="font-size:11px;color:var(--text-muted);background:var(--bg-secondary);padding:6px 12px;border-radius:8px;border:1px solid var(--border)"><i class="fas fa-info-circle" style="color:#f59e0b"></i> Configure Sarvam AI in Settings for AI-powered analysis</div>`}
@@ -33497,10 +33529,10 @@ function renderTpAIRecommendations() {
  ${p.difficulty ? `<span><i class="fas fa-signal" style="color:#94a3b8"></i> ${p.difficulty}</span>` : ''}
  </div>
  </div>
- ${SarvamAI.isConfigured() ? `<button class="btn btn-ghost btn-sm ai-action-btn" onclick="generateAIPracticeTips('${p.id}')" style="color:#8b5cf6;white-space:nowrap;font-size:11px" title="AI-powered teaching tips for this practice">
+ ${SarvamAI.isConfigured() ? `<button class="btn btn-ghost btn-sm ai-action-btn" onclick="generateAIPracticeTips('${p.id}')" style="color:#8b5cf6;white-space:nowrap;font-size:11px" data-tip="AI-powered teaching tips for this practice">
  <i class="fas fa-lightbulb"></i> AI Tips
  </button>` : ''}
- <button class="btn btn-ghost btn-sm" onclick="navigateTo('observations'); setTimeout(()=>{const s=document.getElementById('observationSearchInput'); if(s){s.value='${escapeHtml(p.serialNo)}'; renderObservations();}},150)" style="color:#6366f1;white-space:nowrap;font-size:11px" title="View observations for this practice">
+ <button class="btn btn-ghost btn-sm" onclick="navigateTo('observations'); setTimeout(()=>{const s=document.getElementById('observationSearchInput'); if(s){s.value='${escapeHtml(p.serialNo)}'; renderObservations();}},150)" style="color:#6366f1;white-space:nowrap;font-size:11px" data-tip="View observations for this practice">
  <i class="fas fa-search"></i> View Obs
  </button>
  </div>
@@ -33908,7 +33940,7 @@ function renderTpAnalytics(teacherFilter) {
  </div>
  </div>
  ${avgEng ? `<div style="min-width:38px;font-size:11px;font-weight:700;color:${engColor}">${avgEng}</div>` : `<div style="min-width:38px"></div>`}
- <div style="min-width:100px;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(s.tp.practice || '')}">${escapeHtml((s.tp.practice || '').substring(0, 40))}${(s.tp.practice || '').length > 40 ? '...' : ''}</div>
+ <div style="min-width:100px;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-tip="${escapeHtml(s.tp.practice || '')}">${escapeHtml((s.tp.practice || '').substring(0, 40))}${(s.tp.practice || '').length > 40 ? '...' : ''}</div>
  </div>`;
       }).join('')}
  </div>
@@ -34028,7 +34060,7 @@ function renderTpAnalytics(teacherFilter) {
   if (heatSortedTeachers.length > 0 && heatSortedSerials.length > 0) {
     const buildHeatRows = (list) => list.map(([teacher, data]) => {
       return `<tr>
- <td style="position:sticky;left:0;z-index:2;background:var(--card-bg);padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-primary);white-space:nowrap;border-right:2px solid var(--border);max-width:130px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(teacher)}">${escapeHtml(teacher)}</td>
+ <td style="position:sticky;left:0;z-index:2;background:var(--card-bg);padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-primary);white-space:nowrap;border-right:2px solid var(--border);max-width:130px;overflow:hidden;text-overflow:ellipsis" data-tip="${escapeHtml(teacher)}">${escapeHtml(teacher)}</td>
  ${heatSortedSerials.map(serial => {
         const cell = data.serials[serial];
         let bg, tooltip, symbol;
@@ -34042,7 +34074,7 @@ function renderTpAnalytics(teacherFilter) {
         } else {
           bg = 'rgba(239,68,68,0.25)'; tooltip = `${teacher} ${serial}: Not Observed`; symbol = '';
         }
-        return `<td style="padding:0;text-align:center" title="${escapeHtml(tooltip)}">
+        return `<td style="padding:0;text-align:center" data-tip="${escapeHtml(tooltip)}">
  <div style="width:28px;height:28px;background:${bg};margin:1px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${cell && cell.yes > 0 ? '#fff' : 'var(--text-muted)'}">${symbol}</div>
  </td>`;
       }).join('')}
@@ -34062,7 +34094,7 @@ function renderTpAnalytics(teacherFilter) {
  <thead>
  <tr>
  <th style="position:sticky;left:0;top:0;z-index:3;background:var(--bg-secondary);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-muted);border-right:2px solid var(--border);border-bottom:2px solid var(--border);text-align:left">Teacher</th>
- ${heatSortedSerials.map(s => `<th style="position:sticky;top:0;z-index:1;background:var(--bg-secondary);padding:4px 2px;font-size:9px;font-weight:600;color:var(--text-muted);border-bottom:2px solid var(--border);text-align:center;writing-mode:vertical-lr;white-space:nowrap;height:60px" title="${escapeHtml(s)}">${escapeHtml(s)}</th>`).join('')}
+ ${heatSortedSerials.map(s => `<th style="position:sticky;top:0;z-index:1;background:var(--bg-secondary);padding:4px 2px;font-size:9px;font-weight:600;color:var(--text-muted);border-bottom:2px solid var(--border);text-align:center;writing-mode:vertical-lr;white-space:nowrap;height:60px" data-tip="${escapeHtml(s)}">${escapeHtml(s)}</th>`).join('')}
  </tr>
  </thead>
  <tbody id="heatmapBody">
@@ -34228,7 +34260,7 @@ function togglePracticeDrillDown(serial, subject, btn) {
  <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.school || '')}</td>
  <td style="padding:6px 10px;font-size:11px;font-weight:600;color:${statusColor}">${statusLabel}</td>
  <td style="padding:6px 10px;font-size:11px;color:var(--text-muted)">${escapeHtml(o.engagementLevel || '')}</td>
- <td style="padding:6px 10px;font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(o.notes || '')}">${escapeHtml((o.notes || '').substring(0, 60))}${(o.notes || '').length > 60 ? '...' : ''}</td>
+ <td style="padding:6px 10px;font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-tip="${escapeHtml(o.notes || '')}">${escapeHtml((o.notes || '').substring(0, 60))}${(o.notes || '').length > 60 ? '...' : ''}</td>
  </tr>`;
   }).join('');
 
@@ -34658,17 +34690,17 @@ function renderLearningOutcomes() {
                   <div style="flex:1">
                     <p style="margin:0 0 8px;color:var(--text-primary);font-size:14px;line-height:1.5">${escapeHtml(lo.outcome || '')}</p>
                     <div style="display:flex;gap:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;align-items:center">
-                      ${lo.classes ? `<span title="Applicable Classes"><i class="fas fa-users" style="color:#94a3b8"></i> Classes: ${escapeHtml(lo.classes)}</span>` : ''}
-                      <span style="color:${obsData.count > 0 ? '#10b981' : '#94a3b8'}" title="Observations"><i class="fas fa-eye"></i> ${obsData.count} obs</span>
+                      ${lo.classes ? `<span data-tip="Applicable Classes"><i class="fas fa-users" style="color:#94a3b8"></i> Classes: ${escapeHtml(lo.classes)}</span>` : ''}
+                      <span style="color:${obsData.count > 0 ? '#10b981' : '#94a3b8'}" data-tip="Observations"><i class="fas fa-eye"></i> ${obsData.count} obs</span>
                       ${teacherCount > 0 ? `<span style="color:#6366f1"><i class="fas fa-chalkboard-teacher"></i> ${teacherCount} teacher${teacherCount > 1 ? 's' : ''}</span>` : ''}
                       ${obsData.lastDate ? `<span style="color:#8b5cf6"><i class="fas fa-calendar-check"></i> ${obsData.lastDate}</span>` : ''}
                       ${lo.effectTracking === 'y' ? `<span style="color:#10b981"><i class="fas fa-chart-line"></i> ET</span>` : ''}
                     </div>
                   </div>
                   <div style="display:flex;gap:8px">
-                    <button class="btn btn-ghost btn-sm" onclick="toggleOutcomeDrillDown('${escapeHtml(lo.serialNo)}','${escapeHtml(lo.subject || activeSubject || '')}', this)" title="View linked observations" style="color:#6366f1"><i class="fas fa-eye"></i> <span style="font-size:10px">${obsData.count}</span></button>
-                    <button class="btn btn-ghost btn-sm" onclick="editLO('${lo.id}')" title="Edit Outcome"><i class="fas fa-pen"></i></button>
-                    <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteLO('${lo.id}')" title="Delete Outcome"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-ghost btn-sm" onclick="toggleOutcomeDrillDown('${escapeHtml(lo.serialNo)}','${escapeHtml(lo.subject || activeSubject || '')}', this)" data-tip="View linked observations" style="color:#6366f1"><i class="fas fa-eye"></i> <span style="font-size:10px">${obsData.count}</span></button>
+                    <button class="btn btn-ghost btn-sm" onclick="editLO('${lo.id}')" data-tip="Edit Outcome"><i class="fas fa-pen"></i></button>
+                    <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteLO('${lo.id}')" data-tip="Delete Outcome"><i class="fas fa-trash"></i></button>
                   </div>
                 </div>
                 <div id="lo-drilldown-${escapeHtml(lo.serialNo)}" style="display:none"></div>
@@ -34740,7 +34772,7 @@ function toggleOutcomeDrillDown(serial, subject, btn) {
       <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.teacher || '')}</td>
       <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.school || '')}</td>
       <td style="padding:6px 10px;font-size:11px;font-weight:600;color:${statusColor}">${statusLabel}</td>
-      <td style="padding:6px 10px;font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(o.notes || '')}">${escapeHtml((o.notes || '').substring(0, 60))}${(o.notes || '').length > 60 ? '...' : ''}</td>
+      <td style="padding:6px 10px;font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-tip="${escapeHtml(o.notes || '')}">${escapeHtml((o.notes || '').substring(0, 60))}${(o.notes || '').length > 60 ? '...' : ''}</td>
     </tr>`;
   }).join('');
 
@@ -34901,7 +34933,7 @@ function renderLoAnalytics() {
                     ${s.count > 0 ? `<span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap">${s.count}x</span>` : ''}
                   </div>
                 </div>
-                <div style="min-width:100px;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(s.lo.outcome || '')}">${escapeHtml((s.lo.outcome || '').substring(0, 40))}${(s.lo.outcome || '').length > 40 ? '...' : ''}</div>
+                <div style="min-width:100px;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-tip="${escapeHtml(s.lo.outcome || '')}">${escapeHtml((s.lo.outcome || '').substring(0, 40))}${(s.lo.outcome || '').length > 40 ? '...' : ''}</div>
               </div>`;
       }).join('')}
         </div>
@@ -35087,8 +35119,8 @@ function renderLoTeacherMapping() {
             </div>
             <div style="display:flex;gap:6px;align-items:center">
               <span style="font-size:11px;color:var(--text-muted)">${outcomes.length} outcomes</span>
-              <button class="btn btn-ghost btn-sm" onclick="openLoAssignModal('${a.id}')" title="Edit"><i class="fas fa-pen"></i></button>
-              <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteLoAssignment('${a.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+              <button class="btn btn-ghost btn-sm" onclick="openLoAssignModal('${a.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
+              <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteLoAssignment('${a.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
             </div>
           </div>
           <div style="padding:8px 12px">
@@ -35193,10 +35225,10 @@ function renderLoAIRecommendations() {
           <p style="margin:0;font-size:12px;color:var(--text-muted)">Top ${top.length} outcomes to focus on for <strong>${escapeHtml(subject)}</strong> based on observation gaps, adoption rates &amp; recency</p>
         </div>
         ${SarvamAI.isConfigured() ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAILoDeepAnalysis('${escapeHtml(subject)}')" title="AI-powered deep analysis of all outcomes">
+          <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAILoDeepAnalysis('${escapeHtml(subject)}')" data-tip="AI-powered deep analysis of all outcomes">
             <i class="fas fa-brain"></i> AI Deep Analysis
           </button>
-          <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAILoGapReport('${escapeHtml(subject)}')" title="Generate AI gap report">
+          <button class="btn btn-outline btn-sm ai-action-btn" onclick="generateAILoGapReport('${escapeHtml(subject)}')" data-tip="Generate AI gap report">
             <i class="fas fa-file-medical-alt"></i> AI Gap Report
           </button>
         </div>` : `<div style="font-size:11px;color:var(--text-muted);background:var(--bg-secondary);padding:6px 12px;border-radius:8px;border:1px solid var(--border)"><i class="fas fa-info-circle" style="color:#f59e0b"></i> Configure Sarvam AI in Settings for AI-powered analysis</div>`}
@@ -35235,8 +35267,8 @@ function renderLoAIRecommendations() {
               ${lo.effectTracking === 'y' ? `<span style="color:#10b981"><i class="fas fa-chart-line"></i> ET</span>` : ''}
             </div>
           </div>
-          ${SarvamAI.isConfigured() ? `<button class="btn btn-ghost btn-sm ai-action-btn" onclick="generateAILoTips('${lo.id}')" style="color:#8b5cf6;white-space:nowrap;font-size:11px" title="AI-powered teaching tips for this outcome"><i class="fas fa-lightbulb"></i> AI Tips</button>` : ''}
-          <button class="btn btn-ghost btn-sm" onclick="navigateTo('observations'); setTimeout(()=>{const s=document.getElementById('observationSearchInput'); if(s){s.value='${escapeHtml(lo.serialNo)}'; renderObservations();}},150)" style="color:#6366f1;white-space:nowrap;font-size:11px" title="View observations for this outcome"><i class="fas fa-search"></i> View Obs</button>
+          ${SarvamAI.isConfigured() ? `<button class="btn btn-ghost btn-sm ai-action-btn" onclick="generateAILoTips('${lo.id}')" style="color:#8b5cf6;white-space:nowrap;font-size:11px" data-tip="AI-powered teaching tips for this outcome"><i class="fas fa-lightbulb"></i> AI Tips</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('observations'); setTimeout(()=>{const s=document.getElementById('observationSearchInput'); if(s){s.value='${escapeHtml(lo.serialNo)}'; renderObservations();}},150)" style="color:#6366f1;white-space:nowrap;font-size:11px" data-tip="View observations for this outcome"><i class="fas fa-search"></i> View Obs</button>
         </div>
       </div>`;
   });
@@ -36208,8 +36240,8 @@ function renderTpTeacherMapping() {
  </div>
  <div style="display:flex;gap:6px;align-items:center">
  <span style="font-size:11px;color:var(--text-muted)">${practices.length} practices</span>
- <button class="btn btn-ghost btn-sm" onclick="openTpAssignModal('${a.id}')" title="Edit"><i class="fas fa-pen"></i></button>
- <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteTpAssignment('${a.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+ <button class="btn btn-ghost btn-sm" onclick="openTpAssignModal('${a.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
+ <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="deleteTpAssignment('${a.id}')" data-tip="Delete"><i class="fas fa-trash"></i></button>
  </div>
  </div>
  <div style="padding:8px 12px">
@@ -36330,7 +36362,7 @@ function openTpAssignModal(editId = null) {
     checkHtml += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 2px;padding-left:4px">${escapeHtml(g)}</div>`;
     grouped[g].forEach(p => {
       const checked = selectedIds.includes(p.id) ? 'checked' : '';
-      checkHtml += `<label class="tp-assign-check" title="${escapeHtml(p.serialNo + ' ' + (p.practice || ''))}" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--text-primary)">
+      checkHtml += `<label class="tp-assign-check" data-tip="${escapeHtml(p.serialNo + ' ' + (p.practice || ''))}" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--text-primary)">
  <input type="checkbox" value="${p.id}" ${checked} class="tpAssignCb" style="margin-top:2px">
  <span style="font-family:monospace;color:#d97706;font-weight:600;font-size:11px;white-space:nowrap">${escapeHtml(p.serialNo)}</span>
  <span class="tp-assign-txt">${escapeHtml(p.practice || '')}</span>
@@ -36533,9 +36565,9 @@ function generateTeacherJourneyReport(idx) {
  </div>
  <p style="font-size:12px;margin:8px 0"><strong>Engagement Breakdown:</strong></p>
  <div class="rpt-bar">
- <div style="width:${t.engagementScores.length ? (engMore / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#10b981" title="More Engaged"></div>
- <div style="width:${t.engagementScores.length ? (engNormal / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#f59e0b" title="Engaged"></div>
- <div style="width:${t.engagementScores.length ? (engLow / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#ef4444" title="Not Engaged"></div>
+ <div style="width:${t.engagementScores.length ? (engMore / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#10b981" data-tip="More Engaged"></div>
+ <div style="width:${t.engagementScores.length ? (engNormal / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#f59e0b" data-tip="Engaged"></div>
+ <div style="width:${t.engagementScores.length ? (engLow / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#ef4444" data-tip="Not Engaged"></div>
  </div>
  <p style="font-size:11px;color:#64748b"> More Engaged: ${engMore} &nbsp;|&nbsp; Engaged: ${engNormal} &nbsp;|&nbsp; Not Engaged: ${engLow}</p>
  </div>
@@ -37201,9 +37233,9 @@ function renderTeacherJourney() {
  </div>
  <p style="font-size:12px;margin-bottom:6px"><strong>Engagement Breakdown:</strong></p>
  <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:6px;background:var(--border)">
- <div style="width:${t.engagementScores.length ? (engMore / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#10b981" title="More Engaged"></div>
- <div style="width:${t.engagementScores.length ? (engNormal / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#f59e0b" title="Engaged"></div>
- <div style="width:${t.engagementScores.length ? (engLow / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#ef4444" title="Not Engaged"></div>
+ <div style="width:${t.engagementScores.length ? (engMore / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#10b981" data-tip="More Engaged"></div>
+ <div style="width:${t.engagementScores.length ? (engNormal / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#f59e0b" data-tip="Engaged"></div>
+ <div style="width:${t.engagementScores.length ? (engLow / t.engagementScores.length * 100).toFixed(0) : 0}%;background:#ef4444" data-tip="Not Engaged"></div>
  </div>
  <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px"> More Engaged: ${engMore} &nbsp;|&nbsp; Engaged: ${engNormal} &nbsp;|&nbsp; Not Engaged: ${engLow}</p>
 
@@ -37326,7 +37358,7 @@ function renderTeacherJourney() {
  </div>
  ${playbookRuns.length > 0 ? `<div style="margin-top:12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-secondary,#f8fafc)">
  <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Recent playbook runs</div>
- ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> · +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} · ${fmtDateShort(r.runAt)}</span><button onclick="deleteInterventionPlaybookRun('${r.id}')" title="Delete this run log" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">&times;</button></div>`).join('')}
+ ${playbookRuns.map(r => `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span><strong>${escapeHtml(r.playbookTitle || r.playbookKey || 'Playbook')}</strong> · +${r.actionsAdded || 0} action(s)${r.actionsSkipped ? `, ${r.actionsSkipped} skipped` : ''} · ${fmtDateShort(r.runAt)}</span><button onclick="deleteInterventionPlaybookRun('${r.id}')" data-tip="Delete this run log" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">&times;</button></div>`).join('')}
  </div>` : ''}
  ` : `<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="fas fa-check-circle" style="font-size:22px;opacity:0.35;margin-bottom:8px;display:block"></i>No critical recurring patterns found right now. Continue monitoring.</div>`);
 
@@ -37343,7 +37375,7 @@ function renderTeacherJourney() {
       const overdue = !done && p.dueDate && p.dueDate < todayStr;
       const pc = prioColor[p.priority] || '#64748b';
       return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${done ? 'rgba(16,185,129,0.3)' : overdue ? 'rgba(239,68,68,0.3)' : 'var(--border)'};border-radius:8px;background:${done ? 'rgba(16,185,129,0.05)' : overdue ? 'rgba(239,68,68,0.04)' : 'var(--bg-secondary)'};transition:opacity 0.2s;opacity:${done ? '0.7' : '1'}">
- <button onclick="toggleTeacherActionPlanStatus('${p.id}')" title="${done ? 'Mark pending' : 'Mark done'}" style="flex-shrink:0;width:20px;height:20px;border-radius:50%;border:2px solid ${done ? '#10b981' : 'var(--border)'};background:${done ? '#10b981' : 'transparent'};color:white;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;margin-top:1px">${done ? '<i class="fas fa-check"></i>' : ''}</button>
+ <button onclick="toggleTeacherActionPlanStatus('${p.id}')" data-tip="${done ? 'Mark pending' : 'Mark done'}" style="flex-shrink:0;width:20px;height:20px;border-radius:50%;border:2px solid ${done ? '#10b981' : 'var(--border)'};background:${done ? '#10b981' : 'transparent'};color:white;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;margin-top:1px">${done ? '<i class="fas fa-check"></i>' : ''}</button>
  <div style="flex:1;min-width:0">
  <div style="font-size:13px;font-weight:600;color:var(--text-primary);${done ? 'text-decoration:line-through;opacity:0.7' : ''}">${escapeHtml(p.title)}</div>
  ${p.steps ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.5">${escapeHtml(p.steps)}</div>` : ''}
@@ -37353,7 +37385,7 @@ function renderTeacherJourney() {
  <span style="font-size:10px;color:var(--text-muted);opacity:0.6">${escapeHtml(p.playbookTitle || '')}</span>
  </div>
  </div>
- <button onclick="deleteTeacherActionPlan('${p.id}')" title="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px 4px;font-size:12px;opacity:0.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5"><i class="fas fa-times"></i></button>
+ <button onclick="deleteTeacherActionPlan('${p.id}')" data-tip="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px 4px;font-size:12px;opacity:0.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5"><i class="fas fa-times"></i></button>
  </div>`;
     }).join('')}
  </div>` :
@@ -37588,7 +37620,7 @@ function renderPeriodComparison() {
  <div class="vdr-sep"></div>
  <button id="pcAToBtn" class="vdr-trigger-btn has-value"
  onclick="VDR.open('to',this,function(f,t){document.getElementById('pcAStart').value=f;document.getElementById('pcAEnd').value=t;pcUpdateBtnLabels();})">${fmtBtn(defs.aEnd) || 'To'}</button>
- <button class="vdr-clear-btn" title="Clear A" onclick="document.getElementById('pcAStart').value='';document.getElementById('pcAEnd').value='';pcUpdateBtnLabels();">
+ <button class="vdr-clear-btn" data-tip="Clear A" onclick="document.getElementById('pcAStart').value='';document.getElementById('pcAEnd').value='';pcUpdateBtnLabels();">
  <i class="fas fa-times"></i></button>
  </div>
  <input type="hidden" id="pcAStart" value="${defs.aStart}">
@@ -37603,7 +37635,7 @@ function renderPeriodComparison() {
  <div class="vdr-sep"></div>
  <button id="pcBToBtn" class="vdr-trigger-btn has-value"
  onclick="VDR.open('to',this,function(f,t){document.getElementById('pcBStart').value=f;document.getElementById('pcBEnd').value=t;pcUpdateBtnLabels();})">${fmtBtn(defs.bEnd) || 'To'}</button>
- <button class="vdr-clear-btn" title="Clear B" onclick="document.getElementById('pcBStart').value='';document.getElementById('pcBEnd').value='';pcUpdateBtnLabels();">
+ <button class="vdr-clear-btn" data-tip="Clear B" onclick="document.getElementById('pcBStart').value='';document.getElementById('pcBEnd').value='';pcUpdateBtnLabels();">
  <i class="fas fa-times"></i></button>
  </div>
  <input type="hidden" id="pcBStart" value="${defs.bStart}">
@@ -39100,8 +39132,8 @@ function renderCapacityBuilding() {
  <span class="cb-entry-status ${sc.cls}">${sc.icon} ${e.status.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
  <span class="cb-entry-date"><i class="fas fa-calendar"></i> ${dateStr}</span>
  <div class="cb-entry-actions">
- <button class="btn btn-sm btn-ghost" onclick="editCapacityBuilding('${e.id}')" title="Edit"><i class="fas fa-pen"></i></button>
- <button class="btn btn-sm btn-ghost" onclick="deleteCapacityBuilding('${e.id}')" title="Delete" style="color:#ef4444"><i class="fas fa-trash"></i></button>
+ <button class="btn btn-sm btn-ghost" onclick="editCapacityBuilding('${e.id}')" data-tip="Edit"><i class="fas fa-pen"></i></button>
+ <button class="btn btn-sm btn-ghost" onclick="deleteCapacityBuilding('${e.id}')" data-tip="Delete" style="color:#ef4444"><i class="fas fa-trash"></i></button>
  </div>
  </div>
  <h3 class="cb-entry-title">${escapeHTML(e.title)}</h3>
@@ -39294,3 +39326,225 @@ document.addEventListener('DOMContentLoaded', async () => {
   // License OK proceed normally
   await proceedAfterLicense();
 });
+
+/* ===== Modern Dropdown v3 — custom option-list popup =====
+   Intercepts native <select> popup and renders a themed list.
+   The native select stays hidden-but-authoritative: value, events
+   (change), form submit and all existing logic keep working.     */
+(function () {
+  'use strict';
+
+  let openList = null;   // currently open .mdd-list element
+  let openSel = null;    // the select it belongs to
+  let hlIndex = -1;      // highlighted option index
+  let openedAt = 0;      // timestamp — guards against the opening click landing on an option
+
+  function closeList() {
+    if (!openList) return;
+    const list = openList, sel = openSel;
+    openList = null; openSel = null; hlIndex = -1;
+    list.classList.remove('open');
+    setTimeout(() => list.remove(), 150);
+    if (sel) { sel.style.visibility = ''; sel.focus({ preventScroll: true }); }
+    document.removeEventListener('mousedown', onDocDown, true);
+    document.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('resize', reposition);
+    window.removeEventListener('scroll', onScroll, true);
+  }
+
+  // Scroll/resize behavior: scroll INSIDE the list never closes it;
+  // scrolling elsewhere repositions the list to follow its select.
+  function reposition() {
+    if (!openList || !openSel) return;
+    const r = openSel.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) { closeList(); return; }
+    const listH = Math.min(openList.scrollHeight, 280);
+    const spaceBelow = window.innerHeight - r.bottom;
+    let top = r.bottom + 4;
+    openList.classList.remove('drop-up');
+    if (spaceBelow < listH + 12 && r.top > listH + 12) {
+      top = r.top - listH - 4;
+      openList.classList.add('drop-up');
+    }
+    openList.style.left = Math.min(r.left, window.innerWidth - Math.max(r.width, 160) - 8) + 'px';
+    openList.style.top = top + 'px';
+    openList.style.minWidth = r.width + 'px';
+  }
+
+  function onScroll(e) {
+    if (!openList) return;
+    if (openList.contains(e.target) || e.target === openSel) return; // inner scroll: keep open
+    reposition();
+  }
+
+  function onDocDown(e) {
+    if (openList && !openList.contains(e.target) && e.target !== openSel) closeList();
+  }
+
+  function onKey(e) {
+    if (!openList) return;
+    const opts = [...openList.querySelectorAll('.mdd-option:not(.disabled)')];
+    if (e.key === 'Escape') { e.preventDefault(); closeList(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      hlIndex = e.key === 'ArrowDown'
+        ? (hlIndex + 1) % opts.length
+        : (hlIndex - 1 + opts.length) % opts.length;
+      opts.forEach((o, i) => o.classList.toggle('highlighted', i === hlIndex));
+      opts[hlIndex].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const target = opts[Math.max(hlIndex, 0)];
+      if (target) commit(target);
+    } else if (e.key === 'Tab') {
+      closeList();
+    }
+  }
+
+  function commit(optEl) {
+    const sel = openSel;
+    const value = optEl.dataset.value;
+    if (sel && sel.value !== value) {
+      sel.value = value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    closeList();
+  }
+
+  function buildOptionRow(option, sel) {
+    const row = document.createElement('div');
+    row.className = 'mdd-option';
+    if (option.disabled) row.classList.add('disabled');
+    if (option.selected) row.classList.add('selected');
+    row.textContent = option.textContent;
+    row.dataset.value = option.value;
+    row.addEventListener('click', () => {
+      // Ignore the click that opened the list (mouseup lands on an option underneath)
+      if (Date.now() - openedAt < 150) return;
+      commit(row);
+    });
+    row.addEventListener('mousemove', () => {
+      if (row.classList.contains('disabled')) return;
+      openList.querySelectorAll('.mdd-option.highlighted').forEach(o => o.classList.remove('highlighted'));
+      row.classList.add('highlighted');
+      hlIndex = [...openList.querySelectorAll('.mdd-option')].indexOf(row);
+    });
+    return row;
+  }
+
+  function openFor(select) {
+    closeList();
+    openSel = select;
+    const list = document.createElement('div');
+    list.className = 'mdd-list';
+    [...select.options].forEach(o => list.appendChild(buildOptionRow(o, select)));
+    document.body.appendChild(list);
+
+    // Position below the select (reposition() handles flip-up + follow-on-scroll)
+    select.style.visibility = 'visible';
+    openList = list;
+    openedAt = Date.now();
+    reposition();
+    hlIndex = [...select.options].findIndex(o => o.selected);
+    requestAnimationFrame(() => list.classList.add('open'));
+    document.addEventListener('mousedown', onDocDown, true);
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', onScroll, true);
+  }
+
+  // Intercept left mousedown on any select (capture phase, before native popup)
+  document.addEventListener('mousedown', function (e) {
+    const sel = e.target.closest('select');
+    if (!sel || sel.multiple || sel.disabled || e.button !== 0) return;
+    if (sel.dataset.mddOff === '1') return; // opt-out escape hatch
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (openSel === sel) { closeList(); return; }
+    openFor(sel);
+  }, true);
+
+  // Keyboard: Enter/Space/ArrowDown on a focused closed select opens the list
+  document.addEventListener('keydown', function (e) {
+    if (openList) return;
+    const sel = document.activeElement && document.activeElement.tagName === 'SELECT'
+      ? document.activeElement : null;
+    if (!sel || sel.multiple || sel.disabled) return;
+    if (sel.dataset.mddOff === '1') return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      openFor(sel);
+    }
+  });
+
+  window.mddClose = closeList;
+  window.mddOpenFor = openFor;
+})();
+
+/* ============================================================
+   APP-WIDE STYLED TOOLTIP — replaces native title="" popups
+   Any element with [data-tip] shows a themed floating tooltip
+   (dark/light aware, viewport-aware, never clipped).
+   ============================================================ */
+(function () {
+  'use strict';
+  let tipEl = null, curTarget = null, showTimer = null;
+
+  function ensureEl() {
+    if (!tipEl) {
+      tipEl = document.createElement('div');
+      tipEl.className = 'app-tip';
+      document.body.appendChild(tipEl);
+    }
+    return tipEl;
+  }
+
+  function move(e) {
+    if (!tipEl || !curTarget) return;
+    const pad = 12, maxW = 460;
+    let x = e.clientX + pad, y = e.clientY + pad + 4;
+    // Measure and clamp
+    tipEl.style.maxWidth = maxW + 'px';
+    tipEl.style.visibility = 'hidden';
+    tipEl.style.left = '0px'; tipEl.style.top = '0px';
+    const r = tipEl.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = Math.max(8, e.clientX - r.width - pad);
+    if (y + r.height > window.innerHeight - 8) y = Math.max(8, e.clientY - r.height - pad);
+    tipEl.style.left = x + 'px';
+    tipEl.style.top = y + 'px';
+    tipEl.style.visibility = '';
+  }
+
+  function show(target, e) {
+    const text = target.getAttribute('data-tip');
+    if (!text) return;
+    const el = ensureEl();
+    el.textContent = text;
+    el.classList.add('show');
+    curTarget = target;
+    move(e);
+  }
+
+  function hide() {
+    clearTimeout(showTimer);
+    if (tipEl) tipEl.classList.remove('show');
+    curTarget = null;
+  }
+
+  document.addEventListener('mouseover', (e) => {
+    const t = e.target.closest('[data-tip]');
+    if (t === curTarget) { move(e); return; }
+    clearTimeout(showTimer);
+    if (!t) { hide(); return; }
+    showTimer = setTimeout(() => show(t, e), 350); // small delay like native tooltips
+  });
+  document.addEventListener('mouseout', (e) => {
+    const t = e.target.closest('[data-tip]');
+    if (t && !t.contains(e.relatedTarget)) hide();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (curTarget) move(e);
+  });
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('blur', hide);
+})();
