@@ -25223,11 +25223,15 @@ const SarvamAI = {
     const s = getAppSettings();
     return !!this.getApiKey() && s.sarvamEnabled !== false;
   },
-  async request(endpoint, body) {
+  // Default abort budget for lightweight endpoints (translate / TTS / STT)
+  DEFAULT_TIMEOUT_MS: 60000,
+  MAX_TIMEOUT_MS: 150000,
+  async request(endpoint, body, timeoutMs) {
     const key = this.getApiKey();
     if (!key) throw new Error('Sarvam AI API key not configured. Go to Settings Sarvam AI to add your key.');
+    const budget = Math.min(this.MAX_TIMEOUT_MS, Math.max(5000, Number(timeoutMs) || this.DEFAULT_TIMEOUT_MS));
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 25000) : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), budget) : null;
     try {
       const res = await fetch(this.BASE_URL + endpoint, {
         method: 'POST',
@@ -25242,12 +25246,19 @@ const SarvamAI = {
       return await res.json();
     } catch (err) {
       if (err.name === 'AbortError') {
-        throw new Error('Sarvam AI request timed out (25s). Please try again.');
+        throw new Error(`Sarvam AI request timed out (${Math.round(budget / 1000)}s). Please try again.`);
       }
       throw err;
     } finally {
       if (timeoutId) clearTimeout(timeoutId);
     }
+  },
+  // Chat replies are non-streaming, so the whole generation must finish inside the budget.
+  // Budget = request overhead + generation time (~25 tok/s) + chain-of-thought headroom.
+  resolveChatTimeout(maxTokens, reasoningEffort) {
+    const tokens = Math.max(256, Number(maxTokens) || 2048);
+    const reasoningPad = reasoningEffort === 'high' ? 45000 : reasoningEffort === 'low' ? 0 : 25000;
+    return Math.min(this.MAX_TIMEOUT_MS, 25000 + tokens * 40 + reasoningPad);
   },
   async chat(messages, options = {}) {
     const s = getAppSettings();
@@ -25275,17 +25286,20 @@ const SarvamAI = {
       );
     }
 
+    const reasoningEffort = options.reasoning_effort || s.sarvamReasoning || 'medium';
+    const timeoutMs = options.timeout || this.resolveChatTimeout(maxTokens, reasoningEffort);
+
     const reqBody = {
       model,
       messages,
       temperature: options.temperature ?? 0.5,
       max_tokens: maxTokens,
-      reasoning_effort: options.reasoning_effort || s.sarvamReasoning || 'medium',
+      reasoning_effort: reasoningEffort,
       stream: false
     };
 
     // First request
-    let data = await this.request('/v1/chat/completions', reqBody);
+    let data = await this.request('/v1/chat/completions', reqBody, timeoutMs);
     let message = data?.choices?.[0]?.message;
     if (message) message.content = getSarvamMessageDisplayText(message, '');
 
@@ -25304,7 +25318,7 @@ const SarvamAI = {
         const contData = await this.request('/v1/chat/completions', {
           ...reqBody,
           messages: contMessages
-        });
+        }, timeoutMs);
         const contMessage = contData?.choices?.[0]?.message;
         if (contMessage) contMessage.content = getSarvamMessageDisplayText(contMessage, '');
         const chunk = contMessage?.content || '';
