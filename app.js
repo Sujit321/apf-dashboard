@@ -5858,6 +5858,12 @@ function renderVisitCalendar() {
       if (S.onChangeCb) S.onChangeCb('', '');
       removePopup();
     },
+    reset(anchor) {
+      S.fromVal = ''; S.toVal = '';
+      if (anchor) S.anchor = anchor;
+      updateTriggerBtns();
+      removePopup();
+    },
     _today() {
       const t = todayStr();
       if (S.picking === 'from') S.fromVal = t; else S.toVal = t;
@@ -5868,8 +5874,9 @@ function renderVisitCalendar() {
       if (S.onChangeCb) S.onChangeCb(S.fromVal, S.toVal);
       removePopup();
     },
-    syncFrom(fromVal, toVal) {
+    syncFrom(fromVal, toVal, anchor) {
       S.fromVal = fromVal || ''; S.toVal = toVal || '';
+      if (anchor) S.anchor = anchor;
       updateTriggerBtns();
     }
   };
@@ -11971,10 +11978,21 @@ function setReportType(type) {
   const yearF = document.getElementById('reportYearFilter');
   const clusterF = document.getElementById('reportClusterFilter');
   const blockF = document.getElementById('reportBlockFilter');
-  if (monthF) monthF.style.display = ['monthly', 'cluster', 'block', 'district', 'health', 'visits', 'training'].includes(type) ? '' : 'none';
-  if (yearF) yearF.style.display = ['monthly', 'cluster', 'block', 'district', 'health', 'visits', 'training'].includes(type) ? '' : 'none';
-  if (clusterF) clusterF.style.display = ['cluster'].includes(type) ? '' : 'none';
-  if (blockF) blockF.style.display = ['block', 'district'].includes(type) ? '' : 'none';
+  const setFilterVisibility = (el, visible) => {
+    if (!el) return;
+    const field = el.closest('.report-filter-field');
+    (field || el).style.display = visible ? '' : 'none';
+  };
+  const hasPeriod = ['monthly', 'cluster', 'block', 'district', 'health', 'visits', 'training'].includes(type);
+  // Exact date ranges apply to every report lens; month/year remain a
+  // convenient fallback for period-based reports.
+  const fromF = document.getElementById('reportFromDate');
+  const toF = document.getElementById('reportToDate');
+  if (fromF) (fromF.closest('.report-date-range') || fromF).style.display = '';
+  setFilterVisibility(monthF, hasPeriod);
+  setFilterVisibility(yearF, hasPeriod);
+  setFilterVisibility(clusterF, type === 'cluster');
+  setFilterVisibility(blockF, ['block', 'district'].includes(type));
 }
 
 function _reportPopulateFilters() {
@@ -12003,17 +12021,60 @@ function _reportPopulateFilters() {
     blockF.value = cur || 'all';
   }
   // Hide filters by default
-  if (clusterF) clusterF.style.display = 'none';
-  if (blockF) blockF.style.display = 'none';
+  if (clusterF) (clusterF.closest('.report-filter-field') || clusterF).style.display = 'none';
+  if (blockF) (blockF.closest('.report-filter-field') || blockF).style.display = 'none';
   // Set current month/year
   const monthF = document.getElementById('reportMonthFilter');
   if (monthF && !monthF.dataset.init) {
     monthF.value = new Date().getMonth().toString();
     monthF.dataset.init = '1';
   }
+  // Re-apply the active report's visibility after rebuilding filter options.
+  // This keeps the field labels in sync with the selects they wrap.
+  setReportType(currentReportType);
+}
+
+function _reportDateKey(value) {
+  const d = parseLocalDate(value);
+  if (!d || isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function syncReportDateRange(from, to) {
+  const fromInput = document.getElementById('reportFromDate');
+  const toInput = document.getElementById('reportToDate');
+  if (fromInput) fromInput.value = from || '';
+  if (toInput) toInput.value = to || '';
+}
+
+function _reportDateRange() {
+  const from = document.getElementById('reportFromDate')?.value || '';
+  const to = document.getElementById('reportToDate')?.value || '';
+  return { from, to, active: !!(from || to), valid: !from || !to || from <= to };
+}
+
+function _reportFilterByDateRange(items) {
+  const range = _reportDateRange();
+  if (!range.active) return [...items];
+  return items.filter(item => {
+    const key = _reportDateKey(item.date);
+    return key && (!range.from || key >= range.from) && (!range.to || key <= range.to);
+  });
+}
+
+function clearReportDateRange() {
+  const from = document.getElementById('reportFromDate');
+  const to = document.getElementById('reportToDate');
+  if (from) from.value = '';
+  if (to) to.value = '';
+  const reportFromBtn = document.getElementById('reportFromBtn');
+  if (typeof VDR !== 'undefined' && typeof VDR.reset === 'function') VDR.reset(reportFromBtn);
+  if (typeof showToast === 'function') showToast('Date range cleared. Month/year filters are active.', 'info');
 }
 
 function _reportFilterByPeriod(items, monthVal, year) {
+  const range = _reportDateRange();
+  if (range.active) return _reportFilterByDateRange(items);
   if (year === 'all' || isNaN(year)) {
     if (monthVal === 'all') return [...items];
     const month = parseInt(monthVal);
@@ -12036,6 +12097,12 @@ function _reportFilterByPeriod(items, monthVal, year) {
 }
 
 function _reportPeriodLabel(monthVal, year) {
+  const range = _reportDateRange();
+  if (range.active) {
+    const from = range.from ? parseLocalDate(range.from).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Start';
+    const to = range.to ? parseLocalDate(range.to).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Present';
+    return `${from} – ${to}`;
+  }
   if ((year === 'all' || isNaN(year)) && monthVal === 'all') return 'All Time';
   if (year === 'all' || isNaN(year)) return new Date(2000, parseInt(monthVal)).toLocaleString('en', { month: 'long' }) + ' (All Years)';
   if (monthVal === 'all') return `Year ${year}`;
@@ -12043,6 +12110,11 @@ function _reportPeriodLabel(monthVal, year) {
 }
 
 function generateReport() {
+  const dateRange = _reportDateRange();
+  if (!dateRange.valid) {
+    if (typeof showToast === 'function') showToast('From date must be before or equal to the To date.', 'error');
+    return;
+  }
   const monthVal = document.getElementById('reportMonthFilter').value;
   const yearRaw = document.getElementById('reportYearFilter').value;
   const year = yearRaw === 'all' ? 'all' : parseInt(yearRaw);
@@ -12060,12 +12132,12 @@ function generateReport() {
     case 'monthly': generateMonthlyReport(output, visits, trainings, observations, monthVal, year); break;
     case 'cluster': generateClusterReport(output, visits, trainings, observations, monthVal, year, clusterFilter); break;
     case 'block': generateBlockReport(output, visits, trainings, observations, monthVal, year, blockFilter); break;
-    case 'district': generateDistrictReport(output, visits, trainings, observations, monthVal, year); break;
+    case 'district': generateDistrictReport(output, visits, trainings, observations, monthVal, year, blockFilter); break;
     case 'health': generateHealthReport(output, visits, trainings, observations, monthVal, year); break;
     case 'visits': generateVisitsReport(output, visits, monthVal, year); break;
     case 'training': generateTrainingReport(output, trainings, monthVal, year); break;
-    case 'school': generateSchoolReport(output, visits, trainings, observations); break;
-    case 'summary': generateSummaryReport(output, visits, trainings, observations); break;
+    case 'school': generateSchoolReport(output, _reportFilterByDateRange(visits), _reportFilterByDateRange(trainings), _reportFilterByDateRange(observations)); break;
+    case 'summary': generateSummaryReport(output, _reportFilterByDateRange(visits), _reportFilterByDateRange(trainings), _reportFilterByDateRange(observations)); break;
     case 'reflective': generateReflectiveReport(output, visits, trainings, observations, monthVal, year); break;
     default: generateMonthlyReport(output, visits, trainings, observations, monthVal, year);
   }
@@ -12710,11 +12782,19 @@ function generateBlockReport(output, visits, trainings, observations, monthVal, 
 }
 
 // ===== DISTRICT REPORT =====
-function generateDistrictReport(output, visits, trainings, observations, monthVal, year) {
+function generateDistrictReport(output, visits, trainings, observations, monthVal, year, blockFilter = 'all') {
   const periodLabel = _reportPeriodLabel(monthVal, year);
   let fVisits = _reportFilterByPeriod(visits, monthVal, year);
   let fObs = _reportFilterByPeriod(observations, monthVal, year);
   let fTrainings = _reportFilterByPeriod(trainings, monthVal, year);
+  if (blockFilter && blockFilter !== 'all') {
+    const selectedBlock = blockFilter.trim().toLowerCase();
+    fVisits = fVisits.filter(v => (v.block || '').trim().toLowerCase() === selectedBlock);
+    fObs = fObs.filter(o => (o.block || '').trim().toLowerCase() === selectedBlock);
+    // Trainings do not always have a separate block field; venue is the
+    // existing location field used by the reports module.
+    fTrainings = fTrainings.filter(t => (t.block || t.venue || '').trim().toLowerCase() === selectedBlock);
+  }
 
   const completedVisits = fVisits.filter(v => v.status === 'completed').length;
   const totalAttendees = fTrainings.reduce((s, t) => s + (t.attendees || 0), 0);
@@ -13672,7 +13752,8 @@ function generateReflectiveReport(output, visits, trainings, observations, month
 
   // Load saved reflections for this period
   var reflections = DB.get('reflections') || [];
-  var periodKey = (monthVal === 'all' ? 'all' : monthVal) + '-' + year;
+  var reportRange = _reportDateRange();
+  var periodKey = reportRange.active ? (reportRange.from || 'start') + '_' + (reportRange.to || 'present') : (monthVal === 'all' ? 'all' : monthVal) + '-' + year;
   var saved = reflections.find(function (r) { return r.periodKey === periodKey; }) || {};
 
   // Profile
@@ -13764,7 +13845,8 @@ function saveReflections() {
   var periodKey = '';
   var mv = document.getElementById('reportMonthFilter').value;
   var yr = document.getElementById('reportYearFilter').value;
-  periodKey = (mv === 'all' ? 'all' : mv) + '-' + yr;
+  var reportRange = _reportDateRange();
+  periodKey = reportRange.active ? (reportRange.from || 'start') + '_' + (reportRange.to || 'present') : (mv === 'all' ? 'all' : mv) + '-' + yr;
 
   var reflections = DB.get('reflections') || [];
   var idx = reflections.findIndex(function (r) { return r.periodKey === periodKey; });

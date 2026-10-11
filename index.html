@@ -1049,11 +1049,31 @@
       <div class="section-header">
         <div>
           <h1><i class="fas fa-chart-bar"></i> Reports</h1>
-          <p class="section-subtitle">Generate and view summary reports</p>
+          <p class="section-subtitle">Generate comprehensive evidence-based reports across field work, learning, reach, and impact.</p>
+        </div>
+      </div>
+
+      <div class="reports-intro">
+        <div class="reports-intro-copy">
+          <span class="reports-eyebrow"><i class="fas fa-compass"></i> Insight center</span>
+          <h2>See the story behind your field activity</h2>
+          <p>Choose a report lens, set the scope, and generate a ready-to-share view of visits, observations, trainings, school coverage, and quality signals.</p>
+        </div>
+        <div class="reports-intro-signals">
+          <div><strong>10</strong><span>Report lenses</span></div>
+          <div><strong>360°</strong><span>Coverage &amp; quality</span></div>
+          <div><strong>3</strong><span>Export formats</span></div>
         </div>
       </div>
 
       <div class="reports-controls">
+        <div class="reports-controls-heading">
+          <div>
+            <span class="reports-section-kicker">1 · Choose a report lens</span>
+            <strong>Start with the question you want to answer</strong>
+          </div>
+          <span class="reports-controls-hint"><i class="fas fa-info-circle"></i> Reports use your saved dashboard data</span>
+        </div>
         <div class="report-type-selector">
           <button class="report-type-btn active" data-type="monthly" onclick="setReportType('monthly')">
             <i class="fas fa-calendar-alt"></i> Monthly
@@ -1086,8 +1106,31 @@
             <i class="fas fa-lightbulb"></i> Reflective
           </button>
         </div>
+        <div class="reports-filter-heading">
+          <span class="reports-section-kicker">2 · Set the scope</span>
+          <span class="reports-filter-note">Choose an exact date range or use the month/year filters. A date range takes priority.</span>
+        </div>
         <div class="report-filters">
-          <select id="reportMonthFilter">
+          <div class="report-date-range" aria-label="Report date range">
+            <div class="report-date-picker-field">
+              <span class="report-date-label"><i class="fas fa-calendar-day"></i> Date range</span>
+              <div class="vdr-trigger-wrap report-vdr-wrap" onclick="event.stopPropagation()">
+                <i class="fas fa-calendar-alt report-vdr-icon"></i>
+                <button id="reportFromBtn" class="vdr-trigger-btn" aria-label="Select report start date"
+                  onclick="VDR.syncFrom(document.getElementById('reportFromDate').value,document.getElementById('reportToDate').value,this);VDR.open('from',this,syncReportDateRange)">From</button>
+                <div class="vdr-sep"></div>
+                <button id="reportToBtn" class="vdr-trigger-btn" aria-label="Select report end date"
+                  onclick="VDR.syncFrom(document.getElementById('reportFromDate').value,document.getElementById('reportToDate').value,this);VDR.open('to',this,syncReportDateRange)">To</button>
+                <button type="button" class="vdr-clear-btn report-clear-date" onclick="clearReportDateRange()" data-tip="Clear dates" aria-label="Clear report dates">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <!-- Hidden native values remain the source used by report filtering. -->
+              <input type="date" class="report-date-input" id="reportFromDate" aria-label="Report from date" tabindex="-1">
+              <input type="date" class="report-date-input" id="reportToDate" aria-label="Report to date" tabindex="-1">
+            </div>
+          </div>
+          <label class="report-filter-field"><span><i class="fas fa-calendar-alt"></i> Month</span><select id="reportMonthFilter" aria-label="Report month">
             <option value="all">All Months</option>
             <option value="0">January</option>
             <option value="1">February</option>
@@ -1101,34 +1144,48 @@
             <option value="9">October</option>
             <option value="10">November</option>
             <option value="11">December</option>
-          </select>
-          <select id="reportYearFilter"></select>
-          <select id="reportClusterFilter">
+          </select></label>
+          <label class="report-filter-field"><span><i class="fas fa-calendar-check"></i> Year</span><select id="reportYearFilter" aria-label="Report year"></select></label>
+          <label class="report-filter-field"><span><i class="fas fa-layer-group"></i> Cluster</span><select id="reportClusterFilter" aria-label="Report cluster">
             <option value="all">All Clusters</option>
-          </select>
-          <select id="reportBlockFilter">
+          </select></label>
+          <label class="report-filter-field"><span><i class="fas fa-building"></i> Block</span><select id="reportBlockFilter" aria-label="Report block">
             <option value="all">All Blocks</option>
-          </select>
-          <button class="btn btn-primary" onclick="generateReport()">
+          </select></label>
+          <div class="report-filter-actions">
+            <button class="btn btn-primary" onclick="generateReport()">
             <i class="fas fa-cog"></i> Generate
-          </button>
-          <button class="btn btn-outline" onclick="exportReportExcel()">
+            </button>
+            <button class="btn btn-outline" onclick="exportReportExcel()">
             <i class="fas fa-file-excel"></i> Excel
-          </button>
-          <button class="btn btn-outline" onclick="printReport()">
+            </button>
+            <button class="btn btn-outline" onclick="printReport()">
             <i class="fas fa-print"></i> Print
-          </button>
-          <button class="btn btn-pdf" onclick="exportReportPDF()">
+            </button>
+            <button class="btn btn-pdf" onclick="exportReportPDF()">
             <i class="fas fa-file-pdf"></i> Download PDF
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
+      <div class="reports-output-heading">
+        <div>
+          <span class="reports-section-kicker">3 · Review and share</span>
+          <strong>Generated report</strong>
+        </div>
+        <span><i class="fas fa-shield-alt"></i> Prepared locally from your saved records</span>
+      </div>
       <div id="reportOutput" class="report-output">
         <div class="empty-state">
-          <i class="fas fa-chart-bar"></i>
+          <div class="report-empty-icon"><i class="fas fa-chart-bar"></i></div>
           <h3>Select report type and generate</h3>
-          <p>Choose a report type above and click Generate</p>
+          <p>Choose a report lens and scope above. Your generated report will include KPIs, trends, breakdowns, and detailed tables where data is available.</p>
+          <div class="report-empty-guide">
+            <div><i class="fas fa-route"></i><strong>Coverage</strong><span>Visits, schools, clusters, and blocks</span></div>
+            <div><i class="fas fa-graduation-cap"></i><strong>Learning</strong><span>Observations, teachers, practice, and engagement</span></div>
+            <div><i class="fas fa-share-alt"></i><strong>Shareable</strong><span>Export to Excel, print, or PDF</span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -8978,10 +9035,14 @@ function getOrCreateFolder() {
         </div>
         <div class="obj-hero-content">
           <div class="obj-hero-text">
-            <span class="obj-hero-eyebrow"><i class="fas fa-flag-checkered"></i> Performance Suite</span>
+            <span class="obj-hero-eyebrow"><i class="fas fa-sparkles"></i> Annual performance workspace</span>
             <h1>Objective Setting &amp; Performance Review</h1>
-            <p>Set yearly objectives, track action points, capture review comments, and generate performance
-              reviews.</p>
+            <p>Turn yearly priorities into visible progress, focused action points, and review-ready evidence.</p>
+            <div class="obj-hero-meta">
+              <span><i class="fas fa-calendar-check"></i> Plan the year</span>
+              <span><i class="fas fa-chart-line"></i> Track momentum</span>
+              <span><i class="fas fa-file-signature"></i> Reflect with evidence</span>
+            </div>
           </div>
           <div class="obj-hero-ring" aria-hidden="true">
             <svg viewBox="0 0 120 120">
@@ -9011,9 +9072,32 @@ function getOrCreateFolder() {
       <!-- KPI Stats -->
       <div class="obj-stats-bar" id="objStatsBar"></div>
 
+      <!-- Review workflow -->
+      <div class="obj-workflow" aria-label="Performance review workflow">
+        <div class="obj-workflow-intro">
+          <span class="obj-section-kicker">Your performance cycle</span>
+          <h2>Move from intention to impact</h2>
+          <p>Keep every objective, action, and reflection in one clear workspace.</p>
+        </div>
+        <div class="obj-workflow-steps">
+          <div class="obj-workflow-step">
+            <span class="obj-workflow-number">01</span>
+            <div><strong>Set direction</strong><small>Define outcomes and targets for the year.</small></div>
+          </div>
+          <div class="obj-workflow-step">
+            <span class="obj-workflow-number">02</span>
+            <div><strong>Build momentum</strong><small>Break objectives into trackable action points.</small></div>
+          </div>
+          <div class="obj-workflow-step">
+            <span class="obj-workflow-number">03</span>
+            <div><strong>Prepare the review</strong><small>Capture comments, ratings, and evidence.</small></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Filters -->
-      <div class="obj-toolbar">
-        <div class="obj-toolbar-label"><i class="fas fa-sliders-h"></i> Filters</div>
+      <div class="obj-toolbar" aria-label="Objective filters">
+        <div class="obj-toolbar-label"><i class="fas fa-layer-group"></i> Objective workspace</div>
         <div class="filter-group">
           <select id="objYearFilter" onchange="_pageState.objectives=1;renderObjectives()">
             <option value="all">All Years</option>
