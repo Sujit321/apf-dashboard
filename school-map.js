@@ -1263,6 +1263,156 @@ function smapExportTableCSV() {
   if (typeof showToast === 'function') showToast('Excel / CSV export downloaded!', 'success');
 }
 
+// ---- Import the School Map export structure ----
+// Imports the location columns from the exported table. Visits, last visit,
+// and status are derived from application data and are intentionally ignored.
+async function smapImportTableExcel(event) {
+  var input = event && event.target;
+  var file = input && input.files && input.files[0];
+  if (!file) return;
+
+  var normaliseHeader = function(value) {
+    return String(value == null ? '' : value)
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, '');
+  };
+  var showImportError = function(message) {
+    if (typeof showToast === 'function') showToast(message, 'error');
+  };
+
+  try {
+    if (typeof XLSX === 'undefined') {
+      showImportError('Excel import is unavailable. Please reload the application and try again.');
+      return;
+    }
+
+    var buffer = await file.arrayBuffer();
+    var workbook = XLSX.read(buffer, { type: 'array' });
+    var firstSheetName = workbook.SheetNames && workbook.SheetNames[0];
+    if (!firstSheetName) {
+      showImportError('The selected file does not contain a worksheet.');
+      return;
+    }
+
+    var sheet = workbook.Sheets[firstSheetName];
+    var rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+    if (!rows.length) {
+      showImportError('The selected file does not contain any school rows.');
+      return;
+    }
+
+    var headerNames = Object.keys(rows[0]).map(normaliseHeader);
+    if (headerNames.indexOf('schoolname') === -1) {
+      showImportError('Invalid School Map file. The "School Name" column is required.');
+      return;
+    }
+
+    var cell = function(row, expectedHeader) {
+      var keys = Object.keys(row);
+      for (var i = 0; i < keys.length; i++) {
+        if (normaliseHeader(keys[i]) === expectedHeader) return row[keys[i]];
+      }
+      return '';
+    };
+    var text = function(value) {
+      return String(value == null ? '' : value).trim();
+    };
+    var existingLocations = SchoolMap.getAll();
+    var existingKeys = Object.keys(existingLocations);
+    var findExistingKey = function(name) {
+      var wanted = name.toLowerCase();
+      for (var i = 0; i < existingKeys.length; i++) {
+        if (existingKeys[i].trim().toLowerCase() === wanted) return existingKeys[i];
+      }
+      return null;
+    };
+
+    // Last valid row wins for duplicate school names in the same workbook.
+    var pending = Object.create(null);
+    var invalid = 0;
+    var unpinned = 0;
+    var duplicate = 0;
+
+    rows.forEach(function(row) {
+      var name = text(cell(row, 'schoolname'));
+      if (!name) {
+        invalid++;
+        return;
+      }
+
+      var latText = text(cell(row, 'latitude'));
+      var lngText = text(cell(row, 'longitude'));
+      // Exported rows for unpinned schools are valid but contain no location.
+      if (!latText && !lngText) {
+        unpinned++;
+        return;
+      }
+      if (!latText || !lngText) {
+        invalid++;
+        return;
+      }
+
+      var lat = Number(latText.replace(/,/g, ''));
+      var lng = Number(lngText.replace(/,/g, ''));
+      if (!isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        invalid++;
+        return;
+      }
+
+      var key = name.toLowerCase();
+      var existingKey = findExistingKey(name);
+      var canonicalName = existingKey || (pending[key] && pending[key].name) || name;
+      if (pending[key]) duplicate++;
+      pending[key] = {
+        name: canonicalName,
+        data: {
+          lat: lat,
+          lng: lng,
+          cluster: text(cell(row, 'cluster')),
+          plusCode: text(cell(row, 'pluscode'))
+        }
+      };
+    });
+
+    var pendingKeys = Object.keys(pending);
+    if (!pendingKeys.length) {
+      showImportError('No valid pinned school locations were found in the file.');
+      return;
+    }
+
+    var updatedAt = new Date().toISOString();
+    var locations = SchoolMap.getAll();
+    pendingKeys.forEach(function(key) {
+      var entry = pending[key];
+      var current = locations[entry.name] || {};
+      var data = Object.assign({}, current, entry.data, { school: entry.name, updatedAt: updatedAt });
+      // Blank optional fields should not erase an existing value on re-import.
+      if (!entry.data.cluster && current.cluster) data.cluster = current.cluster;
+      if (!entry.data.plusCode && current.plusCode) data.plusCode = current.plusCode;
+      locations[entry.name] = data;
+    });
+    SchoolMap.save(locations);
+
+    if (SchoolMap._map) renderSchoolMap();
+    var searchEl = document.getElementById('smapTableSearch');
+    renderSchoolMapTable(searchEl ? searchEl.value : '');
+
+    var message = 'Imported ' + pendingKeys.length + ' school location' + (pendingKeys.length === 1 ? '' : 's') + '.';
+    if (invalid || duplicate || unpinned) {
+      message += ' ' + invalid + ' invalid, ' + duplicate + ' duplicate' + (duplicate === 1 ? '' : 's') +
+        ', ' + unpinned + ' unpinned row' + (unpinned === 1 ? '' : 's') + ' skipped.';
+    }
+    if (typeof showToast === 'function') showToast(message, 'success');
+  } catch (err) {
+    console.error('[School Map] Excel import failed:', err);
+    showImportError('Could not import the School Map file. Check that it is a valid Excel or CSV file.');
+  } finally {
+    if (input) input.value = '';
+  }
+}
+
 // =====================================================================
 // SCHOOL LOCATION EDITOR MODAL
 // =====================================================================

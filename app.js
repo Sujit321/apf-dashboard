@@ -25264,9 +25264,16 @@ const SarvamAI = {
     const s = getAppSettings();
     const model = normalizeSarvamModel(options.model || s.sarvamModel || 'sarvam-m');
     // Reasoning models use 60-70% of tokens on chain-of-thought, so ensure sufficient headroom
-    let maxTokens = options.max_tokens || 2048;
+    const requestedMaxTokens = Number(options.max_tokens) || 2048;
+    let maxTokens = requestedMaxTokens;
     // Starter tier limits: sarvam-105b/30b = 4096, sarvam-m = 2048
-    if (model === 'sarvam-105b') maxTokens = Math.min(4096, Math.max(1500, Math.round(maxTokens * 2)));
+    // Short, low-reasoning prompts (such as the dashboard digest) should be
+    // allowed to keep their small budget. The old unconditional 1500-token
+    // floor could turn a 320-token digest request into a 2048-token request.
+    if (options.preserve_max_tokens === true) {
+      const modelLimit = model === 'sarvam-105b' || model === 'sarvam-30b' ? 4096 : 2048;
+      maxTokens = Math.min(modelLimit, Math.max(128, Math.round(requestedMaxTokens)));
+    } else if (model === 'sarvam-105b') maxTokens = Math.min(4096, Math.max(1500, Math.round(maxTokens * 2)));
     else if (model === 'sarvam-30b') maxTokens = Math.min(4096, Math.max(1500, Math.round(maxTokens * 2)));
     else maxTokens = Math.min(2048, Math.max(1500, Math.round(maxTokens * 2)));
 
@@ -25308,7 +25315,7 @@ const SarvamAI = {
     let fullContent = message?.content || '';
     let finishReason = data?.choices?.[0]?.finish_reason;
 
-    if (finishReason === 'length' && fullContent.length > 0) {
+    if (options.allow_continuation !== false && finishReason === 'length' && fullContent.length > 0) {
       for (let i = 0; i < MAX_CONTINUATIONS; i++) {
         const contMessages = [
           ...messages,
@@ -29417,7 +29424,7 @@ function buildCompactDigestContext() {
 
   let todaySummary = 'No visits scheduled today';
   if (todayVisits.length > 0) {
-    const list = todayVisits.slice(0, 3).map(v => `${clean(v.school, 25)} (${v.status || 'planned'})`).join(', ');
+    const list = todayVisits.slice(0, 3).map(v => `${clean(v.school, 25)} (${clean(v.status || 'planned', 20)})`).join(', ');
     const extra = todayVisits.length > 3 ? ` +${todayVisits.length - 3} more` : '';
     todaySummary = `${todayVisits.length} visit(s): ${list}${extra}`;
   }
@@ -29440,7 +29447,7 @@ function buildCompactDigestContext() {
   const blockName = clean(profile.block, 20) || 'Block';
   const dateStr = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
-  const summaryText = `OFFICER: ${officerName} (${blockName})
+  const rawSummaryText = `OFFICER: ${officerName} (${blockName})
 DATE: ${dateStr}
 TODAY'S VISITS: ${todaySummary}
 OVERDUE FOLLOW-UPS: ${overdueSummary}
@@ -29448,6 +29455,9 @@ TODAY'S TASKS: ${tasksSummary}
 THIS WEEK'S VISITS: ${weekVisits.length} total
 THIS MONTH'S PROGRESS: ${completedThisMonth} completed of ${monthVisits.length} total visits
 RECENT OBSERVATIONS: ${recentObs.map(o => `${clean(o.school, 20)} - ${clean(o.teacher, 15)} (${clean(o.subject, 15)})`).join(', ') || 'None'}`;
+  // Keep model input bounded even when imported records contain malformed
+  // values or unusually large counts. The digest only needs a compact summary.
+  const summaryText = rawSummaryText.slice(0, 3500);
 
   return {
     todayVisits,
@@ -29563,7 +29573,14 @@ Output ONLY the bullet points directly. Do not include thinking, reasoning steps
     const res = await SarvamAI.chat([
       { role: 'system', content: 'You are a concise daily educational planner AI for an Azim Premji Foundation Resource Person. Provide exactly 3-5 concise, actionable bullet points immediately. Do NOT include lengthy chain-of-thought, reasoning steps, or conversational preamble. Every bullet point MUST start with a relevant emoji (e.g. 🎯, ⚠️, 📊, 💡, ⭐). Format: "- [Emoji] [Text]".' },
       { role: 'user', content: prompt }
-    ], { temperature: 0.5, max_tokens: 1800, reasoning_effort: 'low' });
+    ], {
+      temperature: 0.5,
+      max_tokens: 320,
+      reasoning_effort: 'low',
+      timeout: 30000,
+      preserve_max_tokens: true,
+      allow_continuation: false
+    });
 
     let reply = res.choices?.[0]?.message?.content?.trim() || '';
 

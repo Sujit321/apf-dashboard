@@ -2650,6 +2650,11 @@
               style="height:32px;">
               <i class="fas fa-file-excel" style="color:#10b981;"></i> Export Data
             </button>
+            <label class="btn btn-outline btn-sm" data-tip="Import the School Map Excel / CSV structure"
+              style="height:32px;cursor:pointer;">
+              <i class="fas fa-file-upload" style="color:#3b82f6;"></i> Import Data
+              <input type="file" accept=".xlsx,.xls,.csv" onchange="smapImportTableExcel(event)" style="display:none;">
+            </label>
             <input type="text" id="smapTableSearch" class="filter-input" placeholder="Filter schools…"
               style="min-width:180px;height:32px;" oninput="renderSchoolMapTable(this.value)">
           </div>
